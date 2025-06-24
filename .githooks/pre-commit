@@ -1,0 +1,18 @@
+#!/bin/bash
+
+fmt=$(scarb fmt --check --workspace)
+fmt_result=$?
+lint=$(scarb lint --workspace)
+lint_result=$?
+
+if [[ ${fmt_result} -ne 0 ]] ; then
+    echo "Cairo code is not formatted correctly, run 'scarb fmt --workspace' to fix"
+    exit 1
+fi
+
+if [[ ${lint_result} -ne 0 ]] ; then
+    echo "Cairo code is not linted correctly, run 'scarb lint --fix --workspace' to fix"
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,33 @@
+[package]
+name = "components"
+readme = "README.md"
+keywords = [
+    "starknet",
+    "cctp",
+    "contracts",
+    "components"
+]
+version.workspace = true
+edition.workspace = true
+cairo-version.workspace = true
+scarb-version.workspace = true
+authors.workspace = true
+description.workspace = true
+documentation.workspace = true
+repository.workspace = true
+license-file.workspace = true
+homepage.workspace = true
+publish = false
+
+[tool]
+fmt.workspace = true
+scarb.workspace = true
+
+[dependencies]
+starknet.workspace = true
+
+[dev-dependencies]
+assert_macros.workspace = true
+snforge_std.workspace = true
+
+[lib]

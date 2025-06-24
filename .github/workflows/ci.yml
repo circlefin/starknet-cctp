@@ -1,0 +1,49 @@
+name: Continuous Integration
+on:
+  pull_request:
+  push:
+    branches: [master]
+jobs:
+  lint_and_test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install lcov
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov
+
+      # .tool-versions will be used to install the correct version of scarb
+      - name: Install scarb
+        uses: software-mansion/setup-scarb@v1
+
+      # .tool-versions will be used to install the correct version of snfoundry
+      - name: Install Starknet Foundry
+        uses: foundry-rs/setup-snfoundry@v4
+
+      - name: Install Cairo Coverage
+        run: |
+          CAIRO_COVERAGE_VERSION=$(grep 'cairo-coverage = ' Scarb.toml | sed 's/cairo-coverage = "\(.*\)"/\1/')
+          curl -L https://raw.githubusercontent.com/software-mansion/cairo-coverage/main/scripts/install.sh | sh -s -- $CAIRO_COVERAGE_VERSION
+
+      - name: Cairo Format
+        run: scarb fmt --check --workspace
+
+      - name: Cairo Lint
+        run: scarb lint --workspace
+
+      - name: Run tests and check coverage
+        run: scarb coverage
+
+  scan:
+    needs: lint_and_test
+    if: github.event_name == 'pull_request'
+    uses: circlefin/circle-public-github-workflows/.github/workflows/pr-scan.yaml@v1
+
+  release-sbom:
+    needs: lint_and_test
+    if: github.event_name == 'push'
+    uses: circlefin/circle-public-github-workflows/.github/workflows/attach-release-assets.yaml@v1

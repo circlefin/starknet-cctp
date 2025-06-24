@@ -1,0 +1,48 @@
+[workspace]
+members = [
+    "packages/utils",
+    "packages/message",
+    "packages/components",
+    "packages/message_transmitter",
+    "packages/token_messenger_minter"
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024_07"
+cairo-version = "2.11.4"
+scarb-version = "2.11.4"
+authors = ["Circle"]
+description = "CCTP Contracts Starknet"
+homepage = "https://www.circle.com"
+license-file = "LICENSE"
+repository = "https://github.com/circlefin/starknet-cctp"
+documentation = "https://developers.circle.com/starknet/docs"
+keywords = [
+    "starknet",
+    "cctp",
+    "contracts"
+]
+
+[workspace.dependencies]
+assert_macros = "2.11.4"
+starknet = "2.11.4"
+snforge_std = "0.43.1"
+utils = { path = "packages/utils" }
+message = { path = "packages/message" }
+components = { path = "packages/components" }
+
+[workspace.tool.fmt]
+
+[workspace.tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+
+# Required for generating coverage report
+[profile.dev.cairo]
+unstable-add-statements-functions-debug-info = true
+unstable-add-statements-code-locations-debug-info = true
+inlining-strategy = "avoid"
+
+[scripts]
+test = "snforge test --workspace"
+coverage = "./coverage.sh"
