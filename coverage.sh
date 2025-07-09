@@ -34,13 +34,12 @@ if [ -z "$COVERAGE_FILES" ]; then
     exit 1
 fi
 
-lcov $COVERAGE_FILES --output-file coverage/combined_coverage.lcov --ignore-errors range
+lcov $COVERAGE_FILES --output-file coverage/combined_coverage.lcov
 
 # 3. Generate HTML report with omitted lines
 echo "Generating HTML report..."
 genhtml coverage/combined_coverage.lcov \
-    --output-directory coverage/html \
-    --ignore-errors range
+    --output-directory coverage/html
 
 # 4. Check coverage rate is 100%
 echo "Checking coverage requirements..."

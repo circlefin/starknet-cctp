@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod ownable;
+pub mod min_fee_controller;
 
-pub use ownable::{IOwnable, IOwnableDispatcher, IOwnableDispatcherTrait};
+pub use min_fee_controller::{
+    IMinFeeController, IMinFeeControllerDispatcher, IMinFeeControllerDispatcherTrait,
+};

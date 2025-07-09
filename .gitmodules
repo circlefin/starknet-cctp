@@ -1,0 +1,3 @@
+[submodule "stablecoin-starknet-private"]
+	path = stablecoin-starknet-private
+	url = git@github.com:circlefin/stablecoin-starknet-private.git

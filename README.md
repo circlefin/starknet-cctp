@@ -14,7 +14,7 @@ cd starknet-cctp-private
 # Analyze and report errors
 scarb check
 # Perform test
-scarb test
+snforge test
 # Test with coverage report
-scarb coverage
+./coverage.sh
 ```

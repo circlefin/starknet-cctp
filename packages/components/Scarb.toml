@@ -1,5 +1,5 @@
 [package]
-name = "components"
+name = "cctp_components"
 readme = "README.md"
 keywords = [
     "starknet",
@@ -25,6 +25,7 @@ scarb.workspace = true
 
 [dependencies]
 starknet.workspace = true
+components.workspace = true
 
 [dev-dependencies]
 assert_macros.workspace = true

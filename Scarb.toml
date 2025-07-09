@@ -27,10 +27,11 @@ keywords = [
 [workspace.dependencies]
 assert_macros = "2.11.4"
 starknet = "2.11.4"
-snforge_std = "0.43.1"
+snforge_std = "0.44.0"
 utils = { path = "packages/utils" }
 message = { path = "packages/message" }
-components = { path = "packages/components" }
+cctp_components = { path = "packages/components" }
+components = { path = "stablecoin-starknet-private/packages/components" }
 
 [workspace.tool.fmt]
 
@@ -42,7 +43,3 @@ allow-prebuilt-plugins = ["snforge_std"]
 unstable-add-statements-functions-debug-info = true
 unstable-add-statements-code-locations-debug-info = true
 inlining-strategy = "avoid"
-
-[scripts]
-test = "snforge test --workspace"
-coverage = "./coverage.sh"
