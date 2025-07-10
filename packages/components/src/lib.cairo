@@ -14,7 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod attestable;
 pub mod min_fee_controller;
+
+pub use attestable::{IAttestable, IAttestableDispatcher, IAttestableDispatcherTrait};
 
 pub use min_fee_controller::{
     IMinFeeController, IMinFeeControllerDispatcher, IMinFeeControllerDispatcherTrait,
