@@ -48,53 +48,12 @@ use starknet::ContractAddress;
 /// address in a contract with two-tier access control.
 #[starknet::interface]
 pub trait IMinFeeController<TContractState> {
-    /// Returns the current minimum fee controller address
-    ///
-    /// # Returns
-    ///
-    /// The address that is authorized to set minimum fee values
     fn min_fee_controller(self: @TContractState) -> ContractAddress;
 
-    /// Returns the current minimum fee value for a specific burn token
-    ///
-    /// # Arguments
-    ///
-    /// * `burn_token` - The address of the burn token to query
-    ///
-    /// # Returns
-    ///
-    /// The minimum fee value for the specified burn token (0 if not set)
     fn min_fee(self: @TContractState, burn_token: ContractAddress) -> u256;
 
-    /// Sets a new minimum fee controller address
-    ///
-    /// Only the contract owner can call this function.
-    ///
-    /// # Arguments
-    ///
-    /// * `min_fee_controller` - The new address authorized to set minimum fees
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if:
-    /// - The caller is not the contract owner
-    /// - The provided address is the zero address
     fn set_min_fee_controller(ref self: TContractState, min_fee_controller: ContractAddress);
 
-    /// Sets a new minimum fee value for a specific burn token
-    ///
-    /// Only the designated fee controller can call this function.
-    ///
-    /// # Arguments
-    ///
-    /// * `burn_token` - The address of the burn token to set the fee for
-    /// * `min_fee` - The new minimum fee value (must be less than MIN_FEE_MULTIPLIER)
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if:
-    /// - The caller is not the designated fee controller
-    /// - The fee value is greater than or equal to MIN_FEE_MULTIPLIER (10,000,000)
     fn set_min_fee(ref self: TContractState, burn_token: ContractAddress, min_fee: u256);
 }
 

@@ -27,6 +27,14 @@ pub use erc20::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 pub use min_fee_controller::{
     IMinFeeController, IMinFeeControllerDispatcher, IMinFeeControllerDispatcherTrait,
 };
+
+pub mod remote_token_messenger_controller;
+
+pub use remote_token_messenger_controller::{
+    IRemoteTokenMessengerController, IRemoteTokenMessengerControllerDispatcher,
+    IRemoteTokenMessengerControllerDispatcherTrait,
+};
+
 pub use rescuable::{IRescuable, IRescuableDispatcher, IRescuableDispatcherTrait};
 
 pub use token_controller::{
