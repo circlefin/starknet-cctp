@@ -14,14 +14,126 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Adds two numbers together
-///
-/// # Arguments
-/// * `a` - The first number
-/// * `b` - The second number
-///
-/// # Returns
-/// The sum of `a` and `b`
-pub fn add_numbers(a: u32, b: u32) -> u32 {
-    a + b
+use core::byte_array::ByteArrayTrait;
+
+pub mod Errors {
+    pub const OUT_OF_BOUNDS: felt252 = 'Byte array out of bounds';
+    pub const BYTE_ARRAY_TOO_SHORT: felt252 = 'Byte array too short';
+}
+
+// Helper functions for big-endian encoding/decoding
+
+/// Append 32 zero bytes efficiently (optimized for fee_executed and expiration_block)
+pub fn append_zero_u256(ref byte_array: ByteArray) {
+    let mut i: u32 = 0;
+    while i != 32 {
+        byte_array.append_byte(0);
+        i += 1;
+    };
+}
+
+/// Append u32 as big-endian bytes to ByteArray
+pub fn append_u32_be(ref byte_array: ByteArray, value: u32) {
+    byte_array.append_byte(((value / 0x1000000) & 0xFF).try_into().unwrap());
+    byte_array.append_byte(((value / 0x10000) & 0xFF).try_into().unwrap());
+    byte_array.append_byte(((value / 0x100) & 0xFF).try_into().unwrap());
+    byte_array.append_byte((value & 0xFF).try_into().unwrap());
+}
+
+/// Append u256 as big-endian bytes (32 bytes) to ByteArray
+pub fn append_u256_be(ref byte_array: ByteArray, value: u256) {
+    let mut i: u32 = 0;
+    while i != 32 {
+        let byte_position = 31 - i; // byte position from right (0-31)
+        let byte_val = ((value / pow256(byte_position)) & 0xFF).try_into().unwrap();
+        byte_array.append_byte(byte_val);
+        i += 1;
+    };
+}
+
+/// Extract u32 from ByteArray at given index (big-endian)
+pub fn extract_u32_be(byte_array: @ByteArray, index: usize) -> u32 {
+    assert(index + 3 < byte_array.len(), Errors::OUT_OF_BOUNDS);
+
+    let b0: u32 = byte_array.at(index).unwrap().into();
+    let b1: u32 = byte_array.at(index + 1).unwrap().into();
+    let b2: u32 = byte_array.at(index + 2).unwrap().into();
+    let b3: u32 = byte_array.at(index + 3).unwrap().into();
+
+    (b0 * 0x1000000) + (b1 * 0x10000) + (b2 * 0x100) + b3
+}
+
+/// Extract u256 from ByteArray at given index (big-endian, 32 bytes)
+pub fn extract_u256_be(byte_array: @ByteArray, index: usize) -> u256 {
+    assert(index + 31 < byte_array.len(), Errors::OUT_OF_BOUNDS);
+
+    let mut result: u256 = 0;
+    let mut i: u32 = 0;
+
+    while i != 32 {
+        let byte_val: u256 = byte_array.at(index + i.into()).unwrap().into();
+        let byte_position = 31 - i; // byte position from right (0-31)
+        result += byte_val * pow256(byte_position);
+        i += 1;
+    }
+
+    result
+}
+
+/// Extract bytes array from ByteArray at given index (dynamic)
+pub fn extract_bytes_array_dynamic(byte_array: @ByteArray, index: usize) -> ByteArray {
+    let byte_array_len = byte_array.len();
+    assert(byte_array_len >= index, Errors::BYTE_ARRAY_TOO_SHORT);
+
+    let mut body: ByteArray = Default::default();
+    let mut i = index;
+
+    while i != byte_array_len {
+        let byte_opt = byte_array.at(i);
+        match byte_opt {
+            Option::Some(byte_val) => { body.append_byte(byte_val); },
+            Option::None => { break; },
+        }
+        i += 1;
+    }
+    body
+}
+
+/// Helper function to calculate 256^exponent using optimized pattern matching
+pub fn pow256(exponent: u32) -> u256 {
+    match exponent {
+        0 => 0x1_u256, // 256^0
+        1 => 0x100_u256, // 256^1
+        2 => 0x10000_u256, // 256^2
+        3 => 0x1000000_u256, // 256^3
+        4 => 0x100000000_u256, // 256^4
+        5 => 0x10000000000_u256, // 256^5
+        6 => 0x1000000000000_u256, // 256^6
+        7 => 0x100000000000000_u256, // 256^7
+        8 => 0x10000000000000000_u256, // 256^8
+        9 => 0x1000000000000000000_u256, // 256^9
+        10 => 0x100000000000000000000_u256, // 256^10
+        11 => 0x10000000000000000000000_u256, // 256^11
+        12 => 0x1000000000000000000000000_u256, // 256^12
+        13 => 0x100000000000000000000000000_u256, // 256^13
+        14 => 0x10000000000000000000000000000_u256, // 256^14
+        15 => 0x1000000000000000000000000000000_u256, // 256^15
+        16 => 0x100000000000000000000000000000000_u256, // 256^16
+        17 => 0x10000000000000000000000000000000000_u256, // 256^17
+        18 => 0x1000000000000000000000000000000000000_u256, // 256^18
+        19 => 0x100000000000000000000000000000000000000_u256, // 256^19
+        20 => 0x10000000000000000000000000000000000000000_u256, // 256^20
+        21 => 0x1000000000000000000000000000000000000000000_u256, // 256^21
+        22 => 0x100000000000000000000000000000000000000000000_u256, // 256^22
+        23 => 0x10000000000000000000000000000000000000000000000_u256, // 256^23
+        24 => 0x1000000000000000000000000000000000000000000000000_u256, // 256^24
+        25 => 0x100000000000000000000000000000000000000000000000000_u256, // 256^25
+        26 => 0x10000000000000000000000000000000000000000000000000000_u256, // 256^26
+        27 => 0x1000000000000000000000000000000000000000000000000000000_u256, // 256^27
+        28 => 0x100000000000000000000000000000000000000000000000000000000_u256, // 256^28
+        29 => 0x10000000000000000000000000000000000000000000000000000000000_u256, // 256^29
+        30 => 0x1000000000000000000000000000000000000000000000000000000000000_u256, // 256^30
+        31 => 0x100000000000000000000000000000000000000000000000000000000000000_u256, // 256^31
+        _ => panic!("u256_mul Overflow"),
+    }
 }

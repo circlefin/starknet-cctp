@@ -16,4 +16,7 @@
 
 mod utils;
 
-pub use utils::add_numbers;
+pub use utils::{
+    append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic, extract_u256_be,
+    extract_u32_be, pow256,
+};

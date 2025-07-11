@@ -22,7 +22,6 @@ pub trait IMessageTransmitter<TContractState> {
 #[starknet::contract]
 pub mod MessageTransmitter {
     use components::ownable::OwnableComponent;
-    use utils::add_numbers;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
@@ -53,7 +52,7 @@ pub mod MessageTransmitter {
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn _internal_add(self: @ContractState, a: u32, b: u32) -> u32 {
-            add_numbers(a, b)
+            a + b
         }
     }
 }
