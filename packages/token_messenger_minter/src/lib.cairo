@@ -17,5 +17,5 @@
 pub mod token_messenger_minter;
 
 pub use token_messenger_minter::{
-    ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait, TokenMessengerMinter,
+    ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
 };

@@ -16,43 +16,19 @@
 
 #[starknet::interface]
 pub trait ITokenMessengerMinter<TContractState> {
-    fn add_two_numbers(self: @TContractState, a: u32, b: u32) -> u32;
-}
+    fn handle_receive_finalized_message(
+        ref self: TContractState,
+        remote_domain: u32,
+        sender: u256,
+        finality_threshold_executed: u32,
+        message_body: ByteArray,
+    ) -> bool;
 
-#[starknet::contract]
-pub mod TokenMessengerMinter {
-    use components::ownable::OwnableComponent;
-
-    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
-
-    #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::Ownable<ContractState>;
-
-    #[storage]
-    struct Storage {
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    enum Event {
-        #[flat]
-        OwnableEvent: OwnableComponent::Event,
-    }
-
-    #[abi(embed_v0)]
-    impl TokenMessengerMinterImpl of super::ITokenMessengerMinter<ContractState> {
-        /// Add two numbers using the utility function from utils
-        fn add_two_numbers(self: @ContractState, a: u32, b: u32) -> u32 {
-            self._internal_add(a, b)
-        }
-    }
-
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn _internal_add(self: @ContractState, a: u32, b: u32) -> u32 {
-            a + b
-        }
-    }
+    fn handle_receive_unfinalized_message(
+        ref self: TContractState,
+        remote_domain: u32,
+        sender: u256,
+        finality_threshold_executed: u32,
+        message_body: ByteArray,
+    ) -> bool;
 }
