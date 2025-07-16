@@ -40,3 +40,10 @@ pub use rescuable::{IRescuable, IRescuableDispatcher, IRescuableDispatcherTrait}
 pub use token_controller::{
     ITokenController, ITokenControllerDispatcher, ITokenControllerDispatcherTrait,
 };
+
+pub mod fee_recipient_controller;
+
+pub use fee_recipient_controller::{
+    IFeeRecipientController, IFeeRecipientControllerDispatcher,
+    IFeeRecipientControllerDispatcherTrait,
+};

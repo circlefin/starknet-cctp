@@ -161,7 +161,7 @@ fn get_test_addresses() -> (
 
 #[test]
 fn test_initialized_contract_state() {
-    let (owner, token_controller, local_token, _, _) = get_test_addresses();
+    let (owner, token_controller, _, _, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, token_controller);
     let dispatcher = ITokenControllerDispatcher { contract_address };
     let test_dispatcher = ITestHelperDispatcher { contract_address };
