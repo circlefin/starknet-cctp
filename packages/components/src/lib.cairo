@@ -15,14 +15,11 @@
 // limitations under the License.
 
 pub mod attestable;
-pub mod erc20;
 pub mod min_fee_controller;
 pub mod rescuable;
 pub mod token_controller;
 
 pub use attestable::{IAttestable, IAttestableDispatcher, IAttestableDispatcherTrait};
-
-pub use erc20::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
 pub use min_fee_controller::{
     IMinFeeController, IMinFeeControllerDispatcher, IMinFeeControllerDispatcherTrait,

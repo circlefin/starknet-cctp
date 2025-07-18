@@ -88,6 +88,15 @@ mod MockRemoteTokenMessengerControllerContract {
         }
 
         #[external(v0)]
+        fn test_add_remote_token_messenger_internal(
+            ref self: ContractState, domain: u32, token_messenger: u256,
+        ) {
+            self
+                .remote_token_messenger_controller
+                .add_remote_token_messenger_internal(domain, token_messenger);
+        }
+
+        #[external(v0)]
         fn test_ownable_initializer(ref self: ContractState, owner: ContractAddress) {
             self.ownable.initializer(owner);
         }
@@ -99,6 +108,9 @@ mod MockRemoteTokenMessengerControllerContract {
 trait ITestHelper<TContractState> {
     fn test_assert_only_remote_token_messenger(
         self: @TContractState, domain: u32, token_messenger: u256,
+    );
+    fn test_add_remote_token_messenger_internal(
+        ref self: TContractState, domain: u32, token_messenger: u256,
     );
     fn test_ownable_initializer(ref self: TContractState, owner: ContractAddress);
 }
@@ -147,6 +159,8 @@ fn test_add_and_remove_remote_token_messenger_functionality() {
     let mut spy = spy_events();
 
     // Add remote token messenger as owner
+    // Note: The public function add_remote_token_messenger checks ownership then calls the internal
+    // function
     start_cheat_caller_address(contract_address, owner);
     dispatcher.add_remote_token_messenger(domain1, token_messenger1);
 
@@ -295,6 +309,108 @@ fn test_remove_remote_token_messenger_rejects_no_token_messenger_set() {
 // ================================
 // INTERNAL FUNCTIONS TESTS
 // ================================
+
+#[test]
+fn test_add_remote_token_messenger_internal_functionality() {
+    let (owner, _, token_messenger1, token_messenger2) = get_test_values();
+    let contract_address = deploy_mock_contract(owner);
+    let dispatcher = IRemoteTokenMessengerControllerDispatcher { contract_address };
+    let test_dispatcher = ITestHelperDispatcher { contract_address };
+
+    let domain1: u32 = 1_u32;
+    let domain2: u32 = 2_u32;
+
+    // Spy on events
+    let mut spy = spy_events();
+
+    // Add remote token messenger using internal function (no owner check)
+    test_dispatcher.test_add_remote_token_messenger_internal(domain1, token_messenger1);
+
+    // Check that remote token messenger was set correctly
+    assert!(
+        dispatcher.remote_token_messenger(domain1) == token_messenger1,
+        "Remote token messenger should be set correctly via internal function",
+    );
+
+    // Verify RemoteTokenMessengerAdded event was emitted
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    contract_address,
+                    RemoteTokenMessengerControllerComponent::Event::RemoteTokenMessengerAdded(
+                        RemoteTokenMessengerControllerComponent::RemoteTokenMessengerAdded {
+                            domain: domain1, token_messenger: token_messenger1,
+                        },
+                    ),
+                ),
+            ],
+        );
+
+    // Add another token messenger for different domain
+    test_dispatcher.test_add_remote_token_messenger_internal(domain2, token_messenger2);
+
+    // Verify both are set correctly
+    assert!(
+        dispatcher.remote_token_messenger(domain1) == token_messenger1,
+        "First domain should remain unchanged",
+    );
+    assert!(
+        dispatcher.remote_token_messenger(domain2) == token_messenger2,
+        "Second domain should be set correctly",
+    );
+}
+
+#[test]
+#[should_panic(expected: ('Zero address not allowed',))]
+fn test_add_remote_token_messenger_internal_rejects_zero_address() {
+    let (owner, _, _, _) = get_test_values();
+    let contract_address = deploy_mock_contract(owner);
+    let test_dispatcher = ITestHelperDispatcher { contract_address };
+
+    let domain1: u32 = 1_u32;
+    let zero_address: u256 = 0;
+
+    // Should panic even without owner check
+    test_dispatcher.test_add_remote_token_messenger_internal(domain1, zero_address);
+}
+
+#[test]
+#[should_panic(expected: ('Token messenger already set',))]
+fn test_add_remote_token_messenger_internal_rejects_already_set() {
+    let (owner, _, token_messenger1, _) = get_test_values();
+    let contract_address = deploy_mock_contract(owner);
+    let test_dispatcher = ITestHelperDispatcher { contract_address };
+
+    let domain1: u32 = 1_u32;
+
+    // Add token messenger once
+    test_dispatcher.test_add_remote_token_messenger_internal(domain1, token_messenger1);
+
+    // Try to add again - should panic
+    test_dispatcher.test_add_remote_token_messenger_internal(domain1, token_messenger1);
+}
+
+#[test]
+fn test_add_remote_token_messenger_internal_works_without_ownership() {
+    let (owner, unauthorized, token_messenger1, _) = get_test_values();
+    let contract_address = deploy_mock_contract(owner);
+    let dispatcher = IRemoteTokenMessengerControllerDispatcher { contract_address };
+    let test_dispatcher = ITestHelperDispatcher { contract_address };
+
+    let domain1: u32 = 1_u32;
+
+    // Call internal function as non-owner - should work
+    start_cheat_caller_address(contract_address, unauthorized);
+    test_dispatcher.test_add_remote_token_messenger_internal(domain1, token_messenger1);
+    stop_cheat_caller_address(contract_address);
+
+    // Verify it was set
+    assert!(
+        dispatcher.remote_token_messenger(domain1) == token_messenger1,
+        "Internal function should work without ownership check",
+    );
+}
 
 #[test]
 fn test_assert_only_remote_token_messenger_functionality() {

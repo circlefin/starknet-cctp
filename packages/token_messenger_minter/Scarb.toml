@@ -27,6 +27,10 @@ scarb.workspace = true
 starknet.workspace = true
 utils.workspace = true
 components.workspace = true
+message_transmitter.workspace = true
+cctp_components.workspace = true
+message.workspace = true
+stablecoin.workspace = true
 
 [dev-dependencies]
 assert_macros.workspace = true

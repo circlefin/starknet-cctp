@@ -26,6 +26,7 @@ scarb.workspace = true
 [dependencies]
 starknet.workspace = true
 components.workspace = true
+stablecoin.workspace = true
 
 [dev-dependencies]
 assert_macros.workspace = true

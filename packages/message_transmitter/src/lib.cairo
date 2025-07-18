@@ -16,6 +16,4 @@
 
 pub mod message_transmitter;
 
-pub use message_transmitter::{
-    IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait, MessageTransmitter,
-};
+pub use message_transmitter::{IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait};

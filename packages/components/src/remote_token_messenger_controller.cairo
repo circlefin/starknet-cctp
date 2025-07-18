@@ -126,20 +126,8 @@ pub mod RemoteTokenMessengerControllerComponent {
             let ownable_component = get_dep_component!(@self, Owner);
             ownable_component.assert_only_owner();
 
-            // Validate token messenger is not zero address
-            assert(!token_messenger.is_zero(), Errors::ZERO_ADDRESS_NOT_ALLOWED);
-
-            // Validate token messenger is not already set
-            assert(
-                self.remote_token_messengers.read(domain).is_zero(),
-                Errors::TOKEN_MESSENGER_ALREADY_SET,
-            );
-
-            // Set token messenger
-            self.remote_token_messengers.write(domain, token_messenger);
-
-            // Emit event
-            self.emit(RemoteTokenMessengerAdded { domain, token_messenger });
+            // Use internal function
+            self.add_remote_token_messenger_internal(domain, token_messenger);
         }
 
         /// Remove remote token messenger address for a specific domain
@@ -190,6 +178,41 @@ pub mod RemoteTokenMessengerControllerComponent {
         +Drop<TContractState>,
         impl Owner: OwnableComponent::HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
+        /// Internal function to add remote token messenger without ownership check
+        ///
+        /// # Arguments
+        ///
+        /// * `domain` - The domain to set the remote token messenger address for
+        /// * `token_messenger` - The address of the remote token messenger
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The provided token messenger address is the zero address
+        /// - The token messenger is already set for the domain
+        ///
+        /// # Events
+        ///
+        /// Emits a `RemoteTokenMessengerAdded` event upon successful addition.
+        fn add_remote_token_messenger_internal(
+            ref self: ComponentState<TContractState>, domain: u32, token_messenger: u256,
+        ) {
+            // Validate token messenger is not zero address
+            assert(!token_messenger.is_zero(), Errors::ZERO_ADDRESS_NOT_ALLOWED);
+
+            // Validate token messenger is not already set
+            assert(
+                self.remote_token_messengers.read(domain).is_zero(),
+                Errors::TOKEN_MESSENGER_ALREADY_SET,
+            );
+
+            // Set token messenger
+            self.remote_token_messengers.write(domain, token_messenger);
+
+            // Emit event
+            self.emit(RemoteTokenMessengerAdded { domain, token_messenger });
+        }
+
         /// Asserts that the remote token messenger set for a specific domain is the same as the
         /// provided address
         ///

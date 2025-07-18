@@ -16,43 +16,14 @@
 
 #[starknet::interface]
 pub trait IMessageTransmitter<TContractState> {
-    fn add_two_numbers(self: @TContractState, a: u32, b: u32) -> u32;
-}
+    fn send_message(
+        ref self: TContractState,
+        destination_domain: u32,
+        recipient: u256,
+        destination_caller: u256,
+        min_finality_threshold: u32,
+        message_body: ByteArray,
+    );
 
-#[starknet::contract]
-pub mod MessageTransmitter {
-    use components::ownable::OwnableComponent;
-
-    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
-
-    #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::Ownable<ContractState>;
-
-    #[storage]
-    struct Storage {
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    enum Event {
-        #[flat]
-        OwnableEvent: OwnableComponent::Event,
-    }
-
-    #[abi(embed_v0)]
-    impl MessageTransmitter of super::IMessageTransmitter<ContractState> {
-        /// Add two numbers using the utility function from utils
-        fn add_two_numbers(self: @ContractState, a: u32, b: u32) -> u32 {
-            self._internal_add(a, b)
-        }
-    }
-
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        fn _internal_add(self: @ContractState, a: u32, b: u32) -> u32 {
-            a + b
-        }
-    }
+    fn receive_message(ref self: TContractState, message: ByteArray, attestation: ByteArray);
 }

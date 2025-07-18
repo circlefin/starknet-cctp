@@ -14,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use cctp_components::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 use cctp_components::rescuable::{
     IRescuableDispatcher, IRescuableDispatcherTrait, RescuableComponent,
 };
@@ -23,12 +22,13 @@ use snforge_std::{
     ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
     start_cheat_caller_address, stop_cheat_caller_address,
 };
+use stablecoin::{IFiatTokenDispatcher, IFiatTokenDispatcherTrait};
 use starknet::ContractAddress;
 
 // Mock ERC20 contract for testing token rescue functionality
 #[starknet::contract]
 mod MockERC20Contract {
-    use cctp_components::erc20::IERC20;
+    use stablecoin::IFiatToken;
     use starknet::ContractAddress;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
@@ -42,7 +42,21 @@ mod MockERC20Contract {
     }
 
     #[abi(embed_v0)]
-    impl ERC20Impl of IERC20<ContractState> {
+    impl ERC20Impl of IFiatToken<ContractState> {
+        fn mint(ref self: ContractState, to: ContractAddress, amount: u256) {
+            // Implementation for test purposes
+            let to_balance = self.balances.read(to);
+            self.balances.write(to, to_balance + amount);
+        }
+
+        fn burn(ref self: ContractState, amount: u256) {
+            // Implementation for test purposes
+            let caller = starknet::get_caller_address();
+            let caller_balance = self.balances.read(caller);
+            assert!(caller_balance >= amount, "Insufficient balance to burn");
+            self.balances.write(caller, caller_balance - amount);
+        }
+
         fn transfer(ref self: ContractState, to: ContractAddress, amount: u256) -> bool {
             if self.transfer_should_fail.read() {
                 return false;
@@ -62,6 +76,30 @@ mod MockERC20Contract {
 
         fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
             self.balances.read(account)
+        }
+
+        fn total_supply(self: @ContractState) -> u256 {
+            // Not needed for tests
+            0
+        }
+
+        fn transfer_from(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, amount: u256,
+        ) -> bool {
+            // Not needed for these tests
+            false
+        }
+
+        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
+            // Not needed for these tests
+            false
+        }
+
+        fn allowance(
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
+        ) -> u256 {
+            // Not needed for these tests
+            0
         }
     }
 
@@ -264,7 +302,7 @@ fn test_rescue_erc20_functionality() {
 
     // Deploy mock ERC20 contract
     let erc20_address = deploy_mock_erc20_contract();
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: erc20_address };
+    let erc20_dispatcher = IFiatTokenDispatcher { contract_address: erc20_address };
     let erc20_test_helper = IMockERC20TestHelperDispatcher { contract_address: erc20_address };
 
     // Set up ERC20 contract with some balance for the rescuable contract
@@ -300,7 +338,7 @@ fn test_complete_rescuable_workflow() {
 
     // Deploy mock ERC20 contract
     let erc20_address = deploy_mock_erc20_contract();
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: erc20_address };
+    let erc20_dispatcher = IFiatTokenDispatcher { contract_address: erc20_address };
     let erc20_test_helper = IMockERC20TestHelperDispatcher { contract_address: erc20_address };
 
     // 1. Owner updates rescuer
@@ -411,7 +449,7 @@ fn test_rescue_erc20_rejects_insufficient_balance() {
 
     // Deploy mock ERC20 contract
     let erc20_address = deploy_mock_erc20_contract();
-    let erc20_dispatcher = IERC20Dispatcher { contract_address: erc20_address };
+    let erc20_dispatcher = IFiatTokenDispatcher { contract_address: erc20_address };
     let erc20_test_helper = IMockERC20TestHelperDispatcher { contract_address: erc20_address };
 
     // Set up contract with some balance, but less than what we try to rescue
@@ -576,8 +614,8 @@ fn test_multiple_rescue_operations() {
     // Deploy multiple mock ERC20 contracts
     let erc20_address1 = deploy_mock_erc20_contract();
     let erc20_address2 = deploy_mock_erc20_contract();
-    let erc20_dispatcher1 = IERC20Dispatcher { contract_address: erc20_address1 };
-    let erc20_dispatcher2 = IERC20Dispatcher { contract_address: erc20_address2 };
+    let erc20_dispatcher1 = IFiatTokenDispatcher { contract_address: erc20_address1 };
+    let erc20_dispatcher2 = IFiatTokenDispatcher { contract_address: erc20_address2 };
     let erc20_test_helper1 = IMockERC20TestHelperDispatcher { contract_address: erc20_address1 };
     let erc20_test_helper2 = IMockERC20TestHelperDispatcher { contract_address: erc20_address2 };
 

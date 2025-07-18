@@ -254,9 +254,6 @@ pub mod MinFeeControllerComponent {
 
         /// Calculates the minimum fee amount for a given amount and burn token.
         ///
-        /// Amount should be constrained to be greater than 1.
-        /// Assumes `min_fee` is non-zero.
-        ///
         /// # Arguments
         ///
         /// * `burn_token` - The address of the burn token
@@ -265,6 +262,10 @@ pub mod MinFeeControllerComponent {
         /// # Returns
         ///
         /// The minimum fee for the given amount and burn token.
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if minFee > 0 and amount <= 1
         fn calc_min_fee_amount(
             self: @ComponentState<TContractState>, burn_token: ContractAddress, amount: u256,
         ) -> u256 {
@@ -272,6 +273,10 @@ pub mod MinFeeControllerComponent {
             if min_fee == 0 {
                 return 0;
             }
+
+            // Require amount > 1 to avoid returning an invalid or misleading fee
+            assert(amount > 1, 'Amount too low');
+
             let min_fee_amount = (amount * min_fee) / MIN_FEE_MULTIPLIER;
             if min_fee_amount == 0 {
                 1

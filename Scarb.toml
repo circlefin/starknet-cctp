@@ -31,7 +31,10 @@ snforge_std = "0.44.0"
 utils = { path = "packages/utils" }
 message = { path = "packages/message" }
 cctp_components = { path = "packages/components" }
+message_transmitter = { path = "packages/message_transmitter" }
+token_messenger_minter = { path = "packages/token_messenger_minter" }
 components = { path = "stablecoin-starknet-private/packages/components" }
+stablecoin = { path = "stablecoin-starknet-private/packages/stablecoin" }
 
 [workspace.tool.fmt]
 

@@ -16,19 +16,19 @@
 
 //! # Rescuable Component
 //!
-//! This component provides functionality to rescue ERC20 tokens that may become locked in the
+//! This component provides functionality to rescue tokens that may become locked in the
 //! contract. This is essential for recovering tokens that are sent to the contract by mistake
 //! or become stuck due to failed operations. The component integrates with the Ownable component
 //! to control rescuer role management, where only the owner can update the rescuer address.
 //!
 //! The component implements a two-tier access control system:
 //! - **Owner**: Can update the rescuer address (inherited from Ownable component)
-//! - **Rescuer**: Can rescue ERC20 tokens locked in the contract
+//! - **Rescuer**: Can rescue tokens locked in the contract
 //!
 //! # Features
 //!
 //! - **Rescuer Management**: Owner can set and update the rescuer address
-//! - **Token Recovery**: Rescuer can recover ERC20 tokens locked in the contract
+//! - **Token Recovery**: Rescuer can recover tokens locked in the contract
 //! - **Access Control**: Two-tier access control (Owner → Rescuer → Token Recovery)
 //! - **Input Validation**: Built-in validation to prevent invalid operations
 //! - **Transfer Validation**: Ensures rescue operations actually succeed before completing
@@ -93,9 +93,9 @@ pub mod RescuableComponent {
     use components::ownable::OwnableComponent;
     use components::ownable::OwnableComponent::InternalTrait as OwnableInternalTrait;
     use core::num::traits::Zero;
+    use stablecoin::{IFiatTokenDispatcher, IFiatTokenDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
-    use crate::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 
     #[storage]
     pub struct Storage {
@@ -171,14 +171,14 @@ pub mod RescuableComponent {
             self.emit(RescuerChanged { new_rescuer });
         }
 
-        /// Rescues ERC20 tokens locked in this contract by transferring them to a recipient
+        /// Rescues tokens locked in this contract by transferring them to a recipient
         ///
         /// This function can only be called by the designated rescuer. It validates all
         /// parameters and ensures the transfer succeeds before completing.
         ///
         /// # Arguments
         ///
-        /// * `token_contract` - The address of the ERC20 token contract to rescue from
+        /// * `token_contract` - The address of the token contract to rescue from
         /// * `to` - The recipient address for the rescued tokens
         /// * `amount` - The amount of tokens to rescue
         ///
@@ -209,15 +209,15 @@ pub mod RescuableComponent {
             // Validate amount is not zero
             assert(amount != 0, Errors::AMOUNT_CANNOT_BE_ZERO);
 
-            // Create ERC20 dispatcher
-            let erc20_dispatcher = IERC20Dispatcher { contract_address: token_contract };
+            // Create token dispatcher
+            let token_dispatcher = IFiatTokenDispatcher { contract_address: token_contract };
 
             // Check contract has sufficient balance before attempting transfer
-            let contract_balance = erc20_dispatcher.balance_of(get_contract_address());
+            let contract_balance = token_dispatcher.balance_of(get_contract_address());
             assert(contract_balance >= amount, Errors::INSUFFICIENT_TOKEN_BALANCE);
 
             // Attempt transfer
-            let transfer_result = erc20_dispatcher.transfer(to, amount);
+            let transfer_result = token_dispatcher.transfer(to, amount);
 
             // Validate transfer succeeded
             assert(transfer_result, Errors::RESCUE_TRANSFER_FAILED);

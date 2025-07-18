@@ -7,6 +7,7 @@ version = "0.1.0"
 dependencies = [
  "components",
  "snforge_std",
+ "stablecoin",
 ]
 
 [[package]]
@@ -46,11 +47,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "token_messenger_minter"
+name = "stablecoin"
 version = "0.1.0"
 dependencies = [
  "components",
+]
+
+[[package]]
+name = "token_messenger_minter"
+version = "0.1.0"
+dependencies = [
+ "cctp_components",
+ "components",
+ "message",
+ "message_transmitter",
  "snforge_std",
+ "stablecoin",
  "utils",
 ]
 
