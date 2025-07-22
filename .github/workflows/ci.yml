@@ -48,11 +48,32 @@ jobs:
       - name: Cairo Lint
         run: scarb lint --workspace
 
-      - name: Run tests
+      - name: Cairo Build
+        run: scarb build --workspace
+
+      - name: Run contracts tests
         run: snforge test --workspace
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack and install dependencies
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile
+      
+      - name: Build E2E Test
+        run: yarn build
+      
+      - name: Lint E2E Test
+        run: yarn lint
+
+      - name: Run E2E tests
+        run: yarn test:e2e
+
   scan:
-    needs: lint_and_test
     if: github.event_name == 'pull_request'
     uses: circlefin/circle-public-github-workflows/.github/workflows/pr-scan.yaml@v1
 

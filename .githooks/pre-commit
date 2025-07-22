@@ -4,6 +4,8 @@ fmt=$(scarb fmt --check --workspace)
 fmt_result=$?
 lint=$(scarb lint --workspace)
 lint_result=$?
+eslint=$(yarn lint)
+eslint_result=$?
 
 if [[ ${fmt_result} -ne 0 ]] ; then
     echo "Cairo code is not formatted correctly, run 'scarb fmt --workspace' to fix"
@@ -12,6 +14,11 @@ fi
 
 if [[ ${lint_result} -ne 0 ]] ; then
     echo "Cairo code is not linted correctly, run 'scarb lint --fix --workspace' to fix"
+    exit 1
+fi
+
+if [[ ${eslint_result} -ne 0 ]] ; then
+    echo "JavaScript code is not linted correctly, run 'yarn lint' to fix"
     exit 1
 fi
 

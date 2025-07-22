@@ -16,3 +16,11 @@ snfoundry_trace/
 coverage/
 coverage_report/
 coverage.lcov
+
+node_modules/
+
+# Test logs
+devnet.log
+
+.yarn/
+starknet-node.log

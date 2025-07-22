@@ -1,0 +1,6 @@
+pkg:npm/%40bcoe/v8-coverage
+pkg:npm/%40pkgjs/parseargs
+pkg:npm/abbrev
+pkg:npm/esprima
+pkg:npm/type-fest
+pkg:npm/pako

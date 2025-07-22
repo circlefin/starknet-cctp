@@ -37,5 +37,5 @@ assert_macros.workspace = true
 snforge_std.workspace = true
 
 [[target.starknet-contract]]
-
-[lib]
+sierra = true
+casm = true

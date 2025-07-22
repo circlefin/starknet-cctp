@@ -1,0 +1,1465 @@
+[
+  {
+    "type": "impl",
+    "name": "TokenMessengerMinterImpl",
+    "interface_name": "token_messenger_minter::token_messenger_minter::ITokenMessengerMinter"
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "token_messenger_minter::token_messenger_minter::ITokenMessengerMinter",
+    "items": [
+      {
+        "type": "function",
+        "name": "initialize",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "pauser",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "denylister",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "rescuer",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "token_controller",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "min_fee_controller",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "fee_recipient",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "message_body_version",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "local_message_transmitter",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "remote_domains",
+            "type": "core::array::Array::<core::integer::u32>"
+          },
+          {
+            "name": "remote_token_messengers",
+            "type": "core::array::Array::<core::integer::u256>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "handle_receive_finalized_message",
+        "inputs": [
+          {
+            "name": "remote_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "sender",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "finality_threshold_executed",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "message_body",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "handle_receive_unfinalized_message",
+        "inputs": [
+          {
+            "name": "remote_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "sender",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "finality_threshold_executed",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "message_body",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "message_body_version",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "local_message_transmitter",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "deposit_for_burn",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "destination_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "mint_recipient",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "burn_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "destination_caller",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "max_fee",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "min_finality_threshold",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "deposit_for_burn_with_hook",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "destination_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "mint_recipient",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "burn_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "destination_caller",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "max_fee",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "min_finality_threshold",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "hook_data",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "DenylistableImpl",
+    "interface_name": "components::denylistable::IDenylistable"
+  },
+  {
+    "type": "interface",
+    "name": "components::denylistable::IDenylistable",
+    "items": [
+      {
+        "type": "function",
+        "name": "denylister",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "update_denylister",
+        "inputs": [
+          {
+            "name": "new_denylister",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "denylist",
+        "inputs": [
+          {
+            "name": "address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "undenylist",
+        "inputs": [
+          {
+            "name": "address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "is_denylisted",
+        "inputs": [
+          {
+            "name": "address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "FeeRecipientControllerImpl",
+    "interface_name": "cctp_components::fee_recipient_controller::IFeeRecipientController"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::fee_recipient_controller::IFeeRecipientController",
+    "items": [
+      {
+        "type": "function",
+        "name": "fee_recipient",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_fee_recipient",
+        "inputs": [
+          {
+            "name": "fee_recipient",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "ManageableImpl",
+    "interface_name": "components::manageable::IManageable"
+  },
+  {
+    "type": "interface",
+    "name": "components::manageable::IManageable",
+    "items": [
+      {
+        "type": "function",
+        "name": "admin",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "pending_admin",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer_admin",
+        "inputs": [
+          {
+            "name": "new_admin",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "accept_admin",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "MinFeeControllerImpl",
+    "interface_name": "cctp_components::min_fee_controller::IMinFeeController"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::min_fee_controller::IMinFeeController",
+    "items": [
+      {
+        "type": "function",
+        "name": "min_fee_controller",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "min_fee",
+        "inputs": [
+          {
+            "name": "burn_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_min_fee_controller",
+        "inputs": [
+          {
+            "name": "min_fee_controller",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_min_fee",
+        "inputs": [
+          {
+            "name": "burn_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "min_fee",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "OwnableImpl",
+    "interface_name": "components::ownable::IOwnable"
+  },
+  {
+    "type": "interface",
+    "name": "components::ownable::IOwnable",
+    "items": [
+      {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "pending_owner",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer_ownership",
+        "inputs": [
+          {
+            "name": "new_owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "accept_ownership",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "PausableImpl",
+    "interface_name": "components::pausable::IPausable"
+  },
+  {
+    "type": "interface",
+    "name": "components::pausable::IPausable",
+    "items": [
+      {
+        "type": "function",
+        "name": "pauser",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "update_pauser",
+        "inputs": [
+          {
+            "name": "new_pauser",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "pause",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "unpause",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "paused",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "RemoteTokenMessengerControllerImpl",
+    "interface_name": "cctp_components::remote_token_messenger_controller::IRemoteTokenMessengerController"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::remote_token_messenger_controller::IRemoteTokenMessengerController",
+    "items": [
+      {
+        "type": "function",
+        "name": "remote_token_messenger",
+        "inputs": [
+          {
+            "name": "domain",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "add_remote_token_messenger",
+        "inputs": [
+          {
+            "name": "domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "token_messenger",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "remove_remote_token_messenger",
+        "inputs": [
+          {
+            "name": "domain",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "RescuableImpl",
+    "interface_name": "cctp_components::rescuable::IRescuable"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::rescuable::IRescuable",
+    "items": [
+      {
+        "type": "function",
+        "name": "rescuer",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "update_rescuer",
+        "inputs": [
+          {
+            "name": "new_rescuer",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "rescue_erc20",
+        "inputs": [
+          {
+            "name": "token_contract",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "amount",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "TokenControllerImpl",
+    "interface_name": "cctp_components::token_controller::ITokenController"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::token_controller::ITokenController",
+    "items": [
+      {
+        "type": "function",
+        "name": "token_controller",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_token_controller",
+        "inputs": [
+          {
+            "name": "new_token_controller",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_max_burn_amount_per_message",
+        "inputs": [
+          {
+            "name": "local_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "burn_limit_per_message",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "link_token_pair",
+        "inputs": [
+          {
+            "name": "local_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "remote_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "remote_token",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "unlink_token_pair",
+        "inputs": [
+          {
+            "name": "local_token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "remote_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "remote_token",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "UpgradeableImpl",
+    "interface_name": "components::upgradeable::IUpgradeable"
+  },
+  {
+    "type": "interface",
+    "name": "components::upgradeable::IUpgradeable",
+    "items": [
+      {
+        "type": "function",
+        "name": "upgrade",
+        "inputs": [
+          {
+            "name": "new_class_hash",
+            "type": "core::starknet::class_hash::ClassHash"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "admin",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::denylistable::DenylistableComponent::DenylisterChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old_denylister",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_denylister",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::denylistable::DenylistableComponent::Denylisted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "address",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::denylistable::DenylistableComponent::Undenylisted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "address",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::denylistable::DenylistableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "DenylisterChanged",
+        "type": "components::denylistable::DenylistableComponent::DenylisterChanged",
+        "kind": "nested"
+      },
+      {
+        "name": "Denylisted",
+        "type": "components::denylistable::DenylistableComponent::Denylisted",
+        "kind": "nested"
+      },
+      {
+        "name": "Undenylisted",
+        "type": "components::denylistable::DenylistableComponent::Undenylisted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::fee_recipient_controller::FeeRecipientControllerComponent::FeeRecipientSet",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "fee_recipient",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::fee_recipient_controller::FeeRecipientControllerComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "FeeRecipientSet",
+        "type": "cctp_components::fee_recipient_controller::FeeRecipientControllerComponent::FeeRecipientSet",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::manageable::ManageableComponent::AdminTransferred",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::manageable::ManageableComponent::AdminTransferStarted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::manageable::ManageableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "AdminTransferred",
+        "type": "components::manageable::ManageableComponent::AdminTransferred",
+        "kind": "nested"
+      },
+      {
+        "name": "AdminTransferStarted",
+        "type": "components::manageable::ManageableComponent::AdminTransferStarted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::min_fee_controller::MinFeeControllerComponent::MinFeeControllerSet",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "min_fee_controller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::min_fee_controller::MinFeeControllerComponent::MinFeeSet",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "burn_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "min_fee",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::min_fee_controller::MinFeeControllerComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "MinFeeControllerSet",
+        "type": "cctp_components::min_fee_controller::MinFeeControllerComponent::MinFeeControllerSet",
+        "kind": "nested"
+      },
+      {
+        "name": "MinFeeSet",
+        "type": "cctp_components::min_fee_controller::MinFeeControllerComponent::MinFeeSet",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::ownable::OwnableComponent::OwnershipTransferred",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::ownable::OwnableComponent::OwnershipTransferStarted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::ownable::OwnableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "OwnershipTransferred",
+        "type": "components::ownable::OwnableComponent::OwnershipTransferred",
+        "kind": "nested"
+      },
+      {
+        "name": "OwnershipTransferStarted",
+        "type": "components::ownable::OwnableComponent::OwnershipTransferStarted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::PausableComponent::Paused",
+    "kind": "struct",
+    "members": []
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::PausableComponent::Unpaused",
+    "kind": "struct",
+    "members": []
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::PausableComponent::PauserChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "new_address",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::PausableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "Paused",
+        "type": "components::pausable::PausableComponent::Paused",
+        "kind": "nested"
+      },
+      {
+        "name": "Unpaused",
+        "type": "components::pausable::PausableComponent::Unpaused",
+        "kind": "nested"
+      },
+      {
+        "name": "PauserChanged",
+        "type": "components::pausable::PausableComponent::PauserChanged",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent::RemoteTokenMessengerAdded",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "domain",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "token_messenger",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent::RemoteTokenMessengerRemoved",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "domain",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "token_messenger",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "RemoteTokenMessengerAdded",
+        "type": "cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent::RemoteTokenMessengerAdded",
+        "kind": "nested"
+      },
+      {
+        "name": "RemoteTokenMessengerRemoved",
+        "type": "cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent::RemoteTokenMessengerRemoved",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::rescuable::RescuableComponent::RescuerChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "new_rescuer",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::rescuable::RescuableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "RescuerChanged",
+        "type": "cctp_components::rescuable::RescuableComponent::RescuerChanged",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::token_controller::TokenControllerComponent::SetTokenController",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "token_controller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::token_controller::TokenControllerComponent::SetBurnLimitPerMessage",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "burn_limit_per_message",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::token_controller::TokenControllerComponent::TokenPairLinked",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "local_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "remote_domain",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "remote_token",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::token_controller::TokenControllerComponent::TokenPairUnlinked",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "local_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "remote_domain",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "remote_token",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::token_controller::TokenControllerComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "SetTokenController",
+        "type": "cctp_components::token_controller::TokenControllerComponent::SetTokenController",
+        "kind": "nested"
+      },
+      {
+        "name": "SetBurnLimitPerMessage",
+        "type": "cctp_components::token_controller::TokenControllerComponent::SetBurnLimitPerMessage",
+        "kind": "nested"
+      },
+      {
+        "name": "TokenPairLinked",
+        "type": "cctp_components::token_controller::TokenControllerComponent::TokenPairLinked",
+        "kind": "nested"
+      },
+      {
+        "name": "TokenPairUnlinked",
+        "type": "cctp_components::token_controller::TokenControllerComponent::TokenPairUnlinked",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::upgradeable::UpgradeableComponent::Upgraded",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "class_hash",
+        "type": "core::starknet::class_hash::ClassHash",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::upgradeable::UpgradeableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "Upgraded",
+        "type": "components::upgradeable::UpgradeableComponent::Upgraded",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::MintAndWithdraw",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "mint_recipient",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "mint_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "fee_collected",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "burn_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "amount",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "depositor",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "mint_recipient",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "destination_domain",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "destination_token_messenger",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "destination_caller",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "max_fee",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "min_finality_threshold",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "hook_data",
+        "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "DenylistableEvent",
+        "type": "components::denylistable::DenylistableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "FeeRecipientControllerEvent",
+        "type": "cctp_components::fee_recipient_controller::FeeRecipientControllerComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "ManageableEvent",
+        "type": "components::manageable::ManageableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "MinFeeControllerEvent",
+        "type": "cctp_components::min_fee_controller::MinFeeControllerComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "OwnableEvent",
+        "type": "components::ownable::OwnableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "PausableEvent",
+        "type": "components::pausable::PausableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "RemoteTokenMessengerControllerEvent",
+        "type": "cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "RescuableEvent",
+        "type": "cctp_components::rescuable::RescuableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "TokenControllerEvent",
+        "type": "cctp_components::token_controller::TokenControllerComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "UpgradeableEvent",
+        "type": "components::upgradeable::UpgradeableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "MintAndWithdraw",
+        "type": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::MintAndWithdraw",
+        "kind": "nested"
+      },
+      {
+        "name": "DepositForBurn",
+        "type": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn",
+        "kind": "nested"
+      }
+    ]
+  }
+]

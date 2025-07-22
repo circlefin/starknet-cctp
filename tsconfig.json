@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+      "lib": ["ES2022"],
+      "module": "NodeNext",
+      "target": "ES2022",
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "noEmit": true,
+      "strict": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "moduleResolution": "NodeNext",
+      "types": ["node", "jest"],
+      "isolatedModules": true
+    },
+    "include": ["e2e/**/*.ts", "jest.config.js"],
+    "ts-node": {
+      "esm": true
+    }
+  }
