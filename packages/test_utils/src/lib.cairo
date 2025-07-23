@@ -14,12 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod address_conversion;
-mod utils;
+pub mod utils;
 
-pub use address_conversion::AddressConversionTrait;
-
-pub use utils::{
-    append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic, extract_u256_be,
-    extract_u32_be, pow256, reverse_u256_bytes,
-};
+pub use utils::{hex_string_to_bytes_array, u8_array_to_byte_array};

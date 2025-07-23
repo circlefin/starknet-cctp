@@ -14,12 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod address_conversion;
-mod utils;
+pub mod message_transmitter;
+pub mod token_messager_minter;
 
-pub use address_conversion::AddressConversionTrait;
+pub use message_transmitter::{
+    IMessageTransmitter, IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait,
+};
 
-pub use utils::{
-    append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic, extract_u256_be,
-    extract_u32_be, pow256, reverse_u256_bytes,
+pub use token_messager_minter::{
+    ITokenMessengerMinter, ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
 };

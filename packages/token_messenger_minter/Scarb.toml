@@ -27,6 +27,7 @@ scarb.workspace = true
 starknet.workspace = true
 utils.workspace = true
 components.workspace = true
+interfaces.workspace = true
 message_transmitter.workspace = true
 cctp_components.workspace = true
 message.workspace = true

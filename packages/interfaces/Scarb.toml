@@ -1,11 +1,11 @@
 [package]
-name = "cctp_components"
+name = "interfaces"
 readme = "README.md"
 keywords = [
     "starknet",
     "cctp",
     "contracts",
-    "components"
+    "interfaces"
 ]
 version.workspace = true
 edition.workspace = true
@@ -25,13 +25,5 @@ scarb.workspace = true
 
 [dependencies]
 starknet.workspace = true
-components.workspace = true
-stablecoin.workspace = true
-utils.workspace = true
-
-[dev-dependencies]
-assert_macros.workspace = true
-snforge_std.workspace = true
-test_utils.workspace = true
 
 [lib]

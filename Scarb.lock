@@ -8,10 +8,16 @@ dependencies = [
  "components",
  "snforge_std",
  "stablecoin",
+ "test_utils",
+ "utils",
 ]
 
 [[package]]
 name = "components"
+version = "0.1.0"
+
+[[package]]
+name = "interfaces"
 version = "0.1.0"
 
 [[package]]
@@ -26,8 +32,12 @@ dependencies = [
 name = "message_transmitter"
 version = "0.1.0"
 dependencies = [
+ "cctp_components",
  "components",
+ "interfaces",
+ "message",
  "snforge_std",
+ "test_utils",
  "utils",
 ]
 
@@ -54,11 +64,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "test_utils"
+version = "0.1.0"
+dependencies = [
+ "snforge_std",
+]
+
+[[package]]
 name = "token_messenger_minter"
 version = "0.1.0"
 dependencies = [
  "cctp_components",
  "components",
+ "interfaces",
  "message",
  "message_transmitter",
  "snforge_std",

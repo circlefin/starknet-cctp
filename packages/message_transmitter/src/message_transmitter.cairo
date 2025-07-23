@@ -14,16 +14,355 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#[starknet::interface]
-pub trait IMessageTransmitter<TContractState> {
-    fn send_message(
-        ref self: TContractState,
-        destination_domain: u32,
-        recipient: u256,
-        destination_caller: u256,
-        min_finality_threshold: u32,
-        message_body: ByteArray,
-    );
+#[starknet::contract]
+pub mod MessageTransmitter {
+    use cctp_components::attestable::AttestableComponent;
+    use cctp_components::rescuable::RescuableComponent;
+    use components::manageable::ManageableComponent;
+    use components::ownable::OwnableComponent;
+    use components::pausable::PausableComponent;
+    use components::upgradeable::UpgradeableComponent;
+    use core::num::traits::Zero;
+    use interfaces::message_transmitter::IMessageTransmitter;
+    use interfaces::token_messager_minter::{
+        ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
+    };
+    use message::Message;
+    use starknet::storage::{
+        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
+    };
+    use starknet::{ContractAddress, get_caller_address};
+    use utils::AddressConversionTrait;
 
-    fn receive_message(ref self: TContractState, message: ByteArray, attestation: ByteArray);
+    // The threshold at which (and above) messages are considered finalized.
+    pub const FINALITY_THRESHOLD_FINALIZED: u32 = 2000;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
+    component!(path: ManageableComponent, storage: manageable, event: ManageableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+    component!(path: AttestableComponent, storage: attestable, event: AttestableEvent);
+    component!(path: RescuableComponent, storage: rescuable, event: RescuableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::Ownable<ContractState>;
+
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl PausableImpl = PausableComponent::Pausable<ContractState>;
+
+    impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl ManageableImpl = ManageableComponent::Manageable<ContractState>;
+
+    impl ManageableInternalImpl = ManageableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl = UpgradeableComponent::Upgradeable<ContractState>;
+
+    #[abi(embed_v0)]
+    impl AttestableImpl = AttestableComponent::Attestable<ContractState>;
+
+    impl AttestableInternalImpl = AttestableComponent::InternalImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl RescuableImpl = RescuableComponent::Rescuable<ContractState>;
+
+    impl RescuableInternalImpl = RescuableComponent::InternalImpl<ContractState>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        pausable: PausableComponent::Storage,
+        #[substorage(v0)]
+        manageable: ManageableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+        #[substorage(v0)]
+        attestable: AttestableComponent::Storage,
+        #[substorage(v0)]
+        rescuable: RescuableComponent::Storage,
+        used_nonces: Map<u256, bool>,
+        local_domain: u32,
+        version: u32,
+        max_message_body_size: u256,
+        initialized: bool,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        PausableEvent: PausableComponent::Event,
+        #[flat]
+        ManageableEvent: ManageableComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        AttestableEvent: AttestableComponent::Event,
+        #[flat]
+        RescuableEvent: RescuableComponent::Event,
+        MaxMessageBodySizeUpdated: MaxMessageBodySizeUpdated,
+        MessageSent: MessageSent,
+        MessageReceived: MessageReceived,
+    }
+
+    /// Emitted when the max message body size is updated
+    #[derive(Drop, starknet::Event)]
+    pub struct MaxMessageBodySizeUpdated {
+        #[key]
+        pub max_message_body_size: u256,
+    }
+
+    /// Emitted when a message is sent
+    #[derive(Drop, starknet::Event)]
+    pub struct MessageSent {
+        #[key]
+        pub message: ByteArray,
+    }
+
+    /// Emitted when a message is received
+    #[derive(Drop, starknet::Event)]
+    pub struct MessageReceived {
+        #[key]
+        pub caller: ContractAddress,
+        pub source_domain: u32,
+        #[key]
+        pub nonce: u256,
+        pub sender: u256,
+        #[key]
+        pub finality_threshold_executed: u32,
+        pub message_body: ByteArray,
+    }
+
+    pub mod Errors {
+        pub const INVALID_DESTINATION_DOMAIN: felt252 = 'Invalid destination domain';
+        pub const DOMAIN_IS_LOCAL_DOMAIN: felt252 = 'Domain is local domain';
+        pub const INVALID_MESSAGE_BODY_SIZE: felt252 = 'Message body exceeds max size';
+        pub const INVALID_RECIPIENT: felt252 = 'Recipient must be non-zero';
+        pub const INVALID_DESTINATION_CALLER: felt252 = 'Invalid destination caller';
+        pub const INVALID_VERSION: felt252 = 'Invalid message version';
+        pub const NONCE_ALREADY_USED: felt252 = 'Nonce already used';
+        pub const UNFINALIZED_MESSAGE_FAILED: felt252 = 'Failed unfinalized message';
+        pub const FINALIZED_MESSAGE_FAILED: felt252 = 'Failed finalized message';
+        pub const INVALID_MAX_MESSAGE_BODY_SIZE: felt252 = 'Invalid max message body size';
+        pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
+    }
+
+    #[constructor]
+    fn constructor(ref self: ContractState, admin: ContractAddress) {
+        // initialize manageable component with admin
+        self.manageable.initializer(admin);
+
+        self.initialized.write(false);
+    }
+
+    #[abi(embed_v0)]
+    impl MessageTransmitter of IMessageTransmitter<ContractState> {
+        fn initializer(
+            ref self: ContractState,
+            local_domain: u32,
+            version: u32,
+            owner: ContractAddress,
+            pauser: ContractAddress,
+            rescuer: ContractAddress,
+            attester_manager: ContractAddress,
+            attesters: Array<ContractAddress>,
+            signature_threshold: u64,
+            max_message_body_size: u256,
+        ) {
+            // only admin can initialize
+            self.manageable.assert_only_admin();
+
+            // ensure not already initialized
+            assert(!self.initialized.read(), Errors::ALREADY_INITIALIZED);
+
+            // initialize components
+            self.ownable.initializer(owner);
+            self.rescuable.initializer(rescuer);
+            self.pausable.initializer(pauser);
+            self.attestable.initializer(attester_manager, attesters, signature_threshold);
+
+            // set local domain and version
+            self.local_domain.write(local_domain);
+            self.version.write(version);
+
+            // set max message body size
+            assert(max_message_body_size > 0, Errors::INVALID_MAX_MESSAGE_BODY_SIZE);
+            self.max_message_body_size.write(max_message_body_size);
+
+            self.used_nonces.entry(0).write(true);
+
+            // set initialized to true
+            self.initialized.write(true);
+        }
+
+        fn send_message(
+            ref self: ContractState,
+            destination_domain: u32,
+            recipient: u256,
+            destination_caller: u256,
+            min_finality_threshold: u32,
+            message_body: ByteArray,
+        ) {
+            // ensure the contract is not paused
+            self.pausable.assert_not_paused();
+
+            assert(destination_domain != self.local_domain.read(), Errors::DOMAIN_IS_LOCAL_DOMAIN);
+
+            // validate message body size
+            assert(
+                message_body.len().into() <= self.max_message_body_size.read(),
+                Errors::INVALID_MESSAGE_BODY_SIZE,
+            );
+
+            assert(!recipient.is_zero(), Errors::INVALID_RECIPIENT);
+
+            let message = Message::format_message(
+                self.version.read(),
+                self.local_domain.read(),
+                destination_domain,
+                get_caller_address().to_u256(),
+                recipient,
+                destination_caller,
+                min_finality_threshold,
+                message_body,
+            );
+
+            // emit MessageSent event
+            self.emit(MessageSent { message });
+        }
+
+        fn receive_message(
+            ref self: ContractState, message: ByteArray, attestation: ByteArray,
+        ) -> bool {
+            // when not paused, we can receive messages
+            self.pausable.assert_not_paused();
+
+            // validate message and attestation
+            let (
+                nonce, source_domain, sender, recipient, finality_threshold_executed, message_body,
+            ) =
+                self
+                .validate_received_message(message.clone(), attestation);
+
+            // mark nonce as used
+            self.used_nonces.entry(nonce).write(true);
+
+            // get token messenger dispatcher
+            let token_messenger_dispatcher = ITokenMessengerMinterDispatcher {
+                contract_address: recipient,
+            };
+
+            // handle receive message
+            if (finality_threshold_executed < FINALITY_THRESHOLD_FINALIZED) {
+                // if the message is not finalized, we can't receive it
+                assert(
+                    token_messenger_dispatcher
+                        .handle_receive_unfinalized_message(
+                            source_domain,
+                            sender,
+                            finality_threshold_executed,
+                            message_body.clone(),
+                        ),
+                    Errors::UNFINALIZED_MESSAGE_FAILED,
+                );
+            } else {
+                // if the message is not confirmed, we can't receive it
+                assert(
+                    token_messenger_dispatcher
+                        .handle_receive_finalized_message(
+                            source_domain,
+                            sender,
+                            finality_threshold_executed,
+                            message_body.clone(),
+                        ),
+                    Errors::FINALIZED_MESSAGE_FAILED,
+                );
+            }
+
+            // emit MessageReceived event
+            self
+                .emit(
+                    MessageReceived {
+                        caller: get_caller_address(),
+                        source_domain,
+                        nonce,
+                        sender,
+                        finality_threshold_executed,
+                        message_body,
+                    },
+                );
+
+            true
+        }
+
+        fn set_max_message_body_size(ref self: ContractState, max_message_body_size: u256) {
+            self.ownable.assert_only_owner();
+            self.max_message_body_size.write(max_message_body_size);
+
+            self.emit(MaxMessageBodySizeUpdated { max_message_body_size });
+        }
+
+        fn get_max_message_body_size(self: @ContractState) -> u256 {
+            self.max_message_body_size.read()
+        }
+    }
+
+    #[generate_trait]
+    pub impl InternalImpl of ContractInternalTrait {
+        fn validate_received_message(
+            ref self: ContractState, message: ByteArray, attestation: ByteArray,
+        ) -> (
+            u256, // nonce
+            u32, // source domain
+            u256, // sender
+            ContractAddress, // recipient
+            u32, // finality threshold executed
+            ByteArray // message body
+        ) {
+            // validate message and attestation
+            self.attestable.verify_attestation_signatures(message.clone(), attestation);
+
+            // validate message format
+            Message::validate_message_format(@message);
+
+            // validate destination domain
+            assert(
+                Message::get_destination_domain(@message) == self.local_domain.read(),
+                Errors::INVALID_DESTINATION_DOMAIN,
+            );
+
+            let destination_caller = Message::get_destination_caller(@message);
+            // validate destination caller
+            if (!destination_caller.is_zero()) {
+                assert(
+                    destination_caller == get_caller_address().to_u256(),
+                    Errors::INVALID_DESTINATION_CALLER,
+                );
+            }
+
+            // validate version
+            assert(Message::get_version(@message) == self.version.read(), Errors::INVALID_VERSION);
+
+            // validate nonce
+            let nonce = Message::get_nonce(@message);
+            assert(!self.used_nonces.entry(nonce).read(), Errors::NONCE_ALREADY_USED);
+
+            (
+                nonce,
+                Message::get_source_domain(@message),
+                Message::get_sender(@message),
+                Message::get_recipient(@message).to_address(),
+                Message::get_finality_threshold_executed(@message),
+                Message::get_message_body(@message),
+            )
+        }
+    }
 }

@@ -32,6 +32,9 @@ use components::manageable::{IManageableDispatcher, IManageableDispatcherTrait};
 use components::ownable::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use components::pausable::{IPausableDispatcher, IPausableDispatcherTrait};
 use components::upgradeable::IUpgradeableDispatcher;
+use interfaces::token_messager_minter::{
+    ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
+};
 use message::BurnMessage;
 use snforge_std::{
     CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait,
@@ -39,7 +42,6 @@ use snforge_std::{
     start_cheat_caller_address, stop_cheat_caller_address,
 };
 use starknet::ContractAddress;
-use token_messenger_minter::{ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait};
 use utils::{append_u256_be, append_u32_be};
 
 // Mock FiatToken contract for testing
@@ -235,10 +237,10 @@ pub mod MockMessageTransmitterContract {
 // Mock Proxy contract that forwards calls to TokenMessengerMinter
 #[starknet::contract]
 mod MockProxyContract {
-    use starknet::ContractAddress;
-    use token_messenger_minter::{
+    use interfaces::token_messager_minter::{
         ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
     };
+    use starknet::ContractAddress;
 
     #[storage]
     struct Storage {}
@@ -1431,4 +1433,3 @@ fn test_handle_receive_message_fails_fee_exceeds_max() {
     start_cheat_caller_address(contract_address, local_message_transmitter);
     dispatcher.handle_receive_finalized_message(source_domain, 1000_u256, 0_u32, message_body);
 }
-

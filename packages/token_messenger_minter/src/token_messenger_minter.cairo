@@ -14,67 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use starknet::ContractAddress;
-
-#[starknet::interface]
-pub trait ITokenMessengerMinter<TContractState> {
-    fn initialize(
-        ref self: TContractState,
-        owner: ContractAddress,
-        pauser: ContractAddress,
-        denylister: ContractAddress,
-        rescuer: ContractAddress,
-        token_controller: ContractAddress,
-        min_fee_controller: ContractAddress,
-        fee_recipient: ContractAddress,
-        message_body_version: u32,
-        local_message_transmitter: ContractAddress,
-        remote_domains: Array<u32>,
-        remote_token_messengers: Array<u256>,
-    );
-
-    fn handle_receive_finalized_message(
-        ref self: TContractState,
-        remote_domain: u32,
-        sender: u256,
-        finality_threshold_executed: u32,
-        message_body: ByteArray,
-    ) -> bool;
-
-    fn handle_receive_unfinalized_message(
-        ref self: TContractState,
-        remote_domain: u32,
-        sender: u256,
-        finality_threshold_executed: u32,
-        message_body: ByteArray,
-    ) -> bool;
-
-    fn message_body_version(self: @TContractState) -> u32;
-    fn local_message_transmitter(self: @TContractState) -> ContractAddress;
-
-    fn deposit_for_burn(
-        ref self: TContractState,
-        amount: u256,
-        destination_domain: u32,
-        mint_recipient: u256,
-        burn_token: ContractAddress,
-        destination_caller: u256,
-        max_fee: u256,
-        min_finality_threshold: u32,
-    );
-    fn deposit_for_burn_with_hook(
-        ref self: TContractState,
-        amount: u256,
-        destination_domain: u32,
-        mint_recipient: u256,
-        burn_token: ContractAddress,
-        destination_caller: u256,
-        max_fee: u256,
-        min_finality_threshold: u32,
-        hook_data: ByteArray,
-    );
-}
-
 #[starknet::contract]
 pub mod TokenMessengerMinter {
     use cctp_components::fee_recipient_controller::FeeRecipientControllerComponent;
@@ -87,8 +26,11 @@ pub mod TokenMessengerMinter {
     use components::ownable::OwnableComponent;
     use components::pausable::PausableComponent;
     use components::upgradeable::UpgradeableComponent;
+    use interfaces::message_transmitter::{
+        IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait,
+    };
+    use interfaces::token_messager_minter::ITokenMessengerMinter;
     use message::BurnMessage;
-    use message_transmitter::{IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait};
     use stablecoin::{IFiatTokenDispatcher, IFiatTokenDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{
@@ -277,7 +219,7 @@ pub mod TokenMessengerMinter {
     }
 
     #[abi(embed_v0)]
-    impl TokenMessengerMinterImpl of super::ITokenMessengerMinter<ContractState> {
+    impl TokenMessengerMinterImpl of ITokenMessengerMinter<ContractState> {
         fn initialize(
             ref self: ContractState,
             owner: ContractAddress,

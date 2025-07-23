@@ -16,7 +16,7 @@
 
 use utils::{
     append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic, extract_u256_be,
-    extract_u32_be, pow256,
+    extract_u32_be, pow256, reverse_u256_bytes,
 };
 
 #[test]
@@ -140,4 +140,12 @@ fn test_extract_bytes_array_dynamic_out_of_bounds() {
 #[should_panic(expected: "u256_mul Overflow")]
 fn test_pow256_overflow() {
     pow256(32);
+}
+
+#[test]
+fn test_reverse_u256_bytes() {
+    let u256 = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
+    let reversed = reverse_u256_bytes(u256);
+    // reversed: 0xefcdab9078563412efcdab9078563412efcdab9078563412efcdab9078563412
+    assert_eq!(reversed, 0xefcdab9078563412efcdab9078563412efcdab9078563412efcdab9078563412);
 }

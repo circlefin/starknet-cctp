@@ -14,12 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod address_conversion;
-mod utils;
+use core::byte_array::ByteArrayTrait;
+use test_utils::hex_string_to_bytes_array;
 
-pub use address_conversion::AddressConversionTrait;
-
-pub use utils::{
-    append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic, extract_u256_be,
-    extract_u32_be, pow256, reverse_u256_bytes,
-};
+#[test]
+fn test_hex_string_to_bytes_array() {
+    let hex =
+        "0x111a2b4ce084ccc83c8ef18eabf50fc332f603c7cd2ef7e177ea45a1c332f1d97c0fc30429b2c6ce57f7cb6bbcbdabff5d94b487075dff3b09182c25d6e9d98a1cc901a511af9b85b6db2b6660d3aeb029129a26944b69a74dd7c26a64e154726f23bd811da1a90c6ce36a9170785966de2a9280c39042fedb95bbc29bbf301c0d1c";
+    let bytes_array = hex_string_to_bytes_array(hex);
+    assert_eq!(bytes_array.len(), 130);
+}

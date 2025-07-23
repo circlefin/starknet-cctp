@@ -1,10 +1,12 @@
 [workspace]
 members = [
     "packages/utils",
+    "packages/test_utils",
     "packages/message",
     "packages/components",
     "packages/message_transmitter",
-    "packages/token_messenger_minter"
+    "packages/token_messenger_minter",
+    "packages/interfaces"
 ]
 
 [workspace.package]
@@ -29,8 +31,10 @@ assert_macros = "2.11.4"
 starknet = "2.11.4"
 snforge_std = "0.44.0"
 utils = { path = "packages/utils" }
+test_utils = { path = "packages/test_utils" }
 message = { path = "packages/message" }
 cctp_components = { path = "packages/components" }
+interfaces = { path = "packages/interfaces" }
 message_transmitter = { path = "packages/message_transmitter" }
 token_messenger_minter = { path = "packages/token_messenger_minter" }
 components = { path = "stablecoin-starknet-private/packages/components" }

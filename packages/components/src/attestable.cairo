@@ -116,11 +116,18 @@ pub trait IAttestable<TContractState> {
 pub mod AttestableComponent {
     use components::ownable::OwnableComponent;
     use components::ownable::OwnableComponent::InternalTrait as OwnableInternalTrait;
+    use core::keccak::compute_keccak_byte_array;
     use core::num::traits::Zero;
+    use starknet::eth_signature::public_key_point_to_eth_address;
+    use starknet::secp256_trait::{is_signature_entry_valid, recover_public_key, signature_from_vrs};
+    use starknet::secp256k1::Secp256k1Point;
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
     use starknet::{ContractAddress, get_caller_address};
+    use utils::{extract_u256_be, reverse_u256_bytes};
+
+    const SIGNATURE_LENGTH: usize = 65;
 
     #[storage]
     pub struct Storage {
@@ -185,6 +192,9 @@ pub mod AttestableComponent {
         pub const TOO_FEW_ENABLED_ATTESERS: felt252 = 'Too few enabled attesters';
         pub const SIGNATURE_THRESHOLD_TOO_LOW: felt252 = 'Signature threshold too low';
         pub const INVALID_SIGNATURE_ORDER_OR_DUPE: felt252 = 'Invalid signature order or dupe';
+        pub const INVALID_ATTESTERS: felt252 = 'Invalid attesters';
+        pub const INVALID_ATTESTATION: felt252 = 'Invalid attestation';
+        pub const INVALID_SIGNATURE: felt252 = 'Invalid signature';
     }
 
     #[embeddable_as(Attestable)]
@@ -328,24 +338,36 @@ pub mod AttestableComponent {
         fn initializer(
             ref self: ComponentState<TContractState>,
             attester_manager: ContractAddress,
-            attester: ContractAddress,
+            attesters: Array<ContractAddress>,
+            signature_threshold: u64,
         ) {
             assert(self.attester_manager.read().is_zero(), Errors::ALREADY_INITIALIZED);
 
             // Check if attester manager is not zero
             assert(!attester_manager.is_zero(), Errors::INVALID_ATTESTER_MANAGER);
 
-            // Check if attester is not zero
-            assert(!attester.is_zero(), Errors::INVALID_ATTESTER);
+            // Check if attesters is empty
+            assert(attesters.len() > 0, Errors::INVALID_ATTESTERS);
+
+            // Check if signature threshold is positive and less than or equal to the number of
+            // attesters
+            assert(
+                signature_threshold > 0 && signature_threshold <= attesters.len().into(),
+                Errors::INVALID_SIGNATURE_THRESHOLD,
+            );
 
             // Add attester to attesters list
-            self.attesters.push(attester);
+            for i in 0..attesters.len() {
+                let attester = *attesters.at(i);
+                assert(!attester.is_zero(), Errors::INVALID_ATTESTER);
+                self.attesters.push(attester);
+            }
 
             // Set attester manager
             self.attester_manager.write(attester_manager);
 
             // Set signature threshold to 1
-            self.signature_threshold.write(1);
+            self.signature_threshold.write(signature_threshold);
         }
 
         fn assert_only_attester_manager(self: @ComponentState<TContractState>) {
@@ -354,11 +376,87 @@ pub mod AttestableComponent {
             assert(caller == attester_manager, Errors::NOT_ATTESTER_MANAGER);
         }
 
+        /// Verifies the attestation signatures.
+        /// Returns an error if the attestation, which is comprised of one or more concatenated
+        /// 65-byte signatures, is invalid.
+        /// Rules for valid attestation:
+        /// 1. length of `_attestation` == 65 (signature length) * signatureThreshold
+        /// 2. addresses recovered from attestation must be in increasing order.
+        /// For example, if signature A is signed by address 0x1..., and signature B
+        /// is signed by address 0x2..., attestation must be passed as AB.
+        /// 3. no duplicate signers
+        /// 4. all signers must be enabled attesters
+        ///
+        /// Based on Christian Lundkvist's Simple Multisig
+        /// (https://github.com/christianlundkvist/simple-multisig/tree/560c463c8651e0a4da331bd8f245ccd2a48ab63d)
+        ///
+        /// # Arguments
+        ///
+        /// * `message` - The message to verify.
+        /// * `attestation` - The attestation to verify.
+        ///
         fn verify_attestation_signatures(
             self: @ComponentState<TContractState>, message: ByteArray, attestation: ByteArray,
-        ) { // TODO: Implement attestation signature verification with MessageTransmitter contract
+        ) {
+            let signature_threshold: u32 = self.signature_threshold.read().try_into().unwrap();
+            // Check if attestation length is valid
+            assert(
+                attestation.len() == SIGNATURE_LENGTH * signature_threshold,
+                Errors::INVALID_ATTESTATION,
+            );
+
+            let mut latestAttester: ContractAddress = 0.try_into().unwrap();
+
+            // compute the hash of the message
+            let cairo_hash = compute_keccak_byte_array(@message);
+            // cairo hash is u256 in little-endian, so we need to reverse it to get the big-endian
+            // hash, which is the same as ethereum hash
+            let digest = reverse_u256_bytes(cairo_hash);
+
+            // Check if attestation is valid
+            for i in 0..signature_threshold {
+                let recovered_attester: ContractAddress = self
+                    ._recover_attester(digest, @attestation, i * 65);
+
+                // Signatures must be in increasing order of address, and may not duplicate
+                // signatures from same address
+                assert(
+                    recovered_attester > latestAttester, Errors::INVALID_SIGNATURE_ORDER_OR_DUPE,
+                );
+
+                // Check if attester is enabled
+                assert(self.is_enabled_attester(recovered_attester), Errors::NOT_ENABLED_ATTESER);
+
+                // Update latest attester
+                latestAttester = recovered_attester;
+            }
         }
 
+        /// Recover the attester from the signature.
+        fn _recover_attester(
+            self: @ComponentState<TContractState>,
+            digest: u256,
+            attestation: @ByteArray,
+            start_index: u32,
+        ) -> ContractAddress {
+            // extract the r, s, v from the signature
+            let r: u256 = extract_u256_be(attestation, start_index);
+            let s: u256 = extract_u256_be(attestation, start_index + 32);
+            let v: u32 = attestation.at(start_index + 64).unwrap().into();
+
+            // check the given value is in value [1, N)
+            assert(is_signature_entry_valid::<Secp256k1Point>(s), Errors::INVALID_SIGNATURE);
+            assert(is_signature_entry_valid::<Secp256k1Point>(r), Errors::INVALID_SIGNATURE);
+
+            let signature = signature_from_vrs(v, r, s);
+            let point: Secp256k1Point = recover_public_key(digest, signature).unwrap();
+
+            // convert the public key point to eth address
+            let recovered_attester: felt252 = public_key_point_to_eth_address(point)
+                .try_into()
+                .unwrap();
+            recovered_attester.try_into().unwrap()
+        }
 
         fn _get_attester_position(
             self: @ComponentState<TContractState>, attester: ContractAddress,

@@ -14,12 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod address_conversion;
-mod utils;
+use starknet::ContractAddress;
+use utils::AddressConversionTrait;
 
-pub use address_conversion::AddressConversionTrait;
+#[test]
+fn test_to_address() {
+    let address = 0x1234567890123456789012345678901234567890.to_address();
+    assert_eq!(address, 0x1234567890123456789012345678901234567890.try_into().unwrap());
+}
 
-pub use utils::{
-    append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic, extract_u256_be,
-    extract_u32_be, pow256, reverse_u256_bytes,
-};
+#[test]
+fn test_to_u256() {
+    let address: ContractAddress = 0x1234_felt252.try_into().unwrap();
+    let address_u256: u256 = address.to_u256();
+    assert_eq!(address_u256, 0x1234);
+}

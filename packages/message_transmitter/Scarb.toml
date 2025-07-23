@@ -27,10 +27,15 @@ scarb.workspace = true
 starknet.workspace = true
 utils.workspace = true
 components.workspace = true
+message.workspace = true
+cctp_components.workspace = true
+interfaces.workspace = true
+
 
 [dev-dependencies]
 assert_macros.workspace = true
 snforge_std.workspace = true
+test_utils.workspace = true
 
 [[target.starknet-contract]]
 

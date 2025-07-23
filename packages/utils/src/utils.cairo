@@ -14,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use core::byte_array::ByteArrayTrait;
-
 pub mod Errors {
     pub const OUT_OF_BOUNDS: felt252 = 'Byte array out of bounds';
     pub const BYTE_ARRAY_TOO_SHORT: felt252 = 'Byte array too short';
@@ -136,4 +134,22 @@ pub fn pow256(exponent: u32) -> u256 {
         31 => 0x100000000000000000000000000000000000000000000000000000000000000_u256, // 256^31
         _ => panic!("u256_mul Overflow"),
     }
+}
+
+/// Reverse bytes of a u256 (little-endian to big-endian or vice versa)
+pub fn reverse_u256_bytes(value: u256) -> u256 {
+    // Step 1: Convert u256 to 32 bytes
+    let mut bytes: ByteArray = Default::default();
+    append_u256_be(ref bytes, value);
+
+    // Step 2: Reverse the bytes
+    let mut reversed_bytes: ByteArray = Default::default();
+    let mut i = 32;
+    while i != 0 {
+        reversed_bytes.append_byte(bytes.at(i - 1).unwrap());
+        i -= 1;
+    }
+
+    // Step 3: Convert the reversed bytes back to u256
+    extract_u256_be(@reversed_bytes, 0)
 }
