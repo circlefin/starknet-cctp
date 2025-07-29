@@ -449,13 +449,14 @@ pub mod AttestableComponent {
             assert(is_signature_entry_valid::<Secp256k1Point>(r), Errors::INVALID_SIGNATURE);
 
             let signature = signature_from_vrs(v, r, s);
-            let point: Secp256k1Point = recover_public_key(digest, signature).unwrap();
+            let point: Secp256k1Point = recover_public_key(digest, signature)
+                .expect('Failed to recover public key');
 
             // convert the public key point to eth address
             let recovered_attester: felt252 = public_key_point_to_eth_address(point)
                 .try_into()
-                .unwrap();
-            recovered_attester.try_into().unwrap()
+                .expect('Invalid attester address size');
+            recovered_attester.try_into().expect('Invalid attester address')
         }
 
         fn _get_attester_position(

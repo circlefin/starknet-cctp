@@ -32,3 +32,8 @@ assert_macros.workspace = true
 snforge_std.workspace = true
 
 [lib]
+
+[profile.dev.cairo]
+unstable-add-statements-functions-debug-info = true
+unstable-add-statements-code-locations-debug-info = true
+inlining-strategy = "avoid"

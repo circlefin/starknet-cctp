@@ -109,7 +109,7 @@ fn test_extract_bytes_array_dynamic() {
 }
 
 #[test]
-#[should_panic(expected: ('Byte array out of bounds',))]
+#[should_panic(expected: ('extract_u256_be OOB',))]
 fn test_extract_u256_be_out_of_bounds() {
     let mut byte_array: ByteArray = Default::default();
     append_u256_be(
@@ -119,7 +119,7 @@ fn test_extract_u256_be_out_of_bounds() {
 }
 
 #[test]
-#[should_panic(expected: ('Byte array out of bounds',))]
+#[should_panic(expected: ('extract_u32_be OOB',))]
 fn test_extract_u32_be_out_of_bounds() {
     let mut byte_array: ByteArray = Default::default();
     append_u32_be(ref byte_array, 0x12345678);
@@ -137,7 +137,7 @@ fn test_extract_bytes_array_dynamic_out_of_bounds() {
 }
 
 #[test]
-#[should_panic(expected: "u256_mul Overflow")]
+#[should_panic(expected: ('pow256 overflow',))]
 fn test_pow256_overflow() {
     pow256(32);
 }

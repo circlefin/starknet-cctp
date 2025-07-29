@@ -2,7 +2,7 @@
   {
     "type": "impl",
     "name": "TokenMessengerMinterImpl",
-    "interface_name": "token_messenger_minter::token_messenger_minter::ITokenMessengerMinter"
+    "interface_name": "interfaces::token_messager_minter::ITokenMessengerMinter"
   },
   {
     "type": "struct",
@@ -52,7 +52,7 @@
   },
   {
     "type": "interface",
-    "name": "token_messenger_minter::token_messenger_minter::ITokenMessengerMinter",
+    "name": "interfaces::token_messager_minter::ITokenMessengerMinter",
     "items": [
       {
         "type": "function",
@@ -1289,7 +1289,7 @@
   },
   {
     "type": "event",
-    "name": "components::upgradeable::UpgradeableComponent::Upgraded",
+    "name": "components::upgradeable::UpgradeableComponent::ContractUpgraded",
     "kind": "struct",
     "members": [
       {
@@ -1305,8 +1305,8 @@
     "kind": "enum",
     "variants": [
       {
-        "name": "Upgraded",
-        "type": "components::upgradeable::UpgradeableComponent::Upgraded",
+        "name": "ContractUpgraded",
+        "type": "components::upgradeable::UpgradeableComponent::ContractUpgraded",
         "kind": "nested"
       }
     ]

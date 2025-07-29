@@ -13,9 +13,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+use core::panic_with_felt252;
 pub mod Errors {
-    pub const OUT_OF_BOUNDS: felt252 = 'Byte array out of bounds';
     pub const BYTE_ARRAY_TOO_SHORT: felt252 = 'Byte array too short';
 }
 
@@ -51,7 +50,7 @@ pub fn append_u256_be(ref byte_array: ByteArray, value: u256) {
 
 /// Extract u32 from ByteArray at given index (big-endian)
 pub fn extract_u32_be(byte_array: @ByteArray, index: usize) -> u32 {
-    assert(index + 3 < byte_array.len(), Errors::OUT_OF_BOUNDS);
+    assert(index + 3 < byte_array.len(), 'extract_u32_be OOB');
 
     let b0: u32 = byte_array.at(index).unwrap().into();
     let b1: u32 = byte_array.at(index + 1).unwrap().into();
@@ -63,7 +62,7 @@ pub fn extract_u32_be(byte_array: @ByteArray, index: usize) -> u32 {
 
 /// Extract u256 from ByteArray at given index (big-endian, 32 bytes)
 pub fn extract_u256_be(byte_array: @ByteArray, index: usize) -> u256 {
-    assert(index + 31 < byte_array.len(), Errors::OUT_OF_BOUNDS);
+    assert(index + 31 < byte_array.len(), 'extract_u256_be OOB');
 
     let mut result: u256 = 0;
     let mut i: u32 = 0;
@@ -132,7 +131,7 @@ pub fn pow256(exponent: u32) -> u256 {
         29 => 0x10000000000000000000000000000000000000000000000000000000000_u256, // 256^29
         30 => 0x1000000000000000000000000000000000000000000000000000000000000_u256, // 256^30
         31 => 0x100000000000000000000000000000000000000000000000000000000000000_u256, // 256^31
-        _ => panic!("u256_mul Overflow"),
+        _ => panic_with_felt252('pow256 overflow'),
     }
 }
 

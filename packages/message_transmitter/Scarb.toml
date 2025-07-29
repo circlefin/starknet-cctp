@@ -38,5 +38,11 @@ snforge_std.workspace = true
 test_utils.workspace = true
 
 [[target.starknet-contract]]
+sierra = true
+casm = true
 
-[lib]
+
+[profile.dev.cairo]
+unstable-add-statements-functions-debug-info = true
+unstable-add-statements-code-locations-debug-info = true
+inlining-strategy = "avoid"

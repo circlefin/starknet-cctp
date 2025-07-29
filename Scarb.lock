@@ -78,7 +78,6 @@ dependencies = [
  "components",
  "interfaces",
  "message",
- "message_transmitter",
  "snforge_std",
  "stablecoin",
  "utils",

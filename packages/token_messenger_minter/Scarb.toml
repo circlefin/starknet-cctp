@@ -28,7 +28,6 @@ starknet.workspace = true
 utils.workspace = true
 components.workspace = true
 interfaces.workspace = true
-message_transmitter.workspace = true
 cctp_components.workspace = true
 message.workspace = true
 stablecoin.workspace = true
@@ -40,3 +39,8 @@ snforge_std.workspace = true
 [[target.starknet-contract]]
 sierra = true
 casm = true
+
+[profile.dev.cairo]
+unstable-add-statements-functions-debug-info = true
+unstable-add-statements-code-locations-debug-info = true
+inlining-strategy = "avoid"

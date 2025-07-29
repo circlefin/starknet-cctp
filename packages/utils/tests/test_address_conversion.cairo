@@ -29,3 +29,21 @@ fn test_to_u256() {
     let address_u256: u256 = address.to_u256();
     assert_eq!(address_u256, 0x1234);
 }
+
+#[test]
+#[should_panic(expected: ('u256 to felt252 failed',))]
+fn test_to_address_overflow() {
+    // Test with a u256 value that's too large to fit in a felt252
+    // felt252 max is approximately 2^251 - 17*2^192 + 1
+    let too_large: u256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    too_large.to_address();
+}
+
+#[test]
+fn test_round_trip_conversion() {
+    // Test that converting back and forth works correctly
+    let original_u256: u256 = 0xabcdef1234567890;
+    let address = original_u256.to_address();
+    let back_to_u256 = address.to_u256();
+    assert_eq!(original_u256, back_to_u256);
+}

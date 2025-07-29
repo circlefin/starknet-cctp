@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Build contracts
+yarn build-contracts
+
 # Start network
 yarn start-network
 

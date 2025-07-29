@@ -123,7 +123,6 @@ pub mod MessageTransmitter {
     /// Emitted when a message is sent
     #[derive(Drop, starknet::Event)]
     pub struct MessageSent {
-        #[key]
         pub message: ByteArray,
     }
 

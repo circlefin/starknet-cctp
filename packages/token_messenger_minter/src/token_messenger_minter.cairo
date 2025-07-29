@@ -36,6 +36,7 @@ pub mod TokenMessengerMinter {
     use starknet::{
         ContractAddress, get_block_info, get_caller_address, get_contract_address, get_tx_info,
     };
+    use utils::AddressConversionTrait;
 
     pub mod Errors {
         pub const INVALID_MESSAGE_BODY_VERSION: felt252 = 'Invalid message body version';
@@ -565,10 +566,7 @@ pub mod TokenMessengerMinter {
             // Get recipient and burn token
             let mint_recipient_bytes = BurnMessage::get_mint_recipient(message);
             let burn_token = BurnMessage::get_burn_token(message);
-
-            // Convert bytes32 to ContractAddress for mint recipient
-            let mint_recipient_felt: felt252 = mint_recipient_bytes.try_into().unwrap();
-            let mint_recipient: ContractAddress = mint_recipient_felt.try_into().unwrap();
+            let mint_recipient: ContractAddress = mint_recipient_bytes.to_address();
 
             (mint_recipient, burn_token, amount, fee)
         }

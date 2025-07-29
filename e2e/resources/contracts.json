@@ -1,3 +1,5 @@
 {
-  "tokenMessengerMinter": "0xdb5aa9ab059569623aad41da6a389b7825a89b03b4d3f6996bcc812806d282"
+  "tokenMessengerMinter": "0x536355228aaeea952dba6a29822c41bb80cc71dc7bc50ad94d94d592db0a23e",
+  "messageTransmitter": "0x66058ee280f46f084b22654e644b389e8b891b93912533bcae7e520733fb8fa",
+  "stablecoin": "0x7b18f17663343b926f596169a9c93390ffe2669d06ce2cc46ee7c959283cf27"
 }

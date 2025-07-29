@@ -9,6 +9,7 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^24.0.14",
     "eslint": "^9.31.0",
+    "ethers": "^6.15.0",
     "jest": "^29.7.0",
     "starknet": "^7.6.4",
     "ts-jest": "^29.4.0",
@@ -20,11 +21,11 @@
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "create-account": "tsx ./e2e/cmd/create_account.ts",
+    "build-contracts": "scarb build --workspace && cd stablecoin-starknet-private && scarb build --workspace",
     "start-network": "bash ./e2e/cmd/start_network.sh",
     "stop-network": "bash ./e2e/cmd/stop_network.sh",
     "deploy": "tsx ./e2e/cmd/deploy.ts",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
     "test:e2e": "bash ./e2e/cmd/run-e2e-tests.sh"
   }
 }

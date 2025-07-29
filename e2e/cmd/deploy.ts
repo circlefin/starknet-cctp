@@ -1,19 +1,92 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { json, Account } from 'starknet';
+import { json, Account, byteArray } from 'starknet';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { loadTokenMessengerMinter, provider } from '../utils.js';
+import { loadMessageTransmitter, loadTokenMessengerMinter, loadStablecoin, provider } from '../utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-async function deploy() {
-  const accounts = JSON.parse(await fs.readFile(path.join(__dirname, '../resources/accounts.json'), 'utf8'));
+async function deployStablecoin(accounts: any): Promise<string> {
+  console.log('Deploying Stablecoin...');
+  const deployer = new Account(
+    provider,
+    accounts.stablecoin.deployer.address,
+    accounts.stablecoin.deployer.privateKey
+  );
+  const stablecoinSierra = json.parse(
+    await fs.readFile(
+      path.join(__dirname, '../../stablecoin-starknet-private/target/dev/stablecoin_FiatToken.contract_class.json'), 
+      'utf8'
+    )
+  );
+  const stablecoinCasm = json.parse(
+    await fs.readFile(
+      path.join(__dirname, '../../stablecoin-starknet-private/target/dev/stablecoin_FiatToken.compiled_contract_class.json'), 
+      'utf8'
+    )
+  );
+  const stablecoinDeployResponse = await deployer.declareAndDeploy({
+    contract: stablecoinSierra,
+    casm: stablecoinCasm,
+    salt: '0x0',
+    constructorCalldata: [
+      byteArray.byteArrayFromString("USDC"),
+      byteArray.byteArrayFromString("USDC"),
+      6,
+      accounts.stablecoin.master_minter.address,
+      accounts.stablecoin.owner.address,
+      accounts.stablecoin.pauser.address,
+      accounts.stablecoin.blocklister.address,
+      accounts.stablecoin.metadata_updater.address,
+      accounts.stablecoin.admin.address,
+    ],
+  });
+  console.log(`✅ Stablecoin deployed: ${stablecoinDeployResponse.deploy.contract_address}`);
+  // Save Stablecoin ABI
+  const stablecoinAbiPath = path.join(__dirname, '../resources/stablecoin.abi.json');
+  await fs.writeFile(stablecoinAbiPath, JSON.stringify(stablecoinSierra.abi, null, 2));
+  console.log(`✅ Stablecoin ABI saved to: ${stablecoinAbiPath}`);
+  return stablecoinDeployResponse.deploy.contract_address;
+}
 
-  console.log('🚀 Starting contract deployment...');
+async function deployMessageTransmitter(accounts: any): Promise<string> {
+  console.log('Deploying Message Transmitter...');
+  const adminAddress = accounts.message_transmitter.admin.address;
+  const deployer = new Account(
+    provider,
+    accounts.message_transmitter.deployer.address,
+    accounts.message_transmitter.deployer.privateKey
+  );
+  const mtSierra = json.parse(
+    await fs.readFile(
+      path.join(__dirname, '../../target/dev/message_transmitter_MessageTransmitter.contract_class.json'), 
+      'utf8'
+    )
+  );
+  const mtCasm = json.parse(
+    await fs.readFile(
+      path.join(__dirname, '../../target/dev/message_transmitter_MessageTransmitter.compiled_contract_class.json'), 
+      'utf8'
+    )
+  );
+  const mtDeployResponse = await deployer.declareAndDeploy({
+    contract: mtSierra,
+    casm: mtCasm,
+    salt: '0x0',
+    constructorCalldata: [adminAddress],
+  });
+  console.log(`✅ Message Transmitter deployed: ${mtDeployResponse.deploy.contract_address}`);
   
-  // Load and deploy Token Messenger Minter
+  // Save Message Transmitter ABI
+  const mtAbiPath = path.join(__dirname, '../resources/message_transmitter.abi.json');
+  await fs.writeFile(mtAbiPath, JSON.stringify(mtSierra.abi, null, 2));
+  console.log(`✅ Message Transmitter ABI saved to: ${mtAbiPath}`);
+  return mtDeployResponse.deploy.contract_address;
+}
+
+async function deployTokenMessengerMinter(accounts: any): Promise<string> {
   console.log('Deploying Token Messenger Minter...');
   const adminAddress = accounts.token_messenger_minter.admin.address;
   const deployer = new Account(
@@ -42,23 +115,72 @@ async function deploy() {
     constructorCalldata: [adminAddress],
   });
   
-  console.log(`✅ Token Messenger Minter deployed: ${tmmDeployResponse.deploy.contract_address}`);
+  console.log(`✅ Token Messenger Minter deployed: ${tmmDeployResponse.deploy.contract_address}`); 
+  
+  // Save Token Messenger Minter ABI
+  const tmmAbiPath = path.join(__dirname, '../resources/token_messenger_minter.abi.json');
+  await fs.writeFile(tmmAbiPath, JSON.stringify(tmmSierra.abi, null, 2));
+  console.log(`✅ Token Messenger Minter ABI saved to: ${tmmAbiPath}`); 
+  return tmmDeployResponse.deploy.contract_address;
+}
+
+async function deploy() {
+  const accounts = JSON.parse(await fs.readFile(path.join(__dirname, '../resources/accounts.json'), 'utf8'));
+
+  console.log('🚀 Starting contract deployment...');
+  const stablecoinContractAddress = await deployStablecoin(accounts);
+  const mtContractAddress = await deployMessageTransmitter(accounts);
+  const tmmContractAddress = await deployTokenMessengerMinter(accounts);
   
   // Save contract addresses to contracts.json
   const contracts = {
-    tokenMessengerMinter: tmmDeployResponse.deploy.contract_address,
+    tokenMessengerMinter: tmmContractAddress,
+    messageTransmitter: mtContractAddress,
+    stablecoin: stablecoinContractAddress,
   };
   
   const contractsPath = path.join(__dirname, '../resources/contracts.json');
   await fs.writeFile(contractsPath, JSON.stringify(contracts, null, 2));
   console.log(`✅ Contract addresses saved to: ${contractsPath}`);
-  
-  // Save Token Messenger Minter ABI
-  const tmmAbiPath = path.join(__dirname, '../resources/token_messenger_minter.abi.json');
-  await fs.writeFile(tmmAbiPath, JSON.stringify(tmmSierra.abi, null, 2));
-  console.log(`✅ Token Messenger Minter ABI saved to: ${tmmAbiPath}`);
 
-  // Initialize
+  // Initialize Stablecoin
+  const stablecoin = await loadStablecoin();
+  stablecoin.contract.connect(stablecoin.master_minter);
+  // Enable token messenger minter to mint
+  await stablecoin.contract.configure_controller(
+    stablecoin.master_minter.address, // controller for minter
+    tmmContractAddress, // minter address
+  );
+  await stablecoin.contract.configure_minter(
+    1_000000_000000_000000n, // 1 trillion USDC
+  );
+  // Enable additional minter to mint
+  await stablecoin.contract.configure_controller(
+    stablecoin.master_minter.address, // controller for minter
+    stablecoin.minter.address, // minter address
+  );
+  await stablecoin.contract.configure_minter(
+    1_000000_000000_000000n, // 1 trillion USDC
+  );
+  console.log('✅ Stablecoin initialized');
+
+  // Initialize Message Transmitter
+  const messageTransmitter = await loadMessageTransmitter();
+  messageTransmitter.contract.connect(messageTransmitter.admin);
+  await messageTransmitter.contract.initializer(
+    18, // local domain
+    1, // version
+    messageTransmitter.owner.address,
+    messageTransmitter.pauser.address,
+    messageTransmitter.rescuer.address,
+    messageTransmitter.attester_manager.address,
+    messageTransmitter.attesters.map(attester => attester.address),
+    2,
+    1024,
+  );
+  console.log('✅ Message Transmitter initialized');
+  
+  // Initialize Token Messenger Minter
   const tokenMessengerMinter = await loadTokenMessengerMinter();
   tokenMessengerMinter.contract.connect(tokenMessengerMinter.admin);
   await tokenMessengerMinter.contract.initialize(
@@ -70,7 +192,7 @@ async function deploy() {
     tokenMessengerMinter.min_fee_controller.address,
     tokenMessengerMinter.fee_recipient.address,
     1,
-    '0x1234', // TODO: add local message transmitter address
+    mtContractAddress,
     [1, 2, 3], // Remote domains
     ['0x1000', '0x2000', '0x3000'] // Remote token messengers
   );

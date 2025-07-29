@@ -23,12 +23,12 @@ pub trait AddressConversionTrait {
 
 impl AddressConversionTraitImpl of AddressConversionTrait {
     fn to_address(self: u256) -> ContractAddress {
-        let value_felt: felt252 = self.try_into().unwrap();
-        value_felt.try_into().unwrap()
+        let value_felt: felt252 = self.try_into().expect('u256 to felt252 failed');
+        value_felt.try_into().expect('felt252 to address failed')
     }
 
     fn to_u256(self: ContractAddress) -> u256 {
-        let value_felt: felt252 = self.try_into().unwrap();
-        value_felt.try_into().unwrap()
+        let value_felt: felt252 = self.into();
+        value_felt.into()
     }
 }

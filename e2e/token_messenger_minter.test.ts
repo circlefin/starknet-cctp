@@ -1,5 +1,5 @@
 import { num } from 'starknet';
-import { loadTokenMessengerMinter, TokenMessengerMinterInfo, provider } from './utils.js';
+import { loadTokenMessengerMinter, loadStablecoin, loadMessageTransmitter, TokenMessengerMinterInfo, StablecoinInfo, MessageTransmitterInfo, provider, ByteArray, uint8ArrayToHexString, numberArrayToHexString, constructMessage } from './utils.js';
 
 describe('token messenger minter', () => {
   let tokenMessengerMinter: TokenMessengerMinterInfo;
@@ -732,6 +732,275 @@ describe('token messenger minter', () => {
       // 5. Verify rescuer is back to original
       const restoredRescuer = num.toHex(await tokenMessengerMinter.contract.rescuer());
       expect(restoredRescuer).toBe(num.toHex(tokenMessengerMinter.rescuer.address));
+    });
+  })
+  describe('deposit_for_burn', () => {
+    let stablecoin: StablecoinInfo;
+    let messageTransmitter: MessageTransmitterInfo;
+    
+    beforeAll(async () => {
+      stablecoin = await loadStablecoin();
+      messageTransmitter = await loadMessageTransmitter();
+    });
+    
+    // Helper function for common deposit_for_burn functionality
+    const setupAndExecuteDepositForBurn = async (params: {
+      amount: bigint;
+      destinationDomain: number;
+      mintRecipient: string;
+      destinationCaller: string;
+      maxFee: bigint;
+      minFinalityThreshold: number;
+      hookData?: string;
+      useHook: boolean;
+    }) => {
+      const burnToken = stablecoin.contract.address;
+      
+      // 1. Set up token configuration
+      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller)
+      
+      // Set max burn amount per message
+      const maxBurnAmount = 1000000000n; // 1000 USDC
+      await tokenMessengerMinter.contract.set_max_burn_amount_per_message(burnToken, maxBurnAmount);
+      
+      // Link token pair (local token to remote token)
+      const remoteToken = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // USDC on destination chain
+      try {
+        await tokenMessengerMinter.contract.link_token_pair(
+          burnToken, 
+          params.destinationDomain, 
+          remoteToken
+        );
+      } catch (error: any) {
+        if (error.message && error.message.includes('Unable to link token pair')) {
+          // The token may have already been linked if the test is run multiple times
+        } else {
+          throw error;
+        }
+      }
+      
+      // 2. Mint some tokens to the tester account
+      stablecoin.contract.connect(stablecoin.minter);
+      await stablecoin.contract.mint(
+        tokenMessengerMinter.tester.address,
+        params.amount * 2n // Mint double the amount we'll burn
+      );
+      const initialBalance = await stablecoin.contract.balance_of(tokenMessengerMinter.tester.address);
+      
+      // 3. Approve token messenger minter to spend tokens
+      stablecoin.contract.connect(tokenMessengerMinter.tester);
+      await stablecoin.contract.approve(
+        tokenMessengerMinter.contract.address,
+        params.amount
+      );
+      
+      // 4. Call deposit_for_burn or deposit_for_burn_with_hook
+      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      const depositTx = params.useHook 
+        ? await tokenMessengerMinter.contract.deposit_for_burn_with_hook(
+            params.amount,
+            params.destinationDomain,
+            params.mintRecipient,
+            burnToken,
+            params.destinationCaller,
+            params.maxFee,
+            params.minFinalityThreshold,
+            params.hookData || ''
+          )
+        : await tokenMessengerMinter.contract.deposit_for_burn(
+            params.amount,
+            params.destinationDomain,
+            params.mintRecipient,
+            burnToken,
+            params.destinationCaller,
+            params.maxFee,
+            params.minFinalityThreshold
+          );
+      
+      // 5. Wait for transaction and verify events
+      const depositReceipt = await provider.waitForTransaction(depositTx.transaction_hash);
+      expect(depositReceipt.isSuccess()).toBe(true);
+      
+      // Parse events from both contracts
+      const tokenMessengerEvents = tokenMessengerMinter.contract.parseEvents(depositReceipt);
+      const messageTransmitterEvents = messageTransmitter.contract.parseEvents(depositReceipt);
+      
+      // 6. Verify the balance was reduced
+      const finalBalance = await stablecoin.contract.balance_of(tokenMessengerMinter.tester.address);
+      expect(finalBalance).toBe(initialBalance - params.amount);
+      
+      // 7. Clean up
+      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller)
+      await tokenMessengerMinter.contract.unlink_token_pair(
+        burnToken,
+        params.destinationDomain,
+        remoteToken
+      );
+      await tokenMessengerMinter.contract.set_max_burn_amount_per_message(burnToken, 0n);
+      
+      return { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents: (depositReceipt as any).events };
+    };
+    
+    it('should deposit and burn tokens, emitting appropriate events for zero destination caller and zero hook data', async () => {
+      // Test parameters
+      const amount = 1000000n; // 1 USDC (6 decimals)
+      const destinationDomain = 1; // AVAX
+      const mintRecipient = '0x1111111111111111111111111111111111111111';
+      const destinationCaller = '0x0'; // Anyone can call
+      const maxFee = 10000n; // 0.01 USDC fee
+      const minFinalityThreshold = 500;
+      
+      const { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents } = await setupAndExecuteDepositForBurn({
+        amount,
+        destinationDomain,
+        mintRecipient,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold,
+        useHook: false
+      });
+      
+      // Verify DepositForBurn event
+      expect(tokenMessengerEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            'token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn': {
+              burn_token: num.toBigInt(burnToken),
+              amount: amount,
+              depositor: num.toBigInt(tokenMessengerMinter.tester.address),
+              mint_recipient: num.toBigInt(mintRecipient),
+              destination_domain: num.toBigInt(destinationDomain),
+              destination_token_messenger: 4096n, // Set to 0x1000 in deploy.ts for domain 1
+              destination_caller: num.toBigInt(destinationCaller),
+              max_fee: maxFee,
+              min_finality_threshold: num.toBigInt(minFinalityThreshold),
+              hook_data: '' // Empty for standard deposit_for_burn
+            }
+          })
+        ])
+      );
+
+      // Verify MessageSent event
+      expect(messageTransmitterEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            'message_transmitter::message_transmitter::MessageTransmitter::MessageSent': {
+              message: expect.any(String)
+            }
+          })
+        ])
+      );
+
+      // now let's decode the raw event manually
+      const messageSentEvent = rawEvents.find(
+        (event: any) => event.from_address === messageTransmitter.contract.address
+      );
+      const messageBody = messageSentEvent.data as string[];
+      const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
+      const burnMessageBytes = constructMessage({
+        version: 1,
+        sourceDomain: 18,
+        destinationDomain: 1,
+        nonce: 0n,
+        sender: tokenMessengerMinter.contract.address,
+        recipient: '0x1000',
+        destinationCaller: destinationCaller,
+        minFinalityThreshold: minFinalityThreshold,
+        finalityThresholdExecuted: 0,
+        burnMessage: {
+          version: 1,
+          burnToken: burnToken,
+          mintRecipient: mintRecipient,
+          amount: amount,
+          messageSender: tokenMessengerMinter.tester.address,
+          maxFee: maxFee,
+          hookData: ''
+        }
+      })
+      const burnMessageHex = numberArrayToHexString(burnMessageBytes);
+      expect(messageBodyHex).toEqual(burnMessageHex);
+    });
+    
+    it('should deposit and burn tokens with hook, emitting appropriate events for non-zero destination caller and hook data', async () => {
+      // Test parameters
+      const amount = 2000000n; // 2 USDC (6 decimals)
+      const destinationDomain = 2; // Different domain
+      const mintRecipient = '0x2222222222222222222222222222222222222222';
+      const destinationCaller = '0x3333333333333333333333333333333333333333'; // Specific caller
+      const maxFee = 20000n; // 0.02 USDC fee
+      const minFinalityThreshold = 600;
+      const hookData = 'Example hook data for testing purposes';
+      
+      const { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents } = await setupAndExecuteDepositForBurn({
+        amount,
+        destinationDomain,
+        mintRecipient,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold,
+        hookData,
+        useHook: true
+      });
+      
+      // Verify DepositForBurn event
+      expect(tokenMessengerEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            'token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn': {
+              burn_token: num.toBigInt(burnToken),
+              amount: amount,
+              depositor: num.toBigInt(tokenMessengerMinter.tester.address),
+              mint_recipient: num.toBigInt(mintRecipient),
+              destination_domain: num.toBigInt(destinationDomain),
+              destination_token_messenger: 8192n, // Set to 0x2000 in deploy.ts for domain 2
+              destination_caller: num.toBigInt(destinationCaller),
+              max_fee: maxFee,
+              min_finality_threshold: num.toBigInt(minFinalityThreshold),
+              hook_data: hookData
+            }
+          })
+        ])
+      );
+
+      // Verify MessageSent event
+      expect(messageTransmitterEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            'message_transmitter::message_transmitter::MessageTransmitter::MessageSent': {
+              message: expect.any(String)
+            }
+          })
+        ])
+      );
+
+      // now let's decode the raw event manually
+      const messageSentEvent = rawEvents.find(
+        (event: any) => event.from_address === messageTransmitter.contract.address
+      );
+      const messageBody = messageSentEvent.data as string[];
+      const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
+      const burnMessageBytes = constructMessage({
+        version: 1,
+        sourceDomain: 18,
+        destinationDomain: 2,
+        nonce: 0n,
+        sender: tokenMessengerMinter.contract.address,
+        recipient: '0x2000',
+        destinationCaller: destinationCaller,
+        minFinalityThreshold: minFinalityThreshold,
+        finalityThresholdExecuted: 0,
+        burnMessage: {
+          version: 1,
+          burnToken: burnToken,
+          mintRecipient: mintRecipient,
+          amount: amount,
+          messageSender: tokenMessengerMinter.tester.address,
+          maxFee: maxFee,
+          hookData: hookData
+        }
+      })
+      const burnMessageHex = numberArrayToHexString(burnMessageBytes);
+      expect(messageBodyHex).toEqual(burnMessageHex);
     });
   })
 });
