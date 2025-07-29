@@ -1,3 +1,19 @@
+// Copyright (c) 2025, Circle Internet Financial LTD. All Rights Reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { num } from 'starknet';
 import { loadTokenMessengerMinter, loadStablecoin, loadMessageTransmitter, TokenMessengerMinterInfo, StablecoinInfo, MessageTransmitterInfo, provider, ByteArray, uint8ArrayToHexString, numberArrayToHexString, constructMessage } from './utils.js';
 
@@ -848,7 +864,7 @@ describe('token messenger minter', () => {
       const mintRecipient = '0x1111111111111111111111111111111111111111';
       const destinationCaller = '0x0'; // Anyone can call
       const maxFee = 10000n; // 0.01 USDC fee
-      const minFinalityThreshold = 500;
+      const minFinalityThreshold = 1000;
       
       const { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents } = await setupAndExecuteDepositForBurn({
         amount,
@@ -899,7 +915,7 @@ describe('token messenger minter', () => {
       const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
       const burnMessageBytes = constructMessage({
         version: 1,
-        sourceDomain: 18,
+        sourceDomain: 25,
         destinationDomain: 1,
         nonce: 0n,
         sender: tokenMessengerMinter.contract.address,
@@ -928,7 +944,7 @@ describe('token messenger minter', () => {
       const mintRecipient = '0x2222222222222222222222222222222222222222';
       const destinationCaller = '0x3333333333333333333333333333333333333333'; // Specific caller
       const maxFee = 20000n; // 0.02 USDC fee
-      const minFinalityThreshold = 600;
+      const minFinalityThreshold = 1000;
       const hookData = 'Example hook data for testing purposes';
       
       const { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents } = await setupAndExecuteDepositForBurn({
@@ -981,7 +997,7 @@ describe('token messenger minter', () => {
       const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
       const burnMessageBytes = constructMessage({
         version: 1,
-        sourceDomain: 18,
+        sourceDomain: 25,
         destinationDomain: 2,
         nonce: 0n,
         sender: tokenMessengerMinter.contract.address,

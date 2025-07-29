@@ -8,6 +8,9 @@ import { loadMessageTransmitter, loadTokenMessengerMinter, loadStablecoin, provi
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const LOCAL_DOMAIN = 25; // Starknet domain id
+const VERSION = 1;
+
 async function deployStablecoin(accounts: any): Promise<string> {
   console.log('Deploying Stablecoin...');
   const deployer = new Account(
@@ -124,6 +127,67 @@ async function deployTokenMessengerMinter(accounts: any): Promise<string> {
   return tmmDeployResponse.deploy.contract_address;
 }
 
+async function initializeStablecoin(tmmContractAddress: string) {
+   // Initialize Stablecoin
+   const stablecoin = await loadStablecoin();
+   stablecoin.contract.connect(stablecoin.master_minter);
+   // Enable token messenger minter to mint
+   await stablecoin.contract.configure_controller(
+     stablecoin.master_minter.address, // controller for minter
+     tmmContractAddress, // minter address
+   );
+   await stablecoin.contract.configure_minter(
+     1_000000_000000_000000n, // 1 trillion USDC
+   );
+   // Enable additional minter to mint
+   await stablecoin.contract.configure_controller(
+     stablecoin.master_minter.address, // controller for minter
+     stablecoin.minter.address, // minter address
+   );
+   await stablecoin.contract.configure_minter(
+     1_000000_000000_000000n, // 1 trillion USDC
+   );
+   console.log('✅ Stablecoin initialized');
+}
+
+async function initializeTokenMessengerMinter(mtContractAddress: string) {
+  // Initialize Token Messenger Minter
+  const tokenMessengerMinter = await loadTokenMessengerMinter();
+  tokenMessengerMinter.contract.connect(tokenMessengerMinter.admin);
+  await tokenMessengerMinter.contract.initialize(
+    tokenMessengerMinter.owner.address,
+    tokenMessengerMinter.pauser.address,
+    tokenMessengerMinter.denylister.address,
+    tokenMessengerMinter.rescuer.address,
+    tokenMessengerMinter.token_controller.address,
+    tokenMessengerMinter.min_fee_controller.address,
+    tokenMessengerMinter.fee_recipient.address,
+    1,
+    mtContractAddress,
+    [1, 2, 3], // Remote domains
+    ['0x1000', '0x2000', '0x3000'] // Remote token messengers
+  );
+  console.log('✅ Token Messenger Minter initialized');
+}
+
+async function initializeMessageTransmitter() {
+    // Initialize Message Transmitter
+    const messageTransmitter = await loadMessageTransmitter();
+    messageTransmitter.contract.connect(messageTransmitter.admin);
+    await messageTransmitter.contract.initializer(
+      LOCAL_DOMAIN, // local domain
+      VERSION, // version
+      messageTransmitter.owner.address,
+      messageTransmitter.pauser.address,
+      messageTransmitter.rescuer.address,
+      messageTransmitter.attester_manager.address,
+      messageTransmitter.attesters.map(attester => attester.address),
+      2,
+      1024,
+    );
+    console.log('✅ Message Transmitter initialized');  
+}
+
 async function deploy() {
   const accounts = JSON.parse(await fs.readFile(path.join(__dirname, '../resources/accounts.json'), 'utf8'));
 
@@ -143,60 +207,9 @@ async function deploy() {
   await fs.writeFile(contractsPath, JSON.stringify(contracts, null, 2));
   console.log(`✅ Contract addresses saved to: ${contractsPath}`);
 
-  // Initialize Stablecoin
-  const stablecoin = await loadStablecoin();
-  stablecoin.contract.connect(stablecoin.master_minter);
-  // Enable token messenger minter to mint
-  await stablecoin.contract.configure_controller(
-    stablecoin.master_minter.address, // controller for minter
-    tmmContractAddress, // minter address
-  );
-  await stablecoin.contract.configure_minter(
-    1_000000_000000_000000n, // 1 trillion USDC
-  );
-  // Enable additional minter to mint
-  await stablecoin.contract.configure_controller(
-    stablecoin.master_minter.address, // controller for minter
-    stablecoin.minter.address, // minter address
-  );
-  await stablecoin.contract.configure_minter(
-    1_000000_000000_000000n, // 1 trillion USDC
-  );
-  console.log('✅ Stablecoin initialized');
-
-  // Initialize Message Transmitter
-  const messageTransmitter = await loadMessageTransmitter();
-  messageTransmitter.contract.connect(messageTransmitter.admin);
-  await messageTransmitter.contract.initializer(
-    18, // local domain
-    1, // version
-    messageTransmitter.owner.address,
-    messageTransmitter.pauser.address,
-    messageTransmitter.rescuer.address,
-    messageTransmitter.attester_manager.address,
-    messageTransmitter.attesters.map(attester => attester.address),
-    2,
-    1024,
-  );
-  console.log('✅ Message Transmitter initialized');
-  
-  // Initialize Token Messenger Minter
-  const tokenMessengerMinter = await loadTokenMessengerMinter();
-  tokenMessengerMinter.contract.connect(tokenMessengerMinter.admin);
-  await tokenMessengerMinter.contract.initialize(
-    tokenMessengerMinter.owner.address,
-    tokenMessengerMinter.pauser.address,
-    tokenMessengerMinter.denylister.address,
-    tokenMessengerMinter.rescuer.address,
-    tokenMessengerMinter.token_controller.address,
-    tokenMessengerMinter.min_fee_controller.address,
-    tokenMessengerMinter.fee_recipient.address,
-    1,
-    mtContractAddress,
-    [1, 2, 3], // Remote domains
-    ['0x1000', '0x2000', '0x3000'] // Remote token messengers
-  );
-  console.log('✅ Token Messenger Minter initialized');
+  await initializeStablecoin(tmmContractAddress);
+  await initializeMessageTransmitter();
+  await initializeTokenMessengerMinter(mtContractAddress);
 }
 
 // Run deployment if this file is executed directly
