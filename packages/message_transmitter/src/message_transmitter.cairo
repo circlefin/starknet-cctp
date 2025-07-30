@@ -312,6 +312,18 @@ pub mod MessageTransmitter {
         fn get_max_message_body_size(self: @ContractState) -> u256 {
             self.max_message_body_size.read()
         }
+
+        fn is_nonce_used(self: @ContractState, nonce: u256) -> bool {
+            self.used_nonces.entry(nonce).read()
+        }
+
+        fn get_local_domain(self: @ContractState) -> u32 {
+            self.local_domain.read()
+        }
+
+        fn get_version(self: @ContractState) -> u32 {
+            self.version.read()
+        }
     }
 
     #[generate_trait]

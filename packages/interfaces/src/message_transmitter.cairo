@@ -131,4 +131,30 @@ pub trait IMessageTransmitter<TContractState> {
         signature_threshold: u64,
         max_message_body_size: u256,
     );
+
+    /// Check if a nonce has been used.
+    ///
+    /// # Arguments
+    ///
+    /// * `nonce` - The nonce to check
+    ///
+    /// # Returns
+    ///
+    /// * `true` - If the nonce has been used
+    /// * `false` - If the nonce has not been used
+    fn is_nonce_used(self: @TContractState, nonce: u256) -> bool;
+
+    /// Get the local domain.
+    ///
+    /// # Returns
+    ///
+    /// * `local_domain` - The local domain
+    fn get_local_domain(self: @TContractState) -> u32;
+
+    /// Get the version.
+    ///
+    /// # Returns
+    ///
+    /// * `version` - The version
+    fn get_version(self: @TContractState) -> u32;
 }

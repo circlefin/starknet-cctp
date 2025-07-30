@@ -698,6 +698,79 @@ fn test_receive_message_with_zero_destination_caller() {
         );
 }
 
+#[test]
+fn test_is_nonce_used() {
+    let contract_address = deploy_contract_then_initialize();
+    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let attestable_dispatcher = IAttestableDispatcher { contract_address };
+
+    // Nonce 0 is used after initialization
+    assert!(dispatcher.is_nonce_used(0.into()), "Nonce should be used");
+
+    let nonce: u256 = 1.into();
+
+    // Nonce 1 is not used
+    assert!(!dispatcher.is_nonce_used(nonce), "Nonce should not be used");
+
+    // Receiving a message with Nonce 1
+    let test_data = get_test_data();
+    let sender = test_data.owner.to_u256();
+    let token_messenger_address = deploy_mock_token_messenger();
+    let token_messenger_helper = ITokenMessengerMinterTestHelperDispatcher {
+        contract_address: token_messenger_address,
+    };
+    let finality_threshold_executed: u32 = 2001;
+
+    let message = format_message(
+        test_data.version,
+        test_data.local_domain,
+        test_data.local_domain,
+        nonce,
+        sender,
+        token_messenger_address.to_u256(),
+        0.into(), // destination caller as zero
+        test_data.min_finality_threshold,
+        finality_threshold_executed,
+        test_data.message_body,
+    );
+
+    let attestation = hex_string_to_bytes_array(
+        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
+    );
+
+    start_cheat_caller_address(contract_address, test_data.attester_manager);
+    attestable_dispatcher.set_signature_threshold(1);
+    attestable_dispatcher
+        .enable_attester(0xd46d7a1cf26b275b777af0ab793faa65bde84e1f.try_into().unwrap());
+    stop_cheat_caller_address(contract_address);
+
+    assert!(!token_messenger_helper.is_finalized(), "Token messenger should not be finalized");
+    start_cheat_caller_address(contract_address, test_data.owner);
+    dispatcher.receive_message(message.clone(), attestation);
+    stop_cheat_caller_address(contract_address);
+
+    // Nonce 1 is used after receiving a message
+    assert!(dispatcher.is_nonce_used(nonce), "Nonce should be used");
+}
+
+#[test]
+fn test_get_local_domain() {
+    let contract_address = deploy_contract_then_initialize();
+    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let test_data = get_test_data();
+
+    assert_eq!(dispatcher.get_local_domain(), test_data.local_domain);
+}
+
+#[test]
+fn test_get_version() {
+    let contract_address = deploy_contract_then_initialize();
+    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let test_data = get_test_data();
+
+    assert_eq!(dispatcher.get_version(), test_data.version);
+}
+
 // ================================
 // ERROR TESTS
 // ================================
