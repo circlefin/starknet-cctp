@@ -128,7 +128,8 @@ pub trait ITokenMessengerMinter<TContractState> {
     /// * `destination_caller` - authorized caller on the destination domain, as u256. If equal
     /// to 0, any address can broadcast the message.
     /// * `max_fee` - maximum fee to pay on the destination domain, specified in units of
-    /// burnToken * `min_finality_threshold` - the minimum finality at which a burn message will
+    /// burnToken
+    /// * `min_finality_threshold` - the minimum finality at which a burn message will
     /// be attested to.
     ///
     /// # Panics
@@ -165,7 +166,8 @@ pub trait ITokenMessengerMinter<TContractState> {
     /// * `destination_caller` - authorized caller on the destination domain, as u256. If equal
     /// to 0, any address can broadcast the message.
     /// * `max_fee` - maximum fee to pay on the destination domain, specified in units of
-    /// burnToken * `min_finality_threshold` - the minimum finality at which a burn message will
+    /// burnToken
+    /// * `min_finality_threshold` - the minimum finality at which a burn message will
     /// be attested to.
     /// * `hook_data` - hook data to append to burn message for interpretation on destination
     /// domain

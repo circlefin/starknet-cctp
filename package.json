@@ -27,5 +27,8 @@
     "deploy": "tsx ./e2e/cmd/deploy.ts",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
     "test:e2e": "bash ./e2e/cmd/run-e2e-tests.sh"
+  },
+  "dependencies": {
+    "env-var": "^7.5.0"
   }
 }

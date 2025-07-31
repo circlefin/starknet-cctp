@@ -14,6 +14,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! # Attestable Component
+//!
+//! This component provides a way to enable and disable attesters.
+//! The component integrates with the Ownable component to ensure proper access control,
+//! The attester manager is the address that can enable and disable attesters.
+//! The attester manager is set by the owner of the contract.
+//! The attester manager can manage the attesters list and the signature threshold.
+//! It also provides a function to verify the attestation signatures.
+//!
+//! # Features
+//!
+//! - **Attester Management**: Attester manager can enable and disable attesters
+//! - **Access Control**: Only the owner can set the attester manager
+//! - **Event Emission**: Emits events for transparency and monitoring
+//! - **Signature Verification**: Verifies the attestation signatures
+
 use starknet::ContractAddress;
 
 #[starknet::interface]
