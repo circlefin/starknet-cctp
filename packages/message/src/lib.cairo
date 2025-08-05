@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod burn_message;
-mod message;
-pub use burn_message::BurnMessage;
+mod burn_message_v2;
+mod message_v2;
+pub use burn_message_v2::BurnMessageV2;
 
-pub use message::Message;
+pub use message_v2::MessageV2;

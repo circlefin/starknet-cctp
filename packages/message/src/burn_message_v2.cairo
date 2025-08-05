@@ -37,7 +37,7 @@
 //! - feeExecuted
 //! - expirationBlock
 //! - hookData
-pub mod BurnMessage {
+pub mod BurnMessageV2 {
     use core::byte_array::ByteArrayTrait;
     use utils::{
         append_u256_be, append_u32_be, append_zero_u256, extract_bytes_array_dynamic,

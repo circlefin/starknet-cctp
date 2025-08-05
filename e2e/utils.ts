@@ -90,14 +90,14 @@ export const loadTokenMessengerMinter = async (): Promise<TokenMessengerMinterIn
   const contracts = JSON.parse(await fs.readFile(contractsPath, 'utf8'));
 
   // Load Token Messenger Minter ABI
-  const tmmAbiPath = path.join(__dirname, 'resources/token_messenger_minter.abi.json');
+  const tmmAbiPath = path.join(__dirname, 'resources/token_messenger_minter_v2.abi.json');
   const tmmAbi = JSON.parse(await fs.readFile(tmmAbiPath, 'utf8'));
 
   // Setup contract instance
   const tokenMessengerMinter = {
     contract: new Contract(
       tmmAbi,
-      contracts.tokenMessengerMinter,
+      contracts.tokenMessengerMinterV2,
       provider
     ),
     admin: toAccount(accounts.token_messenger_minter.admin),
@@ -121,14 +121,14 @@ export const loadMessageTransmitter = async (): Promise<MessageTransmitterInfo> 
   const contracts = JSON.parse(await fs.readFile(contractsPath, 'utf8'));
 
   // Load Message Transmitter ABI
-  const mtAbiPath = path.join(__dirname, 'resources/message_transmitter.abi.json');
+  const mtAbiPath = path.join(__dirname, 'resources/message_transmitter_v2.abi.json');
   const mtAbi = JSON.parse(await fs.readFile(mtAbiPath, 'utf8'));
 
   // Setup contract instance
   const messageTransmitter = {
     contract: new Contract(
       mtAbi,
-      contracts.messageTransmitter,
+      contracts.messageTransmitterV2,
       provider
     ),
     admin: toAccount(accounts.message_transmitter.admin),

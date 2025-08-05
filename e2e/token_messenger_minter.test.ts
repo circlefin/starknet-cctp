@@ -880,7 +880,7 @@ describe('token messenger minter', () => {
       expect(tokenMessengerEvents).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            'token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn': {
+            'token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::DepositForBurn': {
               burn_token: num.toBigInt(burnToken),
               amount: amount,
               depositor: num.toBigInt(tokenMessengerMinter.tester.address),
@@ -900,7 +900,7 @@ describe('token messenger minter', () => {
       expect(messageTransmitterEvents).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            'message_transmitter::message_transmitter::MessageTransmitter::MessageSent': {
+            'message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent': {
               message: expect.any(String)
             }
           })
@@ -962,7 +962,7 @@ describe('token messenger minter', () => {
       expect(tokenMessengerEvents).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            'token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn': {
+            'token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::DepositForBurn': {
               burn_token: num.toBigInt(burnToken),
               amount: amount,
               depositor: num.toBigInt(tokenMessengerMinter.tester.address),
@@ -982,7 +982,7 @@ describe('token messenger minter', () => {
       expect(messageTransmitterEvents).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            'message_transmitter::message_transmitter::MessageTransmitter::MessageSent': {
+            'message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent': {
               message: expect.any(String)
             }
           })

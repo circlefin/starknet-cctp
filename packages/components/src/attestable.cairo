@@ -83,6 +83,8 @@ pub trait IAttestable<TContractState> {
     ///
     /// * `new_attester_manager` - The address of the new attester manager.
     ///
+    /// Only the owner can update the attester manager.
+    ///
     /// # Panics
     ///
     /// This function will panic if:
@@ -96,6 +98,8 @@ pub trait IAttestable<TContractState> {
     /// # Arguments
     ///
     /// * `new_signature_threshold` - The new signature threshold.
+    ///
+    /// Only the attester manager can set the signature threshold.
     ///
     /// # Panics
     ///
@@ -382,7 +386,7 @@ pub mod AttestableComponent {
             // Set attester manager
             self.attester_manager.write(attester_manager);
 
-            // Set signature threshold to 1
+            // Set signature threshold to the provided value
             self.signature_threshold.write(signature_threshold);
         }
 

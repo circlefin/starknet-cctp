@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #[starknet::contract]
-pub mod TokenMessengerMinter {
+pub mod TokenMessengerMinterV2 {
     use cctp_components::fee_recipient_controller::FeeRecipientControllerComponent;
     use cctp_components::min_fee_controller::MinFeeControllerComponent;
     use cctp_components::remote_token_messenger_controller::RemoteTokenMessengerControllerComponent;
@@ -26,11 +26,11 @@ pub mod TokenMessengerMinter {
     use components::ownable::OwnableComponent;
     use components::pausable::PausableComponent;
     use components::upgradeable::UpgradeableComponent;
-    use interfaces::message_transmitter::{
-        IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait,
+    use interfaces::message_transmitter_v2::{
+        IMessageTransmitterV2Dispatcher, IMessageTransmitterV2DispatcherTrait,
     };
-    use interfaces::token_messager_minter::ITokenMessengerMinter;
-    use message::BurnMessage;
+    use interfaces::token_messager_minter_v2::ITokenMessengerMinterV2;
+    use message::BurnMessageV2;
     use stablecoin::{IFiatTokenDispatcher, IFiatTokenDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{
@@ -220,7 +220,7 @@ pub mod TokenMessengerMinter {
     }
 
     #[abi(embed_v0)]
-    impl TokenMessengerMinterImpl of ITokenMessengerMinter<ContractState> {
+    impl TokenMessengerMinterV2Impl of ITokenMessengerMinterV2<ContractState> {
         fn initialize(
             ref self: ContractState,
             owner: ContractAddress,
@@ -536,24 +536,24 @@ pub mod TokenMessengerMinter {
             self: @ContractState, message: @ByteArray,
         ) -> (ContractAddress, u256, u256, u256) {
             // Validate message format
-            BurnMessage::validate_burn_message_format(message);
+            BurnMessageV2::validate_burn_message_format(message);
 
             // Check message version
-            let version = BurnMessage::get_version(message);
+            let version = BurnMessageV2::get_version(message);
             let expected_version = self.message_body_version.read();
             assert(version == expected_version, Errors::INVALID_MESSAGE_BODY_VERSION);
 
             // Enforce message expiration
-            let expiration_block = BurnMessage::get_expiration_block(message);
+            let expiration_block = BurnMessageV2::get_expiration_block(message);
             if expiration_block != 0 {
                 let current_block: u256 = get_block_info().unbox().block_number.into();
                 assert(expiration_block > current_block, Errors::MESSAGE_EXPIRED);
             }
 
             // Get amounts and validate fee
-            let amount = BurnMessage::get_amount(message);
-            let fee = BurnMessage::get_fee_executed(message);
-            let max_fee = BurnMessage::get_max_fee(message);
+            let amount = BurnMessageV2::get_amount(message);
+            let fee = BurnMessageV2::get_fee_executed(message);
+            let max_fee = BurnMessageV2::get_max_fee(message);
 
             // Validate fee doesn't equal or exceed amount
             if fee != 0 {
@@ -564,8 +564,8 @@ pub mod TokenMessengerMinter {
             assert(fee <= max_fee, Errors::FEE_EXCEEDS_MAX_FEE);
 
             // Get recipient and burn token
-            let mint_recipient_bytes = BurnMessage::get_mint_recipient(message);
-            let burn_token = BurnMessage::get_burn_token(message);
+            let mint_recipient_bytes = BurnMessageV2::get_mint_recipient(message);
+            let burn_token = BurnMessageV2::get_burn_token(message);
             let mint_recipient: ContractAddress = mint_recipient_bytes.to_address();
 
             (mint_recipient, burn_token, amount, fee)
@@ -748,7 +748,7 @@ pub mod TokenMessengerMinter {
             let burn_token_u256: u256 = burn_token_felt.into();
             let depositor_felt: felt252 = get_caller_address().into();
             let depositor_u256: u256 = depositor_felt.into();
-            let burn_message = BurnMessage::format_message_for_relay(
+            let burn_message = BurnMessageV2::format_message_for_relay(
                 self.message_body_version.read(),
                 burn_token_u256,
                 mint_recipient,
@@ -760,7 +760,7 @@ pub mod TokenMessengerMinter {
 
             // Send message via local message transmitter
             let local_message_transmitter = self.local_message_transmitter.read();
-            let message_transmitter = IMessageTransmitterDispatcher {
+            let message_transmitter = IMessageTransmitterV2Dispatcher {
                 contract_address: local_message_transmitter,
             };
             message_transmitter

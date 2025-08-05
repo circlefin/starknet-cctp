@@ -32,10 +32,10 @@ use components::manageable::{IManageableDispatcher, IManageableDispatcherTrait};
 use components::ownable::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use components::pausable::{IPausableDispatcher, IPausableDispatcherTrait};
 use components::upgradeable::IUpgradeableDispatcher;
-use interfaces::token_messager_minter::{
-    ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
+use interfaces::token_messager_minter_v2::{
+    ITokenMessengerMinterV2Dispatcher, ITokenMessengerMinterV2DispatcherTrait,
 };
-use message::BurnMessage;
+use message::BurnMessageV2;
 use snforge_std::{
     CheatSpan, ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait,
     cheat_account_contract_address, declare, spy_events, start_cheat_block_number,
@@ -237,8 +237,8 @@ pub mod MockMessageTransmitterContract {
 // Mock Proxy contract that forwards calls to TokenMessengerMinter
 #[starknet::contract]
 mod MockProxyContract {
-    use interfaces::token_messager_minter::{
-        ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
+    use interfaces::token_messager_minter_v2::{
+        ITokenMessengerMinterV2Dispatcher, ITokenMessengerMinterV2DispatcherTrait,
     };
     use starknet::ContractAddress;
 
@@ -257,7 +257,7 @@ mod MockProxyContract {
         max_fee: u256,
         min_finality_threshold: u32,
     ) {
-        let dispatcher = ITokenMessengerMinterDispatcher {
+        let dispatcher = ITokenMessengerMinterV2Dispatcher {
             contract_address: token_messenger_minter,
         };
 
@@ -369,7 +369,7 @@ fn deploy_mock_proxy() -> ContractAddress {
 }
 
 fn deploy_token_messenger_minter() -> (ContractAddress, ContractAddress, ContractAddress) {
-    let contract = declare("TokenMessengerMinter").unwrap().contract_class();
+    let contract = declare("TokenMessengerMinterV2").unwrap().contract_class();
 
     // Deploy mock contracts
     let local_message_transmitter = deploy_mock_message_transmitter();
@@ -393,7 +393,7 @@ fn deploy_token_messenger_minter() -> (ContractAddress, ContractAddress, Contrac
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
 
     // Now initialize the contract as admin
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     // Set caller to admin for initialization
     start_cheat_caller_address(contract_address, admin);
@@ -435,7 +435,7 @@ fn test_full_deployment_with_mocks() {
     let mock_transmitter = deploy_mock_message_transmitter();
 
     // Now deploy TokenMessengerMinter with the actual mock addresses
-    let contract = declare("TokenMessengerMinter").unwrap().contract_class();
+    let contract = declare("TokenMessengerMinterV2").unwrap().contract_class();
 
     let owner: ContractAddress = 0x1.try_into().unwrap();
     let admin: ContractAddress = 0x2.try_into().unwrap();
@@ -458,7 +458,7 @@ fn test_full_deployment_with_mocks() {
     let (contract_address, _) = deploy_result.unwrap();
 
     // Initialize the contract as admin
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     start_cheat_caller_address(contract_address, admin);
 
@@ -512,8 +512,8 @@ fn test_mock_contracts_deployment() {
 #[test]
 fn test_simple_deployment() {
     // Let's try the simplest possible deployment first
-    let contract_class = declare("TokenMessengerMinter");
-    assert!(contract_class.is_ok(), "Failed to declare TokenMessengerMinter");
+    let contract_class = declare("TokenMessengerMinterV2");
+    assert!(contract_class.is_ok(), "Failed to declare TokenMessengerMinterV2");
 
     let contract = contract_class.unwrap().contract_class();
 
@@ -534,7 +534,7 @@ fn test_deployment_without_remote_domains() {
     let mock_transmitter = deploy_mock_message_transmitter();
 
     // Now deploy TokenMessengerMinter with the actual mock addresses
-    let contract = declare("TokenMessengerMinter").unwrap().contract_class();
+    let contract = declare("TokenMessengerMinterV2").unwrap().contract_class();
 
     let owner: ContractAddress = 0x1.try_into().unwrap();
     let admin: ContractAddress = 0x2.try_into().unwrap();
@@ -557,7 +557,7 @@ fn test_deployment_without_remote_domains() {
     let (contract_address, _) = deploy_result.unwrap();
 
     // Initialize the contract as admin
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     start_cheat_caller_address(contract_address, admin);
 
@@ -699,7 +699,7 @@ fn test_upgradeable_component_exists() {
 #[should_panic(expected: ('Already initialized',))]
 fn test_initialize_already_initialized() {
     let (contract_address, _, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     // Setup addresses using numeric values
     let owner: ContractAddress = 0x10.try_into().unwrap();
@@ -736,7 +736,7 @@ fn test_initialize_already_initialized() {
 #[test]
 fn test_message_body_version() {
     let (contract_address, _, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     let version = dispatcher.message_body_version();
     assert!(version == 0_u32, "Message body version should be 0");
@@ -745,7 +745,7 @@ fn test_message_body_version() {
 #[test]
 fn test_local_message_transmitter() {
     let (contract_address, local_message_transmitter, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     let transmitter = dispatcher.local_message_transmitter();
     assert!(transmitter == local_message_transmitter, "Local message transmitter should match");
@@ -754,7 +754,7 @@ fn test_local_message_transmitter() {
 #[test]
 fn test_deposit_for_burn_happy_path() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
     let token_helper = IMockFiatTokenTestHelperDispatcher { contract_address: mock_token };
 
@@ -806,8 +806,8 @@ fn test_deposit_for_burn_happy_path() {
             @array![
                 (
                     contract_address,
-                    token_messenger_minter::token_messenger_minter::TokenMessengerMinter::Event::DepositForBurn(
-                        token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn {
+                    token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::Event::DepositForBurn(
+                        token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::DepositForBurn {
                             burn_token: mock_token,
                             amount,
                             depositor,
@@ -828,7 +828,7 @@ fn test_deposit_for_burn_happy_path() {
 #[test]
 fn test_deposit_for_burn_with_hook_happy_path() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
     let token_helper = IMockFiatTokenTestHelperDispatcher { contract_address: mock_token };
 
@@ -882,8 +882,8 @@ fn test_deposit_for_burn_with_hook_happy_path() {
             @array![
                 (
                     contract_address,
-                    token_messenger_minter::token_messenger_minter::TokenMessengerMinter::Event::DepositForBurn(
-                        token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn {
+                    token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::Event::DepositForBurn(
+                        token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::DepositForBurn {
                             burn_token: mock_token,
                             amount,
                             depositor,
@@ -905,7 +905,7 @@ fn test_deposit_for_burn_with_hook_happy_path() {
 #[should_panic(expected: ('Contract is paused',))]
 fn test_deposit_for_burn_fails_when_paused() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let pausable_dispatcher = IPausableDispatcher { contract_address };
 
     // Pause the contract
@@ -930,7 +930,7 @@ fn test_deposit_for_burn_fails_when_paused() {
 #[should_panic(expected: ('Address is denylisted',))]
 fn test_deposit_for_burn_fails_when_denylisted() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let denylistable_dispatcher = IDenylistableDispatcher { contract_address };
 
     let depositor: ContractAddress = 0x100.try_into().unwrap(); // Use numeric depositor
@@ -1064,7 +1064,7 @@ fn test_deposit_for_burn_succeeds_when_proxy_and_origin_not_denylisted() {
 #[should_panic(expected: ('Amount must be nonzero',))]
 fn test_deposit_for_burn_fails_with_zero_amount() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     dispatcher
         .deposit_for_burn(
@@ -1082,7 +1082,7 @@ fn test_deposit_for_burn_fails_with_zero_amount() {
 #[should_panic(expected: ('Mint recipient must be non-zero',))]
 fn test_deposit_for_burn_fails_with_zero_mint_recipient() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     dispatcher
         .deposit_for_burn(
@@ -1095,7 +1095,7 @@ fn test_deposit_for_burn_fails_with_zero_mint_recipient() {
 #[should_panic(expected: ('Max fee must be less than amt',))]
 fn test_deposit_for_burn_fails_when_max_fee_equals_amount() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     dispatcher
         .deposit_for_burn(
@@ -1113,7 +1113,7 @@ fn test_deposit_for_burn_fails_when_max_fee_equals_amount() {
 #[should_panic(expected: ('Hook data is empty',))]
 fn test_deposit_for_burn_with_hook_fails_with_empty_hook_data() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     dispatcher
         .deposit_for_burn_with_hook(
@@ -1131,7 +1131,7 @@ fn test_deposit_for_burn_with_hook_fails_with_empty_hook_data() {
 #[test]
 fn test_handle_receive_finalized_message_happy_path() {
     let (contract_address, local_message_transmitter, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
 
     // Setup token mapping
@@ -1151,7 +1151,7 @@ fn test_handle_receive_finalized_message_happy_path() {
     let depositor: u256 = 0x100.into(); // Use numeric depositor
     let max_fee: u256 = 10_u256;
 
-    let message_body = BurnMessage::format_message_for_relay(
+    let message_body = BurnMessageV2::format_message_for_relay(
         0_u32, // version
         burn_token,
         mint_recipient_u256,
@@ -1183,8 +1183,8 @@ fn test_handle_receive_finalized_message_happy_path() {
             @array![
                 (
                     contract_address,
-                    token_messenger_minter::token_messenger_minter::TokenMessengerMinter::Event::MintAndWithdraw(
-                        token_messenger_minter::token_messenger_minter::TokenMessengerMinter::MintAndWithdraw {
+                    token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::Event::MintAndWithdraw(
+                        token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::MintAndWithdraw {
                             mint_recipient,
                             amount,
                             mint_token: mock_token,
@@ -1199,7 +1199,7 @@ fn test_handle_receive_finalized_message_happy_path() {
 #[test]
 fn test_handle_receive_unfinalized_message_happy_path() {
     let (contract_address, local_message_transmitter, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
 
     // Setup token mapping
@@ -1256,8 +1256,8 @@ fn test_handle_receive_unfinalized_message_happy_path() {
             @array![
                 (
                     contract_address,
-                    token_messenger_minter::token_messenger_minter::TokenMessengerMinter::Event::MintAndWithdraw(
-                        token_messenger_minter::token_messenger_minter::TokenMessengerMinter::MintAndWithdraw {
+                    token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::Event::MintAndWithdraw(
+                        token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::MintAndWithdraw {
                             mint_recipient,
                             amount: amount - fee_executed, // 950 (recipient gets amount minus fee)
                             mint_token: mock_token,
@@ -1273,7 +1273,7 @@ fn test_handle_receive_unfinalized_message_happy_path() {
 #[should_panic(expected: ('Caller not local MT',))]
 fn test_handle_receive_finalized_message_fails_invalid_caller() {
     let (contract_address, _, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     // Try to call as unauthorized address
     start_cheat_caller_address(
@@ -1286,7 +1286,7 @@ fn test_handle_receive_finalized_message_fails_invalid_caller() {
 #[should_panic(expected: ('Remote token messenger invalid',))]
 fn test_handle_receive_finalized_message_fails_invalid_remote_token_messenger() {
     let (contract_address, local_message_transmitter, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     // Call with wrong remote token messenger
     start_cheat_caller_address(contract_address, local_message_transmitter);
@@ -1301,7 +1301,7 @@ fn test_handle_receive_finalized_message_fails_invalid_remote_token_messenger() 
 #[should_panic(expected: ('Unsupported finality threshold',))]
 fn test_handle_receive_unfinalized_message_fails_low_finality_threshold() {
     let (contract_address, local_message_transmitter, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     // Call with finality threshold below minimum
     start_cheat_caller_address(contract_address, local_message_transmitter);
@@ -1316,10 +1316,10 @@ fn test_handle_receive_unfinalized_message_fails_low_finality_threshold() {
 #[should_panic(expected: ('Invalid message body version',))]
 fn test_handle_receive_message_fails_wrong_version() {
     let (contract_address, local_message_transmitter, _) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
     // Create message with wrong version
-    let message_body = BurnMessage::format_message_for_relay(
+    let message_body = BurnMessageV2::format_message_for_relay(
         1_u32, // Wrong version (1 instead of 0)
         0x200.into(), // Use numeric burn_token
         0x200.into(), // Use numeric mint_recipient
@@ -1337,7 +1337,7 @@ fn test_handle_receive_message_fails_wrong_version() {
 #[should_panic(expected: ('Message expired must re-sign',))]
 fn test_handle_receive_message_fails_expired() {
     let (contract_address, local_message_transmitter, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
 
     // Setup token mapping first
@@ -1371,7 +1371,7 @@ fn test_handle_receive_message_fails_expired() {
 #[should_panic(expected: ('Fee equals or exceeds amount',))]
 fn test_handle_receive_message_fails_fee_equals_amount() {
     let (contract_address, local_message_transmitter, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
 
     // Setup token mapping first
@@ -1404,7 +1404,7 @@ fn test_handle_receive_message_fails_fee_equals_amount() {
 #[should_panic(expected: ('Fee exceeds max fee',))]
 fn test_handle_receive_message_fails_fee_exceeds_max() {
     let (contract_address, local_message_transmitter, mock_token) = deploy_token_messenger_minter();
-    let dispatcher = ITokenMessengerMinterDispatcher { contract_address };
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
     let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
 
     // Setup token mapping first

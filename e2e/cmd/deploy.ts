@@ -64,13 +64,13 @@ async function deployMessageTransmitter(accounts: any): Promise<string> {
   );
   const mtSierra = json.parse(
     await fs.readFile(
-      path.join(__dirname, '../../target/dev/message_transmitter_MessageTransmitter.contract_class.json'), 
+      path.join(__dirname, '../../target/dev/message_transmitter_MessageTransmitterV2.contract_class.json'), 
       'utf8'
     )
   );
   const mtCasm = json.parse(
     await fs.readFile(
-      path.join(__dirname, '../../target/dev/message_transmitter_MessageTransmitter.compiled_contract_class.json'), 
+      path.join(__dirname, '../../target/dev/message_transmitter_MessageTransmitterV2.compiled_contract_class.json'), 
       'utf8'
     )
   );
@@ -83,7 +83,7 @@ async function deployMessageTransmitter(accounts: any): Promise<string> {
   console.log(`✅ Message Transmitter deployed: ${mtDeployResponse.deploy.contract_address}`);
   
   // Save Message Transmitter ABI
-  const mtAbiPath = path.join(__dirname, '../resources/message_transmitter.abi.json');
+  const mtAbiPath = path.join(__dirname, '../resources/message_transmitter_v2.abi.json');
   await fs.writeFile(mtAbiPath, JSON.stringify(mtSierra.abi, null, 2));
   console.log(`✅ Message Transmitter ABI saved to: ${mtAbiPath}`);
   return mtDeployResponse.deploy.contract_address;
@@ -99,14 +99,14 @@ async function deployTokenMessengerMinter(accounts: any): Promise<string> {
   );
   const tmmSierra = json.parse(
     await fs.readFile(
-      path.join(__dirname, '../../target/dev/token_messenger_minter_TokenMessengerMinter.contract_class.json'), 
+      path.join(__dirname, '../../target/dev/token_messenger_minter_TokenMessengerMinterV2.contract_class.json'), 
       'utf8'
     )
   );
   
   const tmmCasm = json.parse(
     await fs.readFile(
-      path.join(__dirname, '../../target/dev/token_messenger_minter_TokenMessengerMinter.compiled_contract_class.json'), 
+      path.join(__dirname, '../../target/dev/token_messenger_minter_TokenMessengerMinterV2.compiled_contract_class.json'), 
       'utf8'
     )
   );
@@ -121,7 +121,7 @@ async function deployTokenMessengerMinter(accounts: any): Promise<string> {
   console.log(`✅ Token Messenger Minter deployed: ${tmmDeployResponse.deploy.contract_address}`); 
   
   // Save Token Messenger Minter ABI
-  const tmmAbiPath = path.join(__dirname, '../resources/token_messenger_minter.abi.json');
+  const tmmAbiPath = path.join(__dirname, '../resources/token_messenger_minter_v2.abi.json');
   await fs.writeFile(tmmAbiPath, JSON.stringify(tmmSierra.abi, null, 2));
   console.log(`✅ Token Messenger Minter ABI saved to: ${tmmAbiPath}`); 
   return tmmDeployResponse.deploy.contract_address;
@@ -198,8 +198,8 @@ async function deploy() {
   
   // Save contract addresses to contracts.json
   const contracts = {
-    tokenMessengerMinter: tmmContractAddress,
-    messageTransmitter: mtContractAddress,
+    tokenMessengerMinterV2: tmmContractAddress,
+    messageTransmitterV2: mtContractAddress,
     stablecoin: stablecoinContractAddress,
   };
   

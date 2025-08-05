@@ -15,7 +15,7 @@
 // limitations under the License.
 
 use core::byte_array::ByteArrayTrait;
-use message::Message;
+use message::MessageV2;
 
 fn get_test_data() -> (u32, u32, u32, u256, u256, u256, u32, ByteArray) {
     let version = 0_u32;
@@ -56,7 +56,7 @@ fn test_format_message_for_relay_basic() {
     ) =
         get_test_data();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -85,7 +85,7 @@ fn test_all_fields() {
     ) =
         get_test_data();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -97,16 +97,16 @@ fn test_all_fields() {
     );
 
     // Test all getter functions
-    assert_eq!(Message::get_version(@message), version);
-    assert_eq!(Message::get_source_domain(@message), source_domain);
-    assert_eq!(Message::get_destination_domain(@message), destination_domain);
-    assert_eq!(Message::get_sender(@message), sender);
-    assert_eq!(Message::get_recipient(@message), recipient);
-    assert_eq!(Message::get_destination_caller(@message), destination_caller);
-    assert_eq!(Message::get_min_finality_threshold(@message), min_finality_threshold);
+    assert_eq!(MessageV2::get_version(@message), version);
+    assert_eq!(MessageV2::get_source_domain(@message), source_domain);
+    assert_eq!(MessageV2::get_destination_domain(@message), destination_domain);
+    assert_eq!(MessageV2::get_sender(@message), sender);
+    assert_eq!(MessageV2::get_recipient(@message), recipient);
+    assert_eq!(MessageV2::get_destination_caller(@message), destination_caller);
+    assert_eq!(MessageV2::get_min_finality_threshold(@message), min_finality_threshold);
 
     // Test message body extraction
-    let extracted_message_body = Message::get_message_body(@message);
+    let extracted_message_body = MessageV2::get_message_body(@message);
     assert_eq!(extracted_message_body.len(), message_body.len());
     assert_eq!(extracted_message_body.at(0).unwrap(), 0x12);
     assert_eq!(extracted_message_body.at(1).unwrap(), 0x34);
@@ -128,7 +128,7 @@ fn test_empty_message_body() {
         get_test_data();
     let empty_message_body: ByteArray = Default::default();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -143,7 +143,7 @@ fn test_empty_message_body() {
     assert_eq!(message.len(), 148_usize);
 
     // Test message body extraction
-    let extracted_message_body = Message::get_message_body(@message);
+    let extracted_message_body = MessageV2::get_message_body(@message);
     assert_eq!(extracted_message_body.len(), 0);
 }
 
@@ -169,7 +169,7 @@ fn test_large_message_body() {
         i += 1;
     }
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -181,19 +181,19 @@ fn test_large_message_body() {
     );
 
     // verify all fields are correct
-    assert_eq!(Message::get_version(@message), version);
-    assert_eq!(Message::get_source_domain(@message), source_domain);
-    assert_eq!(Message::get_destination_domain(@message), destination_domain);
-    assert_eq!(Message::get_sender(@message), sender);
-    assert_eq!(Message::get_recipient(@message), recipient);
-    assert_eq!(Message::get_destination_caller(@message), destination_caller);
-    assert_eq!(Message::get_min_finality_threshold(@message), min_finality_threshold);
+    assert_eq!(MessageV2::get_version(@message), version);
+    assert_eq!(MessageV2::get_source_domain(@message), source_domain);
+    assert_eq!(MessageV2::get_destination_domain(@message), destination_domain);
+    assert_eq!(MessageV2::get_sender(@message), sender);
+    assert_eq!(MessageV2::get_recipient(@message), recipient);
+    assert_eq!(MessageV2::get_destination_caller(@message), destination_caller);
+    assert_eq!(MessageV2::get_min_finality_threshold(@message), min_finality_threshold);
 
     // Message should have correct length: 148 bytes (fixed fields) + 100 bytes message body
     assert_eq!(message.len(), 248_usize);
 
     // Test message body extraction
-    let extracted_message_body = Message::get_message_body(@message);
+    let extracted_message_body = MessageV2::get_message_body(@message);
     assert_eq!(extracted_message_body.len(), 100);
 
     // Verify message body content
@@ -215,7 +215,7 @@ fn test_zero_values() {
     let min_finality_threshold = 0_u32;
     let message_body: ByteArray = Default::default();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -226,14 +226,14 @@ fn test_zero_values() {
         message_body,
     );
 
-    assert_eq!(Message::get_version(@message), version);
-    assert_eq!(Message::get_source_domain(@message), source_domain);
-    assert_eq!(Message::get_destination_domain(@message), destination_domain);
-    assert_eq!(Message::get_sender(@message), sender);
-    assert_eq!(Message::get_recipient(@message), recipient);
-    assert_eq!(Message::get_destination_caller(@message), destination_caller);
-    assert_eq!(Message::get_min_finality_threshold(@message), min_finality_threshold);
-    assert_eq!(Message::get_message_body(@message).len(), 0);
+    assert_eq!(MessageV2::get_version(@message), version);
+    assert_eq!(MessageV2::get_source_domain(@message), source_domain);
+    assert_eq!(MessageV2::get_destination_domain(@message), destination_domain);
+    assert_eq!(MessageV2::get_sender(@message), sender);
+    assert_eq!(MessageV2::get_recipient(@message), recipient);
+    assert_eq!(MessageV2::get_destination_caller(@message), destination_caller);
+    assert_eq!(MessageV2::get_min_finality_threshold(@message), min_finality_threshold);
+    assert_eq!(MessageV2::get_message_body(@message).len(), 0);
 }
 
 #[test]
@@ -248,7 +248,7 @@ fn test_max_values() {
     let min_finality_threshold = 0xFFFFFFFF_u32;
     let message_body: ByteArray = Default::default();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -259,14 +259,14 @@ fn test_max_values() {
         message_body,
     );
 
-    assert_eq!(Message::get_version(@message), version);
-    assert_eq!(Message::get_source_domain(@message), source_domain);
-    assert_eq!(Message::get_destination_domain(@message), destination_domain);
-    assert_eq!(Message::get_sender(@message), sender);
-    assert_eq!(Message::get_recipient(@message), recipient);
-    assert_eq!(Message::get_destination_caller(@message), destination_caller);
-    assert_eq!(Message::get_min_finality_threshold(@message), min_finality_threshold);
-    assert_eq!(Message::get_message_body(@message).len(), 0);
+    assert_eq!(MessageV2::get_version(@message), version);
+    assert_eq!(MessageV2::get_source_domain(@message), source_domain);
+    assert_eq!(MessageV2::get_destination_domain(@message), destination_domain);
+    assert_eq!(MessageV2::get_sender(@message), sender);
+    assert_eq!(MessageV2::get_recipient(@message), recipient);
+    assert_eq!(MessageV2::get_destination_caller(@message), destination_caller);
+    assert_eq!(MessageV2::get_min_finality_threshold(@message), min_finality_threshold);
+    assert_eq!(MessageV2::get_message_body(@message).len(), 0);
 }
 
 #[test]
@@ -283,7 +283,7 @@ fn test_validate_message_format_valid() {
     ) =
         get_test_data();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -295,7 +295,7 @@ fn test_validate_message_format_valid() {
     );
 
     // Should not panic for valid message
-    Message::validate_message_format(@message);
+    MessageV2::validate_message_format(@message);
 }
 
 #[test]
@@ -313,7 +313,7 @@ fn test_validate_message_format_minimum_length() {
         get_test_data();
     let empty_message_body: ByteArray = Default::default();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -325,7 +325,7 @@ fn test_validate_message_format_minimum_length() {
     );
 
     // Should not panic for minimum valid length (148 bytes)
-    Message::validate_message_format(@message);
+    MessageV2::validate_message_format(@message);
 }
 
 #[test]
@@ -339,7 +339,7 @@ fn test_validate_message_format_too_short() {
     }
 
     // Should panic for message body length < 148
-    Message::validate_message_format(@short_message);
+    MessageV2::validate_message_format(@short_message);
 }
 
 #[test]
@@ -352,7 +352,7 @@ fn test_get_message_body_too_short() {
         i += 1;
     }
 
-    Message::get_message_body(@short_message);
+    MessageV2::get_message_body(@short_message);
 }
 
 #[test]
@@ -369,7 +369,7 @@ fn test_message_structure_consistency() {
     ) =
         get_test_data();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -381,16 +381,16 @@ fn test_message_structure_consistency() {
     );
 
     // Test that extracting and reformatting produces the same result
-    let extracted_version = Message::get_version(@message);
-    let extracted_source_domain = Message::get_source_domain(@message);
-    let extracted_destination_domain = Message::get_destination_domain(@message);
-    let extracted_sender = Message::get_sender(@message);
-    let extracted_recipient = Message::get_recipient(@message);
-    let extracted_destination_caller = Message::get_destination_caller(@message);
-    let extracted_min_finality_threshold = Message::get_min_finality_threshold(@message);
-    let extracted_message_body = Message::get_message_body(@message);
+    let extracted_version = MessageV2::get_version(@message);
+    let extracted_source_domain = MessageV2::get_source_domain(@message);
+    let extracted_destination_domain = MessageV2::get_destination_domain(@message);
+    let extracted_sender = MessageV2::get_sender(@message);
+    let extracted_recipient = MessageV2::get_recipient(@message);
+    let extracted_destination_caller = MessageV2::get_destination_caller(@message);
+    let extracted_min_finality_threshold = MessageV2::get_min_finality_threshold(@message);
+    let extracted_message_body = MessageV2::get_message_body(@message);
 
-    let rebuilt_message = Message::format_message(
+    let rebuilt_message = MessageV2::format_message(
         extracted_version,
         extracted_source_domain,
         extracted_destination_domain,
@@ -427,7 +427,7 @@ fn test_field_independence() {
 
     // Test that changing one field doesn't affect others
     let modified_version = version + 1;
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         modified_version,
         source_domain,
         destination_domain,
@@ -439,12 +439,12 @@ fn test_field_independence() {
     );
 
     // Only version should be different
-    assert_eq!(Message::get_version(@message), modified_version);
-    assert_eq!(Message::get_source_domain(@message), source_domain);
-    assert_eq!(Message::get_destination_domain(@message), destination_domain);
-    assert_eq!(Message::get_sender(@message), sender);
-    assert_eq!(Message::get_recipient(@message), recipient);
-    assert_eq!(Message::get_destination_caller(@message), destination_caller);
+    assert_eq!(MessageV2::get_version(@message), modified_version);
+    assert_eq!(MessageV2::get_source_domain(@message), source_domain);
+    assert_eq!(MessageV2::get_destination_domain(@message), destination_domain);
+    assert_eq!(MessageV2::get_sender(@message), sender);
+    assert_eq!(MessageV2::get_recipient(@message), recipient);
+    assert_eq!(MessageV2::get_destination_caller(@message), destination_caller);
 }
 
 #[test]
@@ -468,7 +468,7 @@ fn test_message_body_with_zero_bytes() {
     message_body.append_byte(0xAA);
     message_body.append_byte(0x00);
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -480,7 +480,7 @@ fn test_message_body_with_zero_bytes() {
     );
 
     // Test message body extraction
-    let extracted_message_body = Message::get_message_body(@message);
+    let extracted_message_body = MessageV2::get_message_body(@message);
     assert_eq!(extracted_message_body.len(), 5);
     assert_eq!(extracted_message_body.at(0).unwrap(), 0x00);
     assert_eq!(extracted_message_body.at(1).unwrap(), 0xFF);
@@ -514,7 +514,7 @@ fn test_different_message_body_sizes() {
             message_body.append_byte((i % 256).try_into().unwrap());
             i += 1;
         }
-        let message = Message::format_message(
+        let message = MessageV2::format_message(
             version,
             source_domain,
             destination_domain,
@@ -525,7 +525,7 @@ fn test_different_message_body_sizes() {
             message_body,
         );
 
-        let extracted_message_body = Message::get_message_body(@message);
+        let extracted_message_body = MessageV2::get_message_body(@message);
         assert_eq!(extracted_message_body.len(), size.into());
 
         let mut j: u32 = 0;
@@ -552,7 +552,7 @@ fn test_nonce_always_zero() {
     ) =
         get_test_data();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -563,7 +563,7 @@ fn test_nonce_always_zero() {
         message_body,
     );
 
-    assert_eq!(Message::get_nonce(@message), 0_u256);
+    assert_eq!(MessageV2::get_nonce(@message), 0_u256);
 }
 
 #[test]
@@ -580,7 +580,7 @@ fn test_finality_threshold_executed_always_zero() {
     ) =
         get_test_data();
 
-    let message = Message::format_message(
+    let message = MessageV2::format_message(
         version,
         source_domain,
         destination_domain,
@@ -591,7 +591,7 @@ fn test_finality_threshold_executed_always_zero() {
         message_body,
     );
 
-    assert_eq!(Message::get_finality_threshold_executed(@message), 0_u32);
+    assert_eq!(MessageV2::get_finality_threshold_executed(@message), 0_u32);
 }
 #[test]
 #[cairofmt::skip]
@@ -654,16 +654,16 @@ fn test_with_real_message_data() {
         message.append_byte(*data.at(i));
         i += 1;
     }
-    Message::validate_message_format(@message);
-    let message_body = Message::get_message_body(@message);
-    let version = Message::get_version(@message);
-    let source_domain = Message::get_source_domain(@message);
-    let destination_domain = Message::get_destination_domain(@message);
-    let nonce = Message::get_nonce(@message);
-    let sender = Message::get_sender(@message);
-    let recipient = Message::get_recipient(@message);
-    let destination_caller = Message::get_destination_caller(@message);
-    let min_finality_threshold = Message::get_min_finality_threshold(@message);
+    MessageV2::validate_message_format(@message);
+    let message_body = MessageV2::get_message_body(@message);
+    let version = MessageV2::get_version(@message);
+    let source_domain = MessageV2::get_source_domain(@message);
+    let destination_domain = MessageV2::get_destination_domain(@message);
+    let nonce = MessageV2::get_nonce(@message);
+    let sender = MessageV2::get_sender(@message);
+    let recipient = MessageV2::get_recipient(@message);
+    let destination_caller = MessageV2::get_destination_caller(@message);
+    let min_finality_threshold = MessageV2::get_min_finality_threshold(@message);
 
     assert_eq!(version, 1);
     assert_eq!(source_domain, 13);

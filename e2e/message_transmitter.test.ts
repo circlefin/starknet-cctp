@@ -667,7 +667,7 @@ describe('message transmitter', () => {
       const receiveEvents = messageTransmitter.contract.parseEvents(receiveReceipt);
 
       expect(receiveEvents).toEqual([expect.objectContaining({
-        'message_transmitter::message_transmitter::MessageTransmitter::MessageReceived': {
+        'message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageReceived': {
           caller: num.toBigInt(messageTransmitter.tester.address),
           source_domain: num.toBigInt(messageParams.sourceDomain),
           nonce: messageParams.nonce,

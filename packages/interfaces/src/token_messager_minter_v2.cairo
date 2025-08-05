@@ -17,7 +17,7 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-pub trait ITokenMessengerMinter<TContractState> {
+pub trait ITokenMessengerMinterV2<TContractState> {
     /// Initializes the contract.
     ///
     /// # Arguments

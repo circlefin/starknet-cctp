@@ -17,7 +17,7 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-pub trait IMessageTransmitter<TContractState> {
+pub trait IMessageTransmitterV2<TContractState> {
     /// Send a message to the destination domain and recipient.
     /// Formats the message, and emits a `MessageSent` event with message information.
     ///

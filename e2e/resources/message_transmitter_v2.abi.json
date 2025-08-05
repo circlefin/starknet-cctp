@@ -2,7 +2,7 @@
   {
     "type": "impl",
     "name": "MessageTransmitter",
-    "interface_name": "interfaces::message_transmitter::IMessageTransmitter"
+    "interface_name": "interfaces::message_transmitter_v2::IMessageTransmitterV2"
   },
   {
     "type": "struct",
@@ -52,7 +52,7 @@
   },
   {
     "type": "interface",
-    "name": "interfaces::message_transmitter::IMessageTransmitter",
+    "name": "interfaces::message_transmitter_v2::IMessageTransmitterV2",
     "items": [
       {
         "type": "function",
@@ -850,7 +850,7 @@
   },
   {
     "type": "event",
-    "name": "message_transmitter::message_transmitter::MessageTransmitter::MaxMessageBodySizeUpdated",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MaxMessageBodySizeUpdated",
     "kind": "struct",
     "members": [
       {
@@ -862,7 +862,7 @@
   },
   {
     "type": "event",
-    "name": "message_transmitter::message_transmitter::MessageTransmitter::MessageSent",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent",
     "kind": "struct",
     "members": [
       {
@@ -874,7 +874,7 @@
   },
   {
     "type": "event",
-    "name": "message_transmitter::message_transmitter::MessageTransmitter::MessageReceived",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageReceived",
     "kind": "struct",
     "members": [
       {
@@ -911,7 +911,7 @@
   },
   {
     "type": "event",
-    "name": "message_transmitter::message_transmitter::MessageTransmitter::Event",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::Event",
     "kind": "enum",
     "variants": [
       {
@@ -946,17 +946,17 @@
       },
       {
         "name": "MaxMessageBodySizeUpdated",
-        "type": "message_transmitter::message_transmitter::MessageTransmitter::MaxMessageBodySizeUpdated",
+        "type": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MaxMessageBodySizeUpdated",
         "kind": "nested"
       },
       {
         "name": "MessageSent",
-        "type": "message_transmitter::message_transmitter::MessageTransmitter::MessageSent",
+        "type": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent",
         "kind": "nested"
       },
       {
         "name": "MessageReceived",
-        "type": "message_transmitter::message_transmitter::MessageTransmitter::MessageReceived",
+        "type": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageReceived",
         "kind": "nested"
       }
     ]

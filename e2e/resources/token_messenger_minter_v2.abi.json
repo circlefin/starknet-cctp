@@ -1,8 +1,8 @@
 [
   {
     "type": "impl",
-    "name": "TokenMessengerMinterImpl",
-    "interface_name": "interfaces::token_messager_minter::ITokenMessengerMinter"
+    "name": "TokenMessengerMinterV2Impl",
+    "interface_name": "interfaces::token_messager_minter_v2::ITokenMessengerMinterV2"
   },
   {
     "type": "struct",
@@ -52,7 +52,7 @@
   },
   {
     "type": "interface",
-    "name": "interfaces::token_messager_minter::ITokenMessengerMinter",
+    "name": "interfaces::token_messager_minter_v2::ITokenMessengerMinterV2",
     "items": [
       {
         "type": "function",
@@ -1313,7 +1313,7 @@
   },
   {
     "type": "event",
-    "name": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::MintAndWithdraw",
+    "name": "token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::MintAndWithdraw",
     "kind": "struct",
     "members": [
       {
@@ -1340,7 +1340,7 @@
   },
   {
     "type": "event",
-    "name": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn",
+    "name": "token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::DepositForBurn",
     "kind": "struct",
     "members": [
       {
@@ -1397,7 +1397,7 @@
   },
   {
     "type": "event",
-    "name": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::Event",
+    "name": "token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::Event",
     "kind": "enum",
     "variants": [
       {
@@ -1452,12 +1452,12 @@
       },
       {
         "name": "MintAndWithdraw",
-        "type": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::MintAndWithdraw",
+        "type": "token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::MintAndWithdraw",
         "kind": "nested"
       },
       {
         "name": "DepositForBurn",
-        "type": "token_messenger_minter::token_messenger_minter::TokenMessengerMinter::DepositForBurn",
+        "type": "token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::DepositForBurn",
         "kind": "nested"
       }
     ]

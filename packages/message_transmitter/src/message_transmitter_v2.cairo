@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #[starknet::contract]
-pub mod MessageTransmitter {
+pub mod MessageTransmitterV2 {
     use cctp_components::attestable::AttestableComponent;
     use cctp_components::rescuable::RescuableComponent;
     use components::manageable::ManageableComponent;
@@ -23,11 +23,11 @@ pub mod MessageTransmitter {
     use components::pausable::PausableComponent;
     use components::upgradeable::UpgradeableComponent;
     use core::num::traits::Zero;
-    use interfaces::message_transmitter::IMessageTransmitter;
-    use interfaces::token_messager_minter::{
-        ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
+    use interfaces::message_transmitter_v2::IMessageTransmitterV2;
+    use interfaces::token_messager_minter_v2::{
+        ITokenMessengerMinterV2Dispatcher, ITokenMessengerMinterV2DispatcherTrait,
     };
-    use message::Message;
+    use message::MessageV2;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
@@ -163,7 +163,7 @@ pub mod MessageTransmitter {
     }
 
     #[abi(embed_v0)]
-    impl MessageTransmitter of IMessageTransmitter<ContractState> {
+    impl MessageTransmitter of IMessageTransmitterV2<ContractState> {
         fn initializer(
             ref self: ContractState,
             local_domain: u32,
@@ -223,7 +223,7 @@ pub mod MessageTransmitter {
 
             assert(!recipient.is_zero(), Errors::INVALID_RECIPIENT);
 
-            let message = Message::format_message(
+            let message = MessageV2::format_message(
                 self.version.read(),
                 self.local_domain.read(),
                 destination_domain,
@@ -255,13 +255,12 @@ pub mod MessageTransmitter {
             self.used_nonces.entry(nonce).write(true);
 
             // get token messenger dispatcher
-            let token_messenger_dispatcher = ITokenMessengerMinterDispatcher {
+            let token_messenger_dispatcher = ITokenMessengerMinterV2Dispatcher {
                 contract_address: recipient,
             };
 
             // handle receive message
             if (finality_threshold_executed < FINALITY_THRESHOLD_FINALIZED) {
-                // if the message is not finalized, we can't receive it
                 assert(
                     token_messenger_dispatcher
                         .handle_receive_unfinalized_message(
@@ -273,7 +272,6 @@ pub mod MessageTransmitter {
                     Errors::UNFINALIZED_MESSAGE_FAILED,
                 );
             } else {
-                // if the message is not confirmed, we can't receive it
                 assert(
                     token_messenger_dispatcher
                         .handle_receive_finalized_message(
@@ -342,15 +340,15 @@ pub mod MessageTransmitter {
             self.attestable.verify_attestation_signatures(message.clone(), attestation);
 
             // validate message format
-            Message::validate_message_format(@message);
+            MessageV2::validate_message_format(@message);
 
             // validate destination domain
             assert(
-                Message::get_destination_domain(@message) == self.local_domain.read(),
+                MessageV2::get_destination_domain(@message) == self.local_domain.read(),
                 Errors::INVALID_DESTINATION_DOMAIN,
             );
 
-            let destination_caller = Message::get_destination_caller(@message);
+            let destination_caller = MessageV2::get_destination_caller(@message);
             // validate destination caller
             if (!destination_caller.is_zero()) {
                 assert(
@@ -360,19 +358,21 @@ pub mod MessageTransmitter {
             }
 
             // validate version
-            assert(Message::get_version(@message) == self.version.read(), Errors::INVALID_VERSION);
+            assert(
+                MessageV2::get_version(@message) == self.version.read(), Errors::INVALID_VERSION,
+            );
 
             // validate nonce
-            let nonce = Message::get_nonce(@message);
+            let nonce = MessageV2::get_nonce(@message);
             assert(!self.used_nonces.entry(nonce).read(), Errors::NONCE_ALREADY_USED);
 
             (
                 nonce,
-                Message::get_source_domain(@message),
-                Message::get_sender(@message),
-                Message::get_recipient(@message).to_address(),
-                Message::get_finality_threshold_executed(@message),
-                Message::get_message_body(@message),
+                MessageV2::get_source_domain(@message),
+                MessageV2::get_sender(@message),
+                MessageV2::get_recipient(@message).to_address(),
+                MessageV2::get_finality_threshold_executed(@message),
+                MessageV2::get_message_body(@message),
             )
         }
     }

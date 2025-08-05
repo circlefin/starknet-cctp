@@ -20,19 +20,26 @@ use components::manageable::{IManageableDispatcher, IManageableDispatcherTrait};
 use components::ownable::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use components::pausable::{IPausableDispatcher, IPausableDispatcherTrait};
 use components::upgradeable::{IUpgradeableDispatcher, IUpgradeableDispatcherTrait};
-use interfaces::message_transmitter::{
-    IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait,
+use core::keccak::compute_keccak_byte_array;
+use interfaces::message_transmitter_v2::{
+    IMessageTransmitterV2Dispatcher, IMessageTransmitterV2DispatcherTrait,
 };
-use interfaces::token_messager_minter::ITokenMessengerMinter;
-use message::Message;
-use message_transmitter::MessageTransmitter;
+use interfaces::token_messager_minter_v2::ITokenMessengerMinterV2;
+use message::MessageV2;
+use message_transmitter::MessageTransmitterV2;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, declare, spy_events,
     start_cheat_caller_address, stop_cheat_caller_address,
 };
 use starknet::ContractAddress;
+use starknet::eth_signature::public_key_point_to_eth_address;
+use starknet::secp256_trait::{recover_public_key, signature_from_vrs};
+use starknet::secp256k1::Secp256k1Point;
 use test_utils::hex_string_to_bytes_array;
-use utils::{AddressConversionTrait, append_u256_be, append_u32_be};
+use utils::{
+    AddressConversionTrait, append_u256_be, append_u32_be, extract_u256_be, reverse_u256_bytes,
+};
+
 
 // mock token messenger minter contract
 #[starknet::contract]
@@ -48,7 +55,7 @@ mod MockTokenMessengerMinter {
     }
 
     #[abi(embed_v0)]
-    impl MockTokenMessengerMinter of super::ITokenMessengerMinter<ContractState> {
+    impl MockTokenMessengerMinter of super::ITokenMessengerMinterV2<ContractState> {
         fn initialize(
             ref self: ContractState,
             owner: ContractAddress,
@@ -201,6 +208,27 @@ fn format_message(
     message
 }
 
+fn get_attester(message: @ByteArray, attestation: @ByteArray) -> ContractAddress {
+    let cairo_hash = compute_keccak_byte_array(message);
+    // cairo hash is u256 in little-endian, so we need to reverse it to get the big-endian
+    // hash, which is the same as ethereum hash
+    let digest = reverse_u256_bytes(cairo_hash);
+
+    let r: u256 = extract_u256_be(attestation, 0);
+    let s: u256 = extract_u256_be(attestation, 32);
+    let v: u32 = attestation.at(64).unwrap().into();
+
+    let signature = signature_from_vrs(v, r, s);
+    let point: Secp256k1Point = recover_public_key(digest, signature)
+        .expect('Failed to recover public key');
+
+    // convert the public key point to eth address
+    let recovered_attester: felt252 = public_key_point_to_eth_address(point)
+        .try_into()
+        .expect('Invalid attester address size');
+    recovered_attester.try_into().expect('Invalid attester address')
+}
+
 #[derive(Drop, Destruct, PanicDestruct)]
 struct TestData {
     admin: ContractAddress,
@@ -270,7 +298,7 @@ fn deploy_mock_token_messenger() -> ContractAddress {
 }
 
 fn deploy_contract() -> ContractAddress {
-    let contract = declare("MessageTransmitter").unwrap().contract_class();
+    let contract = declare("MessageTransmitterV2").unwrap().contract_class();
     let test_data = get_test_data();
     let constructor_calldata = array![test_data.admin.into()];
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
@@ -279,7 +307,7 @@ fn deploy_contract() -> ContractAddress {
 
 fn deploy_contract_then_initialize() -> ContractAddress {
     let contract_address = deploy_contract();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.admin);
@@ -369,7 +397,7 @@ fn test_upgradeable_component_exists() {
 #[test]
 fn test_initializer() {
     let contract_address = deploy_contract();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.admin);
@@ -425,7 +453,7 @@ fn test_initializer() {
 #[test]
 fn test_set_max_message_body_size() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.owner);
@@ -443,7 +471,7 @@ fn test_set_max_message_body_size() {
 #[test]
 fn test_send_message() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
     let mut spy = spy_events();
 
@@ -476,8 +504,8 @@ fn test_send_message() {
             @array![
                 (
                     contract_address,
-                    MessageTransmitter::Event::MessageSent(
-                        MessageTransmitter::MessageSent { message },
+                    MessageTransmitterV2::Event::MessageSent(
+                        MessageTransmitterV2::MessageSent { message },
                     ),
                 ),
             ],
@@ -487,7 +515,7 @@ fn test_send_message() {
 #[test]
 fn test_receive_unfinalized_message() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender = test_data.owner.to_u256();
@@ -518,10 +546,10 @@ fn test_receive_unfinalized_message() {
     );
 
     // set up attester
+    let attester = get_attester(@message, @attestation);
     start_cheat_caller_address(contract_address, test_data.attester_manager);
     attestable_dispatcher.set_signature_threshold(1);
-    attestable_dispatcher
-        .enable_attester(0x9ef802408cca629e59622d2e630ec12474d8456f.try_into().unwrap());
+    attestable_dispatcher.enable_attester(attester);
     stop_cheat_caller_address(contract_address);
 
     let mut spy = spy_events();
@@ -538,16 +566,16 @@ fn test_receive_unfinalized_message() {
             @array![
                 (
                     contract_address,
-                    MessageTransmitter::Event::MessageReceived(
-                        MessageTransmitter::MessageReceived {
+                    MessageTransmitterV2::Event::MessageReceived(
+                        MessageTransmitterV2::MessageReceived {
                             caller: test_data.owner,
                             source_domain: test_data.local_domain,
                             nonce,
                             sender,
-                            finality_threshold_executed: Message::get_finality_threshold_executed(
+                            finality_threshold_executed: MessageV2::get_finality_threshold_executed(
                                 @message,
                             ),
-                            message_body: Message::get_message_body(@message),
+                            message_body: MessageV2::get_message_body(@message),
                         },
                     ),
                 ),
@@ -558,7 +586,7 @@ fn test_receive_unfinalized_message() {
 #[test]
 fn test_receive_finalized_message() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender = test_data.owner.to_u256();
@@ -590,10 +618,10 @@ fn test_receive_finalized_message() {
     );
 
     // set up attester
+    let attester = get_attester(@message, @attestation);
     start_cheat_caller_address(contract_address, test_data.attester_manager);
     attestable_dispatcher.set_signature_threshold(1);
-    attestable_dispatcher
-        .enable_attester(0x326c686135fc3892941938c21775640543d18af6.try_into().unwrap());
+    attestable_dispatcher.enable_attester(attester);
     stop_cheat_caller_address(contract_address);
 
     let mut spy = spy_events();
@@ -610,16 +638,16 @@ fn test_receive_finalized_message() {
             @array![
                 (
                     contract_address,
-                    MessageTransmitter::Event::MessageReceived(
-                        MessageTransmitter::MessageReceived {
+                    MessageTransmitterV2::Event::MessageReceived(
+                        MessageTransmitterV2::MessageReceived {
                             caller: test_data.owner,
                             source_domain: test_data.local_domain,
                             nonce,
                             sender,
-                            finality_threshold_executed: Message::get_finality_threshold_executed(
+                            finality_threshold_executed: MessageV2::get_finality_threshold_executed(
                                 @message,
                             ),
-                            message_body: Message::get_message_body(@message),
+                            message_body: MessageV2::get_message_body(@message),
                         },
                     ),
                 ),
@@ -630,7 +658,7 @@ fn test_receive_finalized_message() {
 #[test]
 fn test_receive_message_with_zero_destination_caller() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender = test_data.owner.to_u256();
@@ -661,10 +689,10 @@ fn test_receive_message_with_zero_destination_caller() {
     );
 
     // set up attester
+    let attester = get_attester(@message, @attestation);
     start_cheat_caller_address(contract_address, test_data.attester_manager);
     attestable_dispatcher.set_signature_threshold(1);
-    attestable_dispatcher
-        .enable_attester(0xd46d7a1cf26b275b777af0ab793faa65bde84e1f.try_into().unwrap());
+    attestable_dispatcher.enable_attester(attester);
     stop_cheat_caller_address(contract_address);
 
     let mut spy = spy_events();
@@ -681,16 +709,16 @@ fn test_receive_message_with_zero_destination_caller() {
             @array![
                 (
                     contract_address,
-                    MessageTransmitter::Event::MessageReceived(
-                        MessageTransmitter::MessageReceived {
+                    MessageTransmitterV2::Event::MessageReceived(
+                        MessageTransmitterV2::MessageReceived {
                             caller: test_data.owner,
                             source_domain: test_data.local_domain,
                             nonce,
                             sender,
-                            finality_threshold_executed: Message::get_finality_threshold_executed(
+                            finality_threshold_executed: MessageV2::get_finality_threshold_executed(
                                 @message,
                             ),
-                            message_body: Message::get_message_body(@message),
+                            message_body: MessageV2::get_message_body(@message),
                         },
                     ),
                 ),
@@ -701,7 +729,7 @@ fn test_receive_message_with_zero_destination_caller() {
 #[test]
 fn test_is_nonce_used() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
 
     // Nonce 0 is used after initialization
@@ -738,10 +766,11 @@ fn test_is_nonce_used() {
         "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
     );
 
+    // set up attester
+    let attester = get_attester(@message, @attestation);
     start_cheat_caller_address(contract_address, test_data.attester_manager);
     attestable_dispatcher.set_signature_threshold(1);
-    attestable_dispatcher
-        .enable_attester(0xd46d7a1cf26b275b777af0ab793faa65bde84e1f.try_into().unwrap());
+    attestable_dispatcher.enable_attester(attester);
     stop_cheat_caller_address(contract_address);
 
     assert!(!token_messenger_helper.is_finalized(), "Token messenger should not be finalized");
@@ -756,7 +785,7 @@ fn test_is_nonce_used() {
 #[test]
 fn test_get_local_domain() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     assert_eq!(dispatcher.get_local_domain(), test_data.local_domain);
@@ -765,7 +794,7 @@ fn test_get_local_domain() {
 #[test]
 fn test_get_version() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     assert_eq!(dispatcher.get_version(), test_data.version);
@@ -779,7 +808,7 @@ fn test_get_version() {
 #[should_panic(expected: ('Caller is not the admin',))]
 fn test_non_admin_cannot_initialize() {
     let contract_address = deploy_contract();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.owner);
@@ -801,7 +830,7 @@ fn test_non_admin_cannot_initialize() {
 #[should_panic(expected: ('Already initialized',))]
 fn test_initialize_twice() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.admin);
@@ -823,7 +852,7 @@ fn test_initialize_twice() {
 #[should_panic(expected: ('Invalid max message body size',))]
 fn test_initialize_with_invalid_max_message_body_size() {
     let contract_address = deploy_contract();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.admin);
@@ -845,7 +874,7 @@ fn test_initialize_with_invalid_max_message_body_size() {
 #[should_panic(expected: ('Contract is paused',))]
 fn test_send_message_with_paused_contract() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let pausable_dispatcher = IPausableDispatcher { contract_address };
     let test_data = get_test_data();
 
@@ -867,7 +896,7 @@ fn test_send_message_with_paused_contract() {
 #[should_panic(expected: ('Domain is local domain',))]
 fn test_send_message_with_invalid_destination_domain() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.owner);
@@ -885,7 +914,7 @@ fn test_send_message_with_invalid_destination_domain() {
 #[should_panic(expected: ('Message body exceeds max size',))]
 fn test_send_message_with_invalid_message_body() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.owner);
@@ -904,7 +933,7 @@ fn test_send_message_with_invalid_message_body() {
 #[should_panic(expected: ('Recipient must be non-zero',))]
 fn test_send_message_with_invalid_recipient() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.owner);
@@ -922,7 +951,7 @@ fn test_send_message_with_invalid_recipient() {
 #[should_panic(expected: ('Contract is paused',))]
 fn test_receive_message_with_paused_contract() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let pausable_dispatcher = IPausableDispatcher { contract_address };
     let test_data = get_test_data();
 
@@ -937,7 +966,7 @@ fn test_receive_message_with_paused_contract() {
 #[should_panic(expected: ('Invalid message: too short',))]
 fn test_receive_message_with_invalid_message_body() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let attestation = hex_string_to_bytes_array(
@@ -958,7 +987,7 @@ fn test_receive_message_with_invalid_message_body() {
 #[should_panic(expected: ('Invalid destination domain',))]
 fn test_receive_message_with_invalid_domain() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
@@ -994,7 +1023,7 @@ fn test_receive_message_with_invalid_domain() {
 #[should_panic(expected: ('Invalid destination caller',))]
 fn test_receive_message_with_invalid_destination_caller() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
@@ -1031,7 +1060,7 @@ fn test_receive_message_with_invalid_destination_caller() {
 #[should_panic(expected: ('Invalid attestation',))]
 fn test_receive_message_with_invalid_attestation() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
 
@@ -1058,7 +1087,7 @@ fn test_receive_message_with_invalid_attestation() {
 #[should_panic(expected: ('Invalid message version',))]
 fn test_receive_message_with_invalid_version() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
@@ -1096,7 +1125,7 @@ fn test_receive_message_with_invalid_version() {
 #[should_panic(expected: ('Nonce already used',))]
 fn test_receive_message_with_invalid_nonce() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
@@ -1134,7 +1163,7 @@ fn test_receive_message_with_invalid_nonce() {
 #[should_panic(expected: ('Failed unfinalized message',))]
 fn test_failed_handle_unfinalized_message() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
@@ -1155,14 +1184,6 @@ fn test_failed_handle_unfinalized_message() {
     let attestation = hex_string_to_bytes_array(
         "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
     );
-
-    // set up attester
-    start_cheat_caller_address(contract_address, test_data.attester_manager);
-    attestable_dispatcher.set_signature_threshold(1);
-    attestable_dispatcher
-        .enable_attester(0x9ef802408cca629e59622d2e630ec12474d8456f.try_into().unwrap());
-    stop_cheat_caller_address(contract_address);
-
     let message = format_message(
         test_data.version,
         test_data.local_domain,
@@ -1176,6 +1197,13 @@ fn test_failed_handle_unfinalized_message() {
         test_data.message_body,
     );
 
+    // set up attester
+    let attester = get_attester(@message, @attestation);
+    start_cheat_caller_address(contract_address, test_data.attester_manager);
+    attestable_dispatcher.set_signature_threshold(1);
+    attestable_dispatcher.enable_attester(attester);
+    stop_cheat_caller_address(contract_address);
+
     start_cheat_caller_address(contract_address, test_data.owner);
     dispatcher.receive_message(message.clone(), attestation);
 }
@@ -1184,7 +1212,7 @@ fn test_failed_handle_unfinalized_message() {
 #[should_panic(expected: ('Failed finalized message',))]
 fn test_failed_handle_finalized_message() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
@@ -1205,14 +1233,6 @@ fn test_failed_handle_finalized_message() {
     let attestation = hex_string_to_bytes_array(
         "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
     );
-
-    // set up attester
-    start_cheat_caller_address(contract_address, test_data.attester_manager);
-    attestable_dispatcher.set_signature_threshold(1);
-    attestable_dispatcher
-        .enable_attester(0x326c686135fc3892941938c21775640543d18af6.try_into().unwrap());
-    stop_cheat_caller_address(contract_address);
-
     let message = format_message(
         test_data.version,
         test_data.local_domain,
@@ -1226,6 +1246,13 @@ fn test_failed_handle_finalized_message() {
         test_data.message_body,
     );
 
+    // set up attester
+    let attester = get_attester(@message, @attestation);
+    start_cheat_caller_address(contract_address, test_data.attester_manager);
+    attestable_dispatcher.set_signature_threshold(1);
+    attestable_dispatcher.enable_attester(attester);
+    stop_cheat_caller_address(contract_address);
+
     start_cheat_caller_address(contract_address, test_data.owner);
     dispatcher.receive_message(message.clone(), attestation);
 }
@@ -1234,7 +1261,7 @@ fn test_failed_handle_finalized_message() {
 #[should_panic(expected: ('Caller is not the owner',))]
 fn test_set_max_message_body_size_not_owner() {
     let contract_address = deploy_contract_then_initialize();
-    let dispatcher = IMessageTransmitterDispatcher { contract_address };
+    let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let test_data = get_test_data();
 
     start_cheat_caller_address(contract_address, test_data.admin);

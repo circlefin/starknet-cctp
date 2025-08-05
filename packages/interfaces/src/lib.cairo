@@ -14,13 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod message_transmitter;
-pub mod token_messager_minter;
+pub mod message_transmitter_v2;
+pub mod token_messager_minter_v2;
 
-pub use message_transmitter::{
-    IMessageTransmitter, IMessageTransmitterDispatcher, IMessageTransmitterDispatcherTrait,
+pub use message_transmitter_v2::{
+    IMessageTransmitterV2, IMessageTransmitterV2Dispatcher, IMessageTransmitterV2DispatcherTrait,
 };
 
-pub use token_messager_minter::{
-    ITokenMessengerMinter, ITokenMessengerMinterDispatcher, ITokenMessengerMinterDispatcherTrait,
+pub use token_messager_minter_v2::{
+    ITokenMessengerMinterV2, ITokenMessengerMinterV2Dispatcher,
+    ITokenMessengerMinterV2DispatcherTrait,
 };

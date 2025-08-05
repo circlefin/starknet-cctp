@@ -14,6 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod token_messenger_minter;
+pub mod token_messenger_minter_v2;
 
-pub use token_messenger_minter::TokenMessengerMinter;
+pub use token_messenger_minter_v2::TokenMessengerMinterV2;
