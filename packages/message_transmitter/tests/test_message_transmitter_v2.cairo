@@ -312,7 +312,7 @@ fn deploy_contract_then_initialize() -> ContractAddress {
 
     start_cheat_caller_address(contract_address, test_data.admin);
     dispatcher
-        .initializer(
+        .initialize(
             test_data.local_domain.into(),
             test_data.version.into(),
             test_data.owner.into(),
@@ -402,7 +402,7 @@ fn test_initializer() {
 
     start_cheat_caller_address(contract_address, test_data.admin);
     dispatcher
-        .initializer(
+        .initialize(
             test_data.local_domain.into(),
             test_data.version.into(),
             test_data.owner.into(),
@@ -813,7 +813,7 @@ fn test_non_admin_cannot_initialize() {
 
     start_cheat_caller_address(contract_address, test_data.owner);
     dispatcher
-        .initializer(
+        .initialize(
             test_data.local_domain.into(),
             test_data.version.into(),
             test_data.owner.into(),
@@ -835,7 +835,7 @@ fn test_initialize_twice() {
 
     start_cheat_caller_address(contract_address, test_data.admin);
     dispatcher
-        .initializer(
+        .initialize(
             test_data.local_domain.into(),
             test_data.version.into(),
             test_data.owner.into(),
@@ -857,7 +857,7 @@ fn test_initialize_with_invalid_max_message_body_size() {
 
     start_cheat_caller_address(contract_address, test_data.admin);
     dispatcher
-        .initializer(
+        .initialize(
             test_data.local_domain.into(),
             test_data.version.into(),
             test_data.owner.into(),

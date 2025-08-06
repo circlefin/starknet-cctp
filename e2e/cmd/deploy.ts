@@ -174,7 +174,7 @@ async function initializeMessageTransmitter() {
     // Initialize Message Transmitter
     const messageTransmitter = await loadMessageTransmitter();
     messageTransmitter.contract.connect(messageTransmitter.admin);
-    await messageTransmitter.contract.initializer(
+    await messageTransmitter.contract.initialize(
       LOCAL_DOMAIN, // local domain
       VERSION, // version
       messageTransmitter.owner.address,

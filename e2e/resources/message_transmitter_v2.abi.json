@@ -127,7 +127,7 @@
       },
       {
         "type": "function",
-        "name": "initializer",
+        "name": "initialize",
         "inputs": [
           {
             "name": "local_domain",

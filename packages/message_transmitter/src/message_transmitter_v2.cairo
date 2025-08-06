@@ -164,7 +164,7 @@ pub mod MessageTransmitterV2 {
 
     #[abi(embed_v0)]
     impl MessageTransmitter of IMessageTransmitterV2<ContractState> {
-        fn initializer(
+        fn initialize(
             ref self: ContractState,
             local_domain: u32,
             version: u32,

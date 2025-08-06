@@ -119,7 +119,7 @@ pub trait IMessageTransmitterV2<TContractState> {
     /// * `ALREADY_INITIALIZED` - If the contract is already initialized
     /// * `NOT_ADMIN` - If the caller is not the admin
     /// * `INVALID_MAX_MESSAGE_BODY_SIZE` - If the max message body size is invalid
-    fn initializer(
+    fn initialize(
         ref self: TContractState,
         local_domain: u32,
         version: u32,
