@@ -16,28 +16,31 @@
  * limitations under the License.
  */
 
-import * as env from 'env-var';
+import * as env from "env-var";
 
 // Iris
-export const IRIS_API_URL = env.get('IRIS_API_URL').default('https://iris-api-sandbox.circle.com').asString();
+export const IRIS_API_URL = env.get("IRIS_API_URL").default("https://iris-api-sandbox.circle.com").asString();
 
 // Remote EVM config
-export const REMOTE_TOKEN_HEX = env.get('REMOTE_TOKEN_HEX').required().asString();
-export const REMOTE_EVM_DOMAIN = env.get('REMOTE_EVM_DOMAIN').default('1').asInt();
-export const REMOTE_EVM_ADDRESS = env.get('REMOTE_EVM_ADDRESS').required().asString();
-export const REMOTE_EVM_PRIVATE_KEY = env.get('REMOTE_EVM_PRIVATE_KEY').required().asString();
-export const REMOTE_EVM_RPC_URL = env.get('REMOTE_EVM_RPC_URL').required().asString();
-export const REMOTE_EVM_TOKEN_MESSENGER_ADDRESS = env.get('REMOTE_EVM_TOKEN_MESSENGER_ADDRESS').required().asString();
-export const REMOTE_EVM_MESSAGE_TRANSMITTER_ADDRESS = env.get('REMOTE_EVM_MESSAGE_TRANSMITTER_ADDRESS').required().asString();
+export const REMOTE_TOKEN_HEX = env.get("REMOTE_TOKEN_HEX").required().asString();
+export const REMOTE_EVM_DOMAIN = env.get("REMOTE_EVM_DOMAIN").default("1").asInt();
+export const REMOTE_EVM_ADDRESS = env.get("REMOTE_EVM_ADDRESS").required().asString();
+export const REMOTE_EVM_PRIVATE_KEY = env.get("REMOTE_EVM_PRIVATE_KEY").required().asString();
+export const REMOTE_EVM_RPC_URL = env.get("REMOTE_EVM_RPC_URL").required().asString();
+export const REMOTE_EVM_TOKEN_MESSENGER_ADDRESS = env.get("REMOTE_EVM_TOKEN_MESSENGER_ADDRESS").required().asString();
+export const REMOTE_EVM_MESSAGE_TRANSMITTER_ADDRESS = env
+  .get("REMOTE_EVM_MESSAGE_TRANSMITTER_ADDRESS")
+  .required()
+  .asString();
 
 // Starknet config
-export const NODE_URL = env.get('NODE_URL').required().asString();
-export const ACCOUNT_ADDRESS = env.get('ACCOUNT_ADDRESS').required().asString();
-export const PRIVATE_KEY = env.get('PRIVATE_KEY').required().asString();
+export const NODE_URL = env.get("NODE_URL").required().asString();
+export const ACCOUNT_ADDRESS = env.get("ACCOUNT_ADDRESS").required().asString();
+export const PRIVATE_KEY = env.get("PRIVATE_KEY").required().asString();
 
-export const TOKEN_MESSENGER_MINTER_ADDRESS = env.get('TOKEN_MESSENGER_MINTER_ADDRESS').required().asString();
-export const MESSAGE_TRANSMITTER_ADDRESS = env.get('MESSAGE_TRANSMITTER_ADDRESS').required().asString();
-export const BURN_TOKEN_ADDRESS = env.get('BURN_TOKEN_ADDRESS').required().asString();
+export const TOKEN_MESSENGER_MINTER_ADDRESS = env.get("TOKEN_MESSENGER_MINTER_ADDRESS").required().asString();
+export const MESSAGE_TRANSMITTER_ADDRESS = env.get("MESSAGE_TRANSMITTER_ADDRESS").required().asString();
+export const BURN_TOKEN_ADDRESS = env.get("BURN_TOKEN_ADDRESS").required().asString();
 
-export const DESTINATION_CALLER = env.get('DESTINATION_CALLER').asString();
+export const DESTINATION_CALLER = env.get("DESTINATION_CALLER").asString();
 export const STARKNET_DOMAIN_ID = 25;

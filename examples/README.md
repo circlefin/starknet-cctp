@@ -4,7 +4,6 @@ This directory provides example scripts for calling depositForBurn and receiveMe
 
 For more information see our [developer documentation](https://developers.circle.com/stablecoins/docs/cctp-getting-started).
 
-
 ## How It Works
 
 1. **Burn**: USDC is burned on the source chain (e.g., Starknet)
@@ -18,12 +17,14 @@ For more information see our [developer documentation](https://developers.circle
 ### Prerequisites
 
 **1. Install Starknet Foundry**
+
 ```bash
 # Follow the installation guide
 # https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
 ```
 
 **2. Install Dependencies**
+
 ```bash
 npm install
 ```
@@ -31,17 +32,20 @@ npm install
 **3. Set Up Your Wallet**
 
 Create a new account on Starknet Sepolia testnet:
+
 ```bash
 sncast account create --network sepolia --name my_cctp_account
 ```
 
 This will create a new wallet and give you:
+
 - An account address (your wallet address)
 - A private key (keep this secret!)
 
 **4. Configure Environment**
 
 Copy the example environment file:
+
 ```bash
 cp .env.example .env
 ```
@@ -61,16 +65,17 @@ REMOTE_EVM_PRIVATE_KEY=0xdef...  # Private key for EVM address
 REMOTE_EVM_RPC_URL=https://...   # RPC URL for destination chain
 
 # Optional: Change destination chain (default is Avalanche Fuji)
-# For supported domain, please refer: https://developers.circle.com/cctp/supported-domains 
+# For supported domain, please refer: https://developers.circle.com/cctp/supported-domains
 REMOTE_EVM_DOMAIN=1
 ```
 
 **6. Get Test Tokens**
 
 Get testnet USDC from the Circle faucet and gas token
+
 - Visit: https://faucet.circle.com/
 - Get USDC on both Starknet Sepolia and your chosen EVM testnet
-- Get gas token for Starknet Sepolia and EVM testnet 
+- Get gas token for Starknet Sepolia and EVM testnet
 
 ---
 
@@ -79,11 +84,13 @@ Get testnet USDC from the Circle faucet and gas token
 ### Starknet → EVM (e.g., to Avalanche)
 
 **Fast Transfer Example:**
+
 ```bash
 npm run bridge-v2 strk2evm -- --amount 100 --fastBurn true
 ```
 
 **Standard Transfer Example:**
+
 ```bash
 npm run bridge-v2 strk2evm -- --amount 100
 ```
@@ -91,11 +98,13 @@ npm run bridge-v2 strk2evm -- --amount 100
 ### EVM → Starknet
 
 **Fast Transfer Example:**
+
 ```bash
 npm run bridge-v2 evm2strk -- --amount 100 --fastBurn true
 ```
 
 **Standard Transfer Example:**
+
 ```bash
 npm run bridge-v2 evm2strk -- --amount 100
 ```
@@ -105,6 +114,7 @@ npm run bridge-v2 evm2strk -- --amount 100
 Hooks allow you to execute custom logic when tokens are minted on the destination chain.
 
 **Example:**
+
 ```bash
 npm run bridge-v2 strk2evm -- --amount 100 --maxFee 1 --minFinalityThreshold 1000 --hookData 0x1234
 ```

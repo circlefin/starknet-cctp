@@ -26,11 +26,9 @@ import {
   DESTINATION_CALLER,
   STARKNET_DOMAIN_ID,
   ACCOUNT_ADDRESS,
-} from './config';
+} from "./config";
 
-const APPROVE_EVM_ABI = [
-  "function approve(address spender, uint256 amount) public returns (bool)",
-];
+const APPROVE_EVM_ABI = ["function approve(address spender, uint256 amount) public returns (bool)"];
 const TOKEN_MESSENGER_V2_EVM_ABI = [
   "function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold) public",
   "function depositForBurnWithHook(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold, bytes hookData) public",
@@ -43,24 +41,17 @@ const destinationCaller = DESTINATION_CALLER ?? ZeroHash;
 
 const getContracts = () => {
   const provider = new ethers.JsonRpcProvider(REMOTE_EVM_RPC_URL);
-  const wallet = new ethers.Wallet(
-    REMOTE_EVM_PRIVATE_KEY,
-    provider
-  );
-  const usdcApproveContract = new ethers.Contract(
-    REMOTE_TOKEN_HEX,
-    APPROVE_EVM_ABI,
-    wallet
-  );
+  const wallet = new ethers.Wallet(REMOTE_EVM_PRIVATE_KEY, provider);
+  const usdcApproveContract = new ethers.Contract(REMOTE_TOKEN_HEX, APPROVE_EVM_ABI, wallet);
   const tokenMessengerV2Contract = new ethers.Contract(
     REMOTE_EVM_TOKEN_MESSENGER_ADDRESS,
     TOKEN_MESSENGER_V2_EVM_ABI,
-    wallet
+    wallet,
   );
   const messageTransmitterV2Contract = new ethers.Contract(
     REMOTE_EVM_MESSAGE_TRANSMITTER_ADDRESS,
     MESSAGE_TRANSMITTER_V2_EVM_ABI,
-    wallet
+    wallet,
   );
   return {
     usdcApproveContract,
@@ -71,10 +62,7 @@ const getContracts = () => {
 
 const approve = async (usdcApproveContract: ethers.Contract, amount: number) => {
   console.log("Approving USDC spend on EVM...");
-  const approveTx = await usdcApproveContract.approve(
-    REMOTE_EVM_TOKEN_MESSENGER_ADDRESS,
-    amount
-  );
+  const approveTx = await usdcApproveContract.approve(REMOTE_EVM_TOKEN_MESSENGER_ADDRESS, amount);
   const approveTxReceipt = await approveTx.wait();
   if (approveTxReceipt.status === 1) {
     console.log("USDC spend approved", approveTxReceipt.hash);
@@ -82,13 +70,9 @@ const approve = async (usdcApproveContract: ethers.Contract, amount: number) => 
     console.error("Failed to approve USDC spend", approveTxReceipt);
     throw new Error("Failed to approve USDC spend");
   }
-}
+};
 
-export const depositForBurnEvm = async (
-  amount: number,
-  maxFee: number,
-  minFinalityThreshold: number
-) => {
+export const depositForBurnEvm = async (amount: number, maxFee: number, minFinalityThreshold: number) => {
   const { usdcApproveContract, tokenMessengerV2Contract } = getContracts();
 
   await approve(usdcApproveContract, amount);
@@ -101,7 +85,7 @@ export const depositForBurnEvm = async (
     REMOTE_TOKEN_HEX,
     destinationCaller,
     maxFee,
-    minFinalityThreshold
+    minFinalityThreshold,
   );
   const depositForBurnTxReceipt = await depositForBurnTx.wait();
   if (depositForBurnTxReceipt.status !== 1) {
@@ -115,7 +99,7 @@ export const depositForBurnEvmWithHook = async (
   amount: number,
   maxFee: number,
   minFinalityThreshold: number,
-  hookData: string
+  hookData: string,
 ) => {
   const { usdcApproveContract, tokenMessengerV2Contract } = getContracts();
 
@@ -130,7 +114,7 @@ export const depositForBurnEvmWithHook = async (
     destinationCaller,
     maxFee,
     minFinalityThreshold,
-    hookData
+    hookData,
   );
   const depositForBurnTxReceipt = await depositForBurnTx.wait();
   if (depositForBurnTxReceipt.status !== 1) {
@@ -140,16 +124,10 @@ export const depositForBurnEvmWithHook = async (
   return depositForBurnTxReceipt.hash;
 };
 
-export const receiveMessageEvm = async (
-  message: string,
-  attestation: string
-) => {
+export const receiveMessageEvm = async (message: string, attestation: string) => {
   console.log("Receiving message on EVM...");
   const { messageTransmitterV2Contract } = getContracts();
-  const receiveMessageTx = await messageTransmitterV2Contract.receiveMessage(
-    message,
-    attestation
-  );
+  const receiveMessageTx = await messageTransmitterV2Contract.receiveMessage(message, attestation);
   const receiveMessageTxReceipt = await receiveMessageTx.wait();
   if (receiveMessageTxReceipt.status !== 1) {
     console.error("Failed to receive message", receiveMessageTxReceipt);

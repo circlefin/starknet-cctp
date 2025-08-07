@@ -1,19 +1,19 @@
 {
-    "name": "starknet-cctp-examples",
-    "version": "1.0.0",
-    "description": "Examples demonstrating the use of StarkNet and Cross-Chain Transfer Protocol (CCTP).",
-    "scripts": {
-        "bridge-v2": "tsx main.ts"
-    },
-    "dependencies": {
-        "dotenv": "^17.2.1",
-        "ethers": "^6.15.0",
-        "starknet": "^7.6.4",
-        "tsx": "^4.19.4",
-        "env-var": "^7.5.0",
-        "zx": "^8.7.1"
-    },
-    "overrides": {
-        "ws": "^7.5.10"
-    }
+  "name": "starknet-cctp-examples",
+  "version": "1.0.0",
+  "description": "Examples demonstrating the use of StarkNet and Cross-Chain Transfer Protocol (CCTP).",
+  "scripts": {
+    "bridge-v2": "tsx main.ts"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "starknet": "^7.6.4",
+    "tsx": "^4.19.4",
+    "env-var": "^7.5.0",
+    "zx": "^8.7.1"
+  },
+  "overrides": {
+    "ws": "^7.5.10"
+  }
 }

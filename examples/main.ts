@@ -16,22 +16,11 @@
  * limitations under the License.
  */
 
-import 'dotenv/config';
+import "dotenv/config";
 import { minimist } from "zx";
-import {
-  depositForBurn,
-  receiveMessage,
-} from "./starknet";
-import {
-  depositForBurnEvm,
-  depositForBurnEvmWithHook,
-  receiveMessageEvm,
-} from "./evm";
-import {
-  IRIS_API_URL,
-  REMOTE_EVM_DOMAIN,
-  STARKNET_DOMAIN_ID,
-} from './config';
+import { depositForBurn, receiveMessage } from "./starknet";
+import { depositForBurnEvm, depositForBurnEvmWithHook, receiveMessageEvm } from "./evm";
+import { IRIS_API_URL, REMOTE_EVM_DOMAIN, STARKNET_DOMAIN_ID } from "./config";
 
 enum CommandName {
   Strk2Evm = "strk2evm",
@@ -62,7 +51,7 @@ interface BurnFee {
 
 function getMaxFee(amount: number, minimumFee: number) {
   // minimumFee is in bps, convert to % and multiple by amount to get actual fee
-  return amount * minimumFee / 100;
+  return (amount * minimumFee) / 100;
 }
 
 const main = async () => {
@@ -81,27 +70,15 @@ const main = async () => {
   };
   console.log("args", args);
 
-
   if (commandName === CommandName.Strk2Evm) {
     const burnFee = await fetchBurnFee(STARKNET_DOMAIN_ID, REMOTE_EVM_DOMAIN);
     const { minimumFee, finalityThreshold: minFinalityThreshold } = args.fastBurn ? burnFee.fast : burnFee.slow;
     const maxFee = getMaxFee(args.amount, minimumFee);
 
-    const depositTxHash = await depositForBurn(
-          args.amount,
-          maxFee,
-          minFinalityThreshold,
-          args.hookData
-        );
+    const depositTxHash = await depositForBurn(args.amount, maxFee, minFinalityThreshold, args.hookData);
     console.log("DepositForBurn txHash:", depositTxHash);
-    const attestationResponse = await fetchAttestation(
-      depositTxHash,
-      STARKNET_DOMAIN_ID,
-    );
-    const receiveTxHash = await receiveMessageEvm(
-      attestationResponse.message,
-      attestationResponse.attestation
-    );
+    const attestationResponse = await fetchAttestation(depositTxHash, STARKNET_DOMAIN_ID);
+    const receiveTxHash = await receiveMessageEvm(attestationResponse.message, attestationResponse.attestation);
     console.log("ReceiveMessage txHash:", receiveTxHash);
   } else if (commandName === CommandName.Evm2Strk) {
     const burnFee = await fetchBurnFee(REMOTE_EVM_DOMAIN, STARKNET_DOMAIN_ID);
@@ -109,32 +86,14 @@ const main = async () => {
     const maxFee = getMaxFee(args.amount, minimumFee);
 
     const depositTxHash = args.hookData
-      ? await depositForBurnEvmWithHook(
-          args.amount,
-          maxFee,
-          minFinalityThreshold,
-          args.hookData
-        )
-      : await depositForBurnEvm(
-          args.amount,
-          maxFee,
-          minFinalityThreshold
-        );
+      ? await depositForBurnEvmWithHook(args.amount, maxFee, minFinalityThreshold, args.hookData)
+      : await depositForBurnEvm(args.amount, maxFee, minFinalityThreshold);
     console.log("DepositForBurn txHash:", depositTxHash);
-    const attestationResponse = await fetchAttestation(
-      depositTxHash,
-      REMOTE_EVM_DOMAIN
-    );
-    const receiveTxHash = await receiveMessage(
-      attestationResponse.message,
-      attestationResponse.attestation
-    );
+    const attestationResponse = await fetchAttestation(depositTxHash, REMOTE_EVM_DOMAIN);
+    const receiveTxHash = await receiveMessage(attestationResponse.message, attestationResponse.attestation);
     console.log("ReceiveMessage txHash:", receiveTxHash);
   } else {
-    console.error(
-      "Command must be one of: ",
-      Object.values(CommandName).join(", ")
-    );
+    console.error("Command must be one of: ", Object.values(CommandName).join(", "));
     process.exit(1);
   }
 };
@@ -144,9 +103,7 @@ async function fetchAttestation(txHash: string, domainId: number) {
   let attestationResponse: AttestationResponse = {};
 
   while (true) {
-    const response = await fetch(
-      `${IRIS_API_URL}/v2/messages/${domainId}?transactionHash=${txHash}`
-    );
+    const response = await fetch(`${IRIS_API_URL}/v2/messages/${domainId}?transactionHash=${txHash}`);
     attestationResponse = await response.json();
     // Wait 2 seconds to avoid getting rate limited
     if (
@@ -161,24 +118,28 @@ async function fetchAttestation(txHash: string, domainId: number) {
   }
   console.log("Attestation response:", attestationResponse);
   return attestationResponse.messages[0];
-};
+}
 
 async function fetchBurnFee(sourceDomainId: number, destDomainId: number) {
   console.log("Fetching Fees...");
 
-  const response = await fetch(
-    `${IRIS_API_URL}/v2/burn/usdc/fees/${sourceDomainId}/${destDomainId}`
-  );
+  const response = await fetch(`${IRIS_API_URL}/v2/burn/usdc/fees/${sourceDomainId}/${destDomainId}`);
   const fees: BurnFee[] = await response.json();
   const result: {
     fast: BurnFee;
     slow: BurnFee;
   } = {
-    fast: fees.find((fee) => fee.finalityThreshold === 1000) ?? { finalityThreshold: 1000, minimumFee: 0 },
-    slow: fees.find((fee) => fee.finalityThreshold === 2000) ?? { finalityThreshold: 2000, minimumFee: 0 },
+    fast: fees.find((fee) => fee.finalityThreshold === 1000) ?? {
+      finalityThreshold: 1000,
+      minimumFee: 0,
+    },
+    slow: fees.find((fee) => fee.finalityThreshold === 2000) ?? {
+      finalityThreshold: 2000,
+      minimumFee: 0,
+    },
   };
 
   return result;
-};
+}
 
 main();

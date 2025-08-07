@@ -14,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 export function encode(bytes: Uint8Array | number[]): string[] {
   const byteArray = bytes instanceof Uint8Array ? Array.from(bytes) : bytes;
   const result: string[] = [];
@@ -34,20 +33,20 @@ export function encode(bytes: Uint8Array | number[]): string[] {
   }
 
   // 2. First, push the number of full chunks (excluding remaining)
-  result.push('0x' + chunks.length.toString(16));
+  result.push("0x" + chunks.length.toString(16));
 
   // 3. Push chunks as hex strings
   for (const chunk of chunks) {
-    const hexChunk = chunk.map(b => b.toString(16).padStart(2, '0')).join('');
-    result.push('0x' + hexChunk);
+    const hexChunk = chunk.map((b) => b.toString(16).padStart(2, "0")).join("");
+    result.push("0x" + hexChunk);
   }
 
   // 4. Push remaining chunk as hex string (or empty if no remaining)
-  const remainingHex = remaining.map(b => b.toString(16).padStart(2, '0')).join('');
-  result.push('0x' + remainingHex);
+  const remainingHex = remaining.map((b) => b.toString(16).padStart(2, "0")).join("");
+  result.push("0x" + remainingHex);
 
   // 5. Push the length of remaining chunk
-  result.push('0x' + remaining.length.toString(16));
+  result.push("0x" + remaining.length.toString(16));
 
   return result;
 }

@@ -1,10 +1,10 @@
 {
-    "files.associations": {
-        "*.cairo": "cairo"
-    },
-    "[cairo]": {
-        "editor.defaultFormatter": "starkware.cairo1",
-        "editor.formatOnSave": true,
-        "editor.formatOnPaste": true
-    }
+  "files.associations": {
+    "*.cairo": "cairo"
+  },
+  "[cairo]": {
+    "editor.defaultFormatter": "starkware.cairo1",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true
+  }
 }

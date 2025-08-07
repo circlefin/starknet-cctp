@@ -1,8 +1,11 @@
 # starknet-cctp-private
+
 Official repository for Starknet smart contracts used by the Cross-Chain Transfer Protocol
 
 ## Development
+
 ### Install Toolchain
+
 ```bash
 git clone git@github.com:circlefin/starknet-cctp-private.git
 cd starknet-cctp-private
@@ -10,6 +13,7 @@ cd starknet-cctp-private
 ```
 
 ## Common Commands
+
 ```bash
 # Analyze and report errors
 scarb check
@@ -20,12 +24,15 @@ snforge test
 ```
 
 ## E2E Test
+
 Run All tests
+
 ```bash
 yarn test:e2e
 ```
 
 Focus on a single test
+
 ```bash
 # Start starknet-devnet
 yarn start-network

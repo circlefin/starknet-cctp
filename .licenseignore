@@ -4,3 +4,6 @@ pkg:npm/abbrev
 pkg:npm/esprima
 pkg:npm/type-fest
 pkg:npm/pako
+pkg:npm/doctrine
+pkg:npm/lodash
+pkg:npm/uglify-js

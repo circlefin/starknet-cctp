@@ -20,7 +20,7 @@ jobs:
         with:
           submodules: true
           ssh-key: ${{ env._OPS_UTILITIES_GITHUB_ACTIONS_BOT_SSH_PRIV_KEY }}
-      
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -63,10 +63,10 @@ jobs:
         run: |
           corepack enable
           yarn install --frozen-lockfile
-      
+
       - name: Build E2E Test
         run: yarn build
-      
+
       - name: Lint E2E Test
         run: yarn lint
 
