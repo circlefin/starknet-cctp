@@ -15,10 +15,10 @@ export default {
           module: "NodeNext",
           target: "ES2022",
           esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-        },
-      },
-    ],
+          allowSyntheticDefaultImports: true
+        }
+      }
+    ]
   },
   // This setting makes Jest globals available without imports
   injectGlobals: true,

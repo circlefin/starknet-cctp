@@ -13,7 +13,8 @@
     "types": ["node", "jest"],
     "isolatedModules": true
   },
-  "include": ["e2e/**/*.ts", "jest.config.js"],
+  "include": ["e2e/**/*.ts", "scripts/**/*.ts", "jest.config.js"],
+  "exclude": ["node_modules"],
   "ts-node": {
     "esm": true
   }

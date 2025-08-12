@@ -1,0 +1,35 @@
+{
+  "messageTransmitterV2": {
+    "version": 1,
+    "admin": {
+      "address": "<ADMIN_ADDRESS>",
+      "privateKey": "<ADMIN_PRIVATE_KEY>"
+    },
+    "owner": "<OWNER_ADDRESS>",
+    "pauser": "<PAUSER_ADDRESS>",
+    "rescuer": "<RESCUER_ADDRESS>",
+    "attesterManager": "<ATTESTER_MANAGER_ADDRESS>",
+    "attesters": [
+      "<ATTESTER_ADDRESS_1>",
+      "<ATTESTER_ADDRESS_2>"
+    ],
+    "signatureThreshold": 2,
+    "maxMessageBodySize": 1000
+  },
+  "tokenMessengerMinterV2": {
+    "admin": {
+      "address": "<ADMIN_ADDRESS>",
+      "privateKey": "<ADMIN_PRIVATE_KEY>"
+    },
+    "owner": "<OWNER_ADDRESS>",
+    "pauser": "<PAUSER_ADDRESS>",
+    "denylister": "<DENY_LISTER_ADDRESS>",
+    "rescuer": "<RESCUER_ADDRESS>",
+    "tokenController": "<TOKEN_CONTROLLER_ADDRESS>",
+    "minFeeController": "<MIN_FEE_CONTROLLER_ADDRESS>",
+    "feeRecipient": "<FEE_RECIPIENT_ADDRESS>",
+    "messageBodyVersion": 1,
+    "remoteDomains": [1, 2, 3],
+    "remoteTokenMessengers": ["0x1000", "0x2000", "0x3000"]
+  }
+}
