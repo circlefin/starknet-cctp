@@ -30,7 +30,9 @@ yarn scripts deploy-and-initialize-contracts \
     --rpc-url http://127.0.0.1:5050 \
     --deployer-key <DEPLOYER_PRIVATE_KEY> \
     --deployer-address <DEPLOYER_ADDRESS> \
-    --token-config-path "./scripts/resources/default.json" \
+    --config-path "./scripts/resources/default.json" \
+    --mt-admin-key <MESSAGE_TRANSMITTER_ADMIN_KEY> \
+    --tmm-admin-key <TOKEN_MESSENGER_MINTER_ADMIN_KEY> \
     --profile dev
 ```
 
@@ -93,6 +95,8 @@ yarn scripts deploy-and-initialize-contracts \
     --deployer-key <DEPLOYER_PRIVATE_KEY> \
     --deployer-address <DEPLOYER_ADDRESS> \
     --config-path "<PATH_TO_CONFIG_FILE (ie ./scripts/resources/default.json)>" \
+    --mt-admin-key <MESSAGE_TRANSMITTER_ADMIN_KEY> \
+    --tmm-admin-key <TOKEN_MESSENGER_MINTER_ADMIN_KEY> \
     --profile <BUILD_PROFILE (ie dev/release)>
 ```
 
@@ -127,6 +131,8 @@ Choose the appropriate build profile:
    - Never commit private keys to version control
    - Use environment variables or secure key management
    - Consider using hardware wallets for mainnet
+   - When passing admin keys via command line, ensure your shell history is secure or disabled
+   - Consider using environment variables: `--mt-admin-key $MT_ADMIN_KEY`
 
 2. **Configuration Verification:**
 
@@ -242,6 +248,8 @@ yarn scripts deploy-and-initialize-contracts \
   --deployer-key <PRIVATE_KEY> \
   --deployer-address <ADDRESS> \
   --config-path <CONFIG_PATH> \
+  --mt-admin-key <MT_ADMIN_KEY> \
+  --tmm-admin-key <TMM_ADMIN_KEY> \
   --profile <PROFILE>
 ```
 
@@ -251,8 +259,10 @@ yarn scripts deploy-and-initialize-contracts \
 - **`--deployer-key`** (required): Private key of the deployer account
 - **`--deployer-address`** (required): Address of the deployer account
 - **`--config-path`** (required): Path to the token configuration JSON file
+- **`--mt-admin-key`** (required): Message Transmitter admin private key
+- **`--tmm-admin-key`** (required): Token Messenger Minter admin private key
 - **`--salt`** (optional): Salt for contract deployment. Default value is "0"
-- **`--profile`** (optional): Build profile to use ('dev' or 'release'). Default is 'dev'.
+- **`--profile`** (optional): Build profile to use ('dev' or 'release'). Default is 'release'.
 
 ### Examples
 
@@ -264,6 +274,8 @@ yarn scripts deploy-and-initialize-contracts \
   --deployer-key 0x1234... \
   --deployer-address 0x5678... \
   --config-path "./scripts/resources/default.json" \
+  --mt-admin-key 0xABCD... \
+  --tmm-admin-key 0xEFGH... \
   --profile dev
 ```
 
@@ -274,8 +286,10 @@ yarn scripts deploy-and-initialize-contracts \
   -r https://starknet-sepolia.public.blastapi.io/rpc/v0_8 \
   --deployer-key 0x36fd2719940a65a3f77223657992f914bc49b638bebb1560185ff791c48cdbb \
   --deployer-address 0x06ae696e73762dfe81b76c96bfbe7a0ae600f8e22811bf172347a63f972e7f83 \
-  --token-config-path ".scripts/resources/default.json" \
-  --profile dev
+  --config-path "./scripts/resources/default.json" \
+  --mt-admin-key 0x1234... \
+  --tmm-admin-key 0x5678... \
+  --profile release
 ```
 
 ### Configuration Files
@@ -288,9 +302,12 @@ The script uses JSON configuration files to set up the token:
 For production deployments, copy the template and fill in all required values:
 
 ```bash
-cp scripts/resources/contrats_template.json my_production_config.json
+cp scripts/resources/contracts_template.json my_production_config.json
 # Edit my_production_config.json with your values
 ```
+
+> [!IMPORTANT]
+> In Starknet, account addresses are smart contract addresses and cannot be derived from private keys. Therefore, you must provide the admin private keys separately via command-line options (`--mt-admin-key` and `--tmm-admin-key`) that correspond to the admin addresses configured in your JSON configuration file.
 
 ## Verify Contract State
 

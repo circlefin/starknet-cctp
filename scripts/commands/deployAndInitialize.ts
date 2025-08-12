@@ -33,6 +33,8 @@ export default program
   .requiredOption("--deployer-key <string>", "Deployer private key")
   .requiredOption("--deployer-address <string>", "Deployer account address")
   .requiredOption("--config-path <string>", "Path to contract config file")
+  .requiredOption("--mt-admin-key <string>", "Message Transmitter admin private key")
+  .requiredOption("--tmm-admin-key <string>", "Token Messenger Minter admin private key")
   .option(
     "--profile <string>",
     "Scarb profile that was used to build the contracts. Default profile is 'release'",
@@ -48,11 +50,12 @@ async function initializeMessageTransmitter(
   contractAddress: string,
   abi: Abi,
   config: MessageTransmitterV2Config,
+  adminPrivateKey: string,
 ) {
   console.log("Initializing MessageTransmitterV2 contract...");
 
   const contract = new Contract(abi, contractAddress, provider);
-  contract.connect(new Account(provider, config.admin.address, config.admin.privateKey));
+  contract.connect(new Account(provider, config.admin, adminPrivateKey));
 
   const initializeTx = await contract.initialize(
     LOCAL_DOMAIN_ID,
@@ -86,11 +89,12 @@ async function initializeTokenMessengerMinter(
   abi: Abi,
   config: TokenMessengerMinterV2Config,
   messageTransmitterAddress: string,
+  adminPrivateKey: string,
 ) {
   console.log("Initializing TokenMessengerMinterV2 contract...");
 
   const contract = new Contract(abi, contractAddress, provider);
-  contract.connect(new Account(provider, config.admin.address, config.admin.privateKey));
+  contract.connect(new Account(provider, config.admin, adminPrivateKey));
 
   const initializeTx = await contract.initialize(
     config.owner,
@@ -127,6 +131,8 @@ export async function deployAndInitializeContracts({
   configPath,
   profile,
   salt,
+  mtAdminKey,
+  tmmAdminKey,
 }: {
   rpcUrl: string;
   deployerKey: string;
@@ -134,6 +140,8 @@ export async function deployAndInitializeContracts({
   configPath: string;
   profile: string;
   salt: string;
+  mtAdminKey: string;
+  tmmAdminKey: string;
 }) {
   const provider = getStarknetProvider(rpcUrl);
   const deployer = new Account(provider, deployerAddress, deployerKey);
@@ -150,7 +158,7 @@ export async function deployAndInitializeContracts({
 
   // Deploy MessageTransmitter
   const messageTransmitterResult = await deployContract(deployer, salt, profile, ContractName.MessageTransmitterV2, [
-    messageTransmitterV2.admin.address,
+    messageTransmitterV2.admin,
   ]);
 
   // Deploy TokenMessengerMinter
@@ -159,7 +167,7 @@ export async function deployAndInitializeContracts({
     salt,
     profile,
     ContractName.TokenMessengerMinterV2,
-    [tokenMessengerMinterV2.admin.address],
+    [tokenMessengerMinterV2.admin],
   );
 
   // Initialize MessageTransmitter
@@ -168,6 +176,7 @@ export async function deployAndInitializeContracts({
     messageTransmitterResult.contractAddress,
     messageTransmitterResult.abi,
     messageTransmitterV2,
+    mtAdminKey,
   );
 
   // Initialize TokenMessengerMinter
@@ -177,6 +186,7 @@ export async function deployAndInitializeContracts({
     tokenMessengerMinterResult.abi,
     tokenMessengerMinterV2,
     messageTransmitterResult.contractAddress,
+    tmmAdminKey,
   );
 
   return {

@@ -1,10 +1,7 @@
 {
   "messageTransmitterV2": {
     "version": 1,
-    "admin": {
-      "address": "<ADMIN_ADDRESS>",
-      "privateKey": "<ADMIN_PRIVATE_KEY>"
-    },
+    "admin": "<ADMIN_ADDRESS>",
     "owner": "<OWNER_ADDRESS>",
     "pauser": "<PAUSER_ADDRESS>",
     "rescuer": "<RESCUER_ADDRESS>",
@@ -17,10 +14,7 @@
     "maxMessageBodySize": 1000
   },
   "tokenMessengerMinterV2": {
-    "admin": {
-      "address": "<ADMIN_ADDRESS>",
-      "privateKey": "<ADMIN_PRIVATE_KEY>"
-    },
+    "admin": "<ADMIN_ADDRESS>",
     "owner": "<OWNER_ADDRESS>",
     "pauser": "<PAUSER_ADDRESS>",
     "denylister": "<DENY_LISTER_ADDRESS>",

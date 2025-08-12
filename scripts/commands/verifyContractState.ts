@@ -147,7 +147,7 @@ async function verifyMessageTransmitterState(
   // Verify contract state variables
   addContractStateResult(results, "localDomain", localDomain, BigInt(LOCAL_DOMAIN_ID));
   addContractStateResult(results, "version", version, BigInt(contractConfig.version));
-  addContractStateResult(results, "admin", admin, BigInt(contractConfig.admin.address));
+  addContractStateResult(results, "admin", admin, BigInt(contractConfig.admin));
   addContractStateResult(results, "owner", owner, BigInt(contractConfig.owner));
   addContractStateResult(results, "pauser", pauser, BigInt(contractConfig.pauser));
   addContractStateResult(results, "rescuer", rescuer, BigInt(contractConfig.rescuer));
@@ -184,7 +184,7 @@ async function verifyTokenMessengerMinterState(
   const messageBodyVersion = await contract.message_body_version();
 
   // Verify contract state variables
-  addContractStateResult(results, "admin", admin, BigInt(contractConfig.admin.address));
+  addContractStateResult(results, "admin", admin, BigInt(contractConfig.admin));
   addContractStateResult(results, "owner", owner, BigInt(contractConfig.owner));
   addContractStateResult(results, "pauser", pauser, BigInt(contractConfig.pauser));
   addContractStateResult(results, "denylister", denylister, BigInt(contractConfig.denylister));

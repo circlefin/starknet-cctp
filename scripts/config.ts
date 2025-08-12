@@ -79,14 +79,9 @@ function isValidStarknetAddress(value: any): boolean {
   return true;
 }
 
-const AccountConfigSchema = yup.object().shape({
-  privateKey: yup.string().required(),
-  address: yupStarknetAddress().required(),
-});
-
 const MessageTransmitterV2ConfigSchema = yup.object().shape({
   version: yup.number().integer().positive().required(),
-  admin: AccountConfigSchema,
+  admin: yupStarknetAddress().required(),
   owner: yupStarknetAddress().required(),
   pauser: yupStarknetAddress().required(),
   rescuer: yupStarknetAddress().required(),
@@ -97,7 +92,7 @@ const MessageTransmitterV2ConfigSchema = yup.object().shape({
 });
 
 const TokenMessengerMinterV2ConfigSchema = yup.object().shape({
-  admin: AccountConfigSchema,
+  admin: yupStarknetAddress().required(),
   owner: yupStarknetAddress().required(),
   pauser: yupStarknetAddress().required(),
   denylister: yupStarknetAddress().required(),
