@@ -71,6 +71,12 @@ pub trait ITokenController<TContractState> {
         remote_domain: u32,
         remote_token: u256,
     );
+
+    fn get_burn_limit_per_message(self: @TContractState, token: ContractAddress) -> u256;
+
+    fn get_local_token(
+        self: @TContractState, remote_domain: u32, remote_token: u256,
+    ) -> ContractAddress;
 }
 
 #[starknet::component]
@@ -340,6 +346,48 @@ pub mod TokenControllerComponent {
             // Emit event
             self.emit(TokenPairUnlinked { local_token, remote_domain, remote_token });
         }
+
+        /// Returns the burn limit per message for a specific token
+        ///
+        /// This function retrieves the maximum amount that can be burned in a single message
+        /// for the specified token. Returns 0 if no limit has been set.
+        ///
+        /// # Arguments
+        ///
+        /// * `token` - The address of the token to query
+        ///
+        /// # Returns
+        ///
+        /// The burn limit per message for the token, or 0 if not set
+        fn get_burn_limit_per_message(
+            self: @ComponentState<TContractState>, token: ContractAddress,
+        ) -> u256 {
+            self.burn_limits_per_message.entry(token).read()
+        }
+
+        /// Retrieves the local token address for a given remote domain and token
+        ///
+        /// This function looks up the local token address that corresponds to
+        /// a specific remote domain and token combination. It returns the zero address
+        /// if no mapping exists.
+        ///
+        /// # Arguments
+        ///
+        /// * `remote_domain` - The identifier of the remote domain/chain
+        /// * `remote_token` - The token identifier on the remote domain
+        ///
+        /// # Returns
+        ///
+        /// The local token address if a mapping exists, otherwise the zero address
+        fn get_local_token(
+            self: @ComponentState<TContractState>, remote_domain: u32, remote_token: u256,
+        ) -> ContractAddress {
+            // Create remote token key
+            let remote_key = RemoteTokenKey { remote_domain, remote_token };
+
+            // Return the local token address
+            self.remote_tokens_to_local_tokens.entry(remote_key).read()
+        }
     }
 
     #[generate_trait]
@@ -424,30 +472,6 @@ pub mod TokenControllerComponent {
 
             // Check if amount is within the limit
             assert(amount <= allowed_burn_amount, Errors::BURN_AMOUNT_EXCEEDS_LIMIT);
-        }
-
-        /// Retrieves the local token address for a given remote domain and token
-        ///
-        /// This internal function looks up the local token address that corresponds to
-        /// a specific remote domain and token combination. It returns the zero address
-        /// if no mapping exists.
-        ///
-        /// # Arguments
-        ///
-        /// * `remote_domain` - The identifier of the remote domain/chain
-        /// * `remote_token` - The token identifier on the remote domain
-        ///
-        /// # Returns
-        ///
-        /// The local token address if a mapping exists, otherwise the zero address
-        fn get_local_token(
-            self: @ComponentState<TContractState>, remote_domain: u32, remote_token: u256,
-        ) -> ContractAddress {
-            // Create remote token key
-            let remote_key = RemoteTokenKey { remote_domain, remote_token };
-
-            // Return the local token address
-            self.remote_tokens_to_local_tokens.entry(remote_key).read()
         }
     }
 }

@@ -100,13 +100,6 @@ mod MockTokenControllerContract {
         }
 
         #[external(v0)]
-        fn test_get_local_token(
-            self: @ContractState, remote_domain: u32, remote_token: u256,
-        ) -> ContractAddress {
-            self.token_controller.get_local_token(remote_domain, remote_token)
-        }
-
-        #[external(v0)]
         fn test_ownable_initializer(ref self: ContractState, owner: ContractAddress) {
             self.ownable.initializer(owner);
         }
@@ -121,9 +114,6 @@ trait ITestHelper<TContractState> {
     );
     fn test_assert_only_token_controller(self: @TContractState);
     fn test_assert_within_burn_limit(self: @TContractState, token: ContractAddress, amount: u256);
-    fn test_get_local_token(
-        self: @TContractState, remote_domain: u32, remote_token: u256,
-    ) -> ContractAddress;
     fn test_ownable_initializer(ref self: TContractState, owner: ContractAddress);
 }
 
@@ -173,7 +163,7 @@ fn test_initialized_contract_state() {
     );
 
     // Check that local token lookup returns zero for unlinked pairs
-    let local_token_result = test_dispatcher.test_get_local_token(1, 0x123);
+    let local_token_result = dispatcher.get_local_token(1, 0x123);
     assert!(local_token_result.is_zero(), "Unlinked token pair should return zero address");
 }
 
@@ -289,7 +279,7 @@ fn test_link_token_pair_functionality() {
     dispatcher.link_token_pair(local_token, remote_domain, remote_token);
 
     // Verify token pair is linked
-    let local_token_result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    let local_token_result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(local_token_result == local_token, "Token pair should be linked");
 
     // Verify TokenPairLinked event was emitted
@@ -312,7 +302,7 @@ fn test_link_token_pair_functionality() {
     stop_cheat_caller_address(contract_address);
 
     // Verify both pairs are linked independently
-    let local_token_result2 = test_dispatcher.test_get_local_token(remote_domain2, remote_token2);
+    let local_token_result2 = dispatcher.get_local_token(remote_domain2, remote_token2);
     assert!(local_token_result2 == local_token2, "Second token pair should be linked");
 }
 
@@ -330,7 +320,7 @@ fn test_unlink_token_pair_functionality() {
     dispatcher.link_token_pair(local_token, remote_domain, remote_token);
 
     // Verify it's linked
-    let local_token_result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    let local_token_result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(local_token_result == local_token, "Token pair should be linked");
 
     // Spy on events after linking
@@ -341,7 +331,7 @@ fn test_unlink_token_pair_functionality() {
     stop_cheat_caller_address(contract_address);
 
     // Verify it's unlinked
-    let local_token_result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    let local_token_result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(local_token_result.is_zero(), "Token pair should be unlinked");
 
     // Verify TokenPairUnlinked event was emitted
@@ -379,7 +369,7 @@ fn test_complete_token_controller_workflow() {
 
     // 2. Token controller links token pair
     dispatcher.link_token_pair(local_token, remote_domain, remote_token);
-    let local_token_result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    let local_token_result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(local_token_result == local_token, "Token pair should be linked");
     stop_cheat_caller_address(contract_address);
 
@@ -397,7 +387,7 @@ fn test_complete_token_controller_workflow() {
     stop_cheat_caller_address(contract_address);
 
     // Verify final state
-    let local_token_result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    let local_token_result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(local_token_result.is_zero(), "Token pair should be unlinked");
     // Burn limit should still be set from before
     test_dispatcher.test_assert_within_burn_limit(local_token, burn_limit);
@@ -587,16 +577,28 @@ fn test_assert_only_token_controller_fails_for_non_controller() {
 }
 
 #[test]
-fn test_get_local_token_functionality() {
+fn test_public_getter_functions() {
     let (owner, token_controller, local_token, _, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, token_controller);
     let dispatcher = ITokenControllerDispatcher { contract_address };
-    let test_dispatcher = ITestHelperDispatcher { contract_address };
     let remote_domain: u32 = 1;
     let remote_token: u256 = 0x1234567890abcdef;
+    let burn_limit: u256 = 500000;
 
-    // Test with unlinked pair (should return zero)
-    let result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    // Test get_burn_limit_per_message with unset token (should return 0)
+    let initial_burn_limit = dispatcher.get_burn_limit_per_message(local_token);
+    assert!(initial_burn_limit == 0, "Unset burn limit should return 0");
+
+    // Set burn limit and test again
+    start_cheat_caller_address(contract_address, token_controller);
+    dispatcher.set_max_burn_amount_per_message(local_token, burn_limit);
+    stop_cheat_caller_address(contract_address);
+
+    let new_burn_limit = dispatcher.get_burn_limit_per_message(local_token);
+    assert!(new_burn_limit == burn_limit, "Should return the set burn limit");
+
+    // Test get_local_token with unlinked pair (should return zero)
+    let result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(result.is_zero(), "Should return zero for unlinked pair");
 
     // Link the pair and test again
@@ -604,7 +606,7 @@ fn test_get_local_token_functionality() {
     dispatcher.link_token_pair(local_token, remote_domain, remote_token);
     stop_cheat_caller_address(contract_address);
 
-    let result = test_dispatcher.test_get_local_token(remote_domain, remote_token);
+    let result = dispatcher.get_local_token(remote_domain, remote_token);
     assert!(result == local_token, "Should return local token for linked pair");
 }
 

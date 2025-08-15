@@ -677,6 +677,53 @@ describe("token messenger minter", () => {
       tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
       await tokenMessengerMinter.contract.set_max_burn_amount_per_message(localToken, 0n);
     });
+
+    it("should correctly return burn limit per message and local token for linked pairs", async () => {
+      // Test data - use valid StarkNet addresses (must be < 2^252)
+      const localToken = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd";
+      const remoteDomain = 5; // Optimism
+      const remoteToken = "0x2345678901bcdef02345678901bcdef02345678901bcdef02345678901bcde";
+      const maxBurnAmount = 5000000000n; // 5000 tokens with 6 decimals
+
+      // 1. Check initial burn limit (should be 0)
+      const initialBurnLimit = await tokenMessengerMinter.contract.get_burn_limit_per_message(localToken);
+      expect(initialBurnLimit).toBe(0n);
+
+      // 2. Check initial local token mapping (should be zero address)
+      const initialLocalToken = await tokenMessengerMinter.contract.get_local_token(remoteDomain, remoteToken);
+      expect(num.toHex(initialLocalToken)).toBe("0x0");
+
+      // 3. Set max burn amount (as token controller)
+      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      await tokenMessengerMinter.contract.set_max_burn_amount_per_message(localToken, maxBurnAmount);
+
+      // 4. Verify burn limit is set correctly
+      const setBurnLimit = await tokenMessengerMinter.contract.get_burn_limit_per_message(localToken);
+      expect(setBurnLimit).toBe(maxBurnAmount);
+
+      // 5. Link token pair (as token controller)
+      await tokenMessengerMinter.contract.link_token_pair(localToken, remoteDomain, remoteToken);
+
+      // 6. Verify local token mapping is correct
+      const linkedLocalToken = await tokenMessengerMinter.contract.get_local_token(remoteDomain, remoteToken);
+      expect(num.toHex(linkedLocalToken)).toBe(num.toHex(localToken));
+
+      // 7. Test with different remote domain and same remote token (should return zero)
+      const differentDomain = 6;
+      const differentDomainResult = await tokenMessengerMinter.contract.get_local_token(differentDomain, remoteToken);
+      expect(num.toHex(differentDomainResult)).toBe("0x0");
+
+      // 8. Clean up - unlink and reset burn limit
+      await tokenMessengerMinter.contract.unlink_token_pair(localToken, remoteDomain, remoteToken);
+      await tokenMessengerMinter.contract.set_max_burn_amount_per_message(localToken, 0n);
+
+      // 9. Verify cleanup
+      const finalBurnLimit = await tokenMessengerMinter.contract.get_burn_limit_per_message(localToken);
+      expect(finalBurnLimit).toBe(0n);
+
+      const finalLocalToken = await tokenMessengerMinter.contract.get_local_token(remoteDomain, remoteToken);
+      expect(num.toHex(finalLocalToken)).toBe("0x0");
+    });
   });
   describe("remote_token_messenger_controller", () => {
     it("should manage remote token messengers for different domains", async () => {
