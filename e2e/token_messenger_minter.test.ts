@@ -51,13 +51,13 @@ describe("token messenger minter", () => {
       const transferTx = await tokenMessengerMinter.contract.transfer_admin(testerAddress);
       const transferReceipt = await provider.waitForTransaction(transferTx.transaction_hash);
 
-      // Verify AdminTransferStarted event
+      // Verify AdminChangeStarted event
       expect(transferReceipt.isSuccess()).toBe(true);
       const transferEvents = tokenMessengerMinter.contract.parseEvents(transferReceipt);
       expect(transferEvents).toEqual([
         expect.objectContaining({
-          "components::manageable::ManageableComponent::AdminTransferStarted": {
-            previous_admin: num.toBigInt(tokenMessengerMinter.admin.address),
+          "components::manageable::events::AdminChangeStarted": {
+            old_admin: num.toBigInt(tokenMessengerMinter.admin.address),
             new_admin: num.toBigInt(testerAddress),
           },
         }),
@@ -72,13 +72,13 @@ describe("token messenger minter", () => {
       const acceptTx = await tokenMessengerMinter.contract.accept_admin();
       const acceptReceipt = await provider.waitForTransaction(acceptTx.transaction_hash);
 
-      // Verify AdminTransferred event
+      // Verify AdminChanged event
       expect(acceptReceipt.isSuccess()).toBe(true);
       const acceptEvents = tokenMessengerMinter.contract.parseEvents(acceptReceipt);
       expect(acceptEvents).toEqual([
         expect.objectContaining({
-          "components::manageable::ManageableComponent::AdminTransferred": {
-            previous_admin: num.toBigInt(tokenMessengerMinter.admin.address),
+          "components::manageable::events::AdminChanged": {
+            old_admin: num.toBigInt(tokenMessengerMinter.admin.address),
             new_admin: num.toBigInt(testerAddress),
           },
         }),
@@ -131,8 +131,8 @@ describe("token messenger minter", () => {
       const transferEvents = tokenMessengerMinter.contract.parseEvents(transferReceipt);
       expect(transferEvents).toEqual([
         expect.objectContaining({
-          "components::ownable::OwnableComponent::OwnershipTransferStarted": {
-            previous_owner: num.toBigInt(tokenMessengerMinter.owner.address),
+          "components::ownable::events::OwnershipTransferStarted": {
+            old_owner: num.toBigInt(tokenMessengerMinter.owner.address),
             new_owner: num.toBigInt(testerAddress),
           },
         }),
@@ -152,8 +152,8 @@ describe("token messenger minter", () => {
       const acceptEvents = tokenMessengerMinter.contract.parseEvents(acceptReceipt);
       expect(acceptEvents).toEqual([
         expect.objectContaining({
-          "components::ownable::OwnableComponent::OwnershipTransferred": {
-            previous_owner: num.toBigInt(tokenMessengerMinter.owner.address),
+          "components::ownable::events::OwnershipTransferred": {
+            old_owner: num.toBigInt(tokenMessengerMinter.owner.address),
             new_owner: num.toBigInt(testerAddress),
           },
         }),
@@ -205,7 +205,7 @@ describe("token messenger minter", () => {
       const pauseEvents = tokenMessengerMinter.contract.parseEvents(pauseReceipt);
       expect(pauseEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::Paused": {},
+          "components::pausable::events::Paused": {},
         }),
       ]);
 
@@ -223,7 +223,7 @@ describe("token messenger minter", () => {
       const unpauseEvents = tokenMessengerMinter.contract.parseEvents(unpauseReceipt);
       expect(unpauseEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::Unpaused": {},
+          "components::pausable::events::Unpaused": {},
         }),
       ]);
 
@@ -242,8 +242,9 @@ describe("token messenger minter", () => {
       const updatePauserEvents = tokenMessengerMinter.contract.parseEvents(updatePauserReceipt);
       expect(updatePauserEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::PauserChanged": {
-            new_address: num.toBigInt(testerAddress),
+          "components::pausable::events::PauserChanged": {
+            old_pauser: num.toBigInt(initialPauser),
+            new_pauser: num.toBigInt(testerAddress),
           },
         }),
       ]);
@@ -262,7 +263,7 @@ describe("token messenger minter", () => {
       const pauseWithNewPauserEvents = tokenMessengerMinter.contract.parseEvents(pauseWithNewPauserReceipt);
       expect(pauseWithNewPauserEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::Paused": {},
+          "components::pausable::events::Paused": {},
         }),
       ]);
 
@@ -300,7 +301,7 @@ describe("token messenger minter", () => {
       const updateDenylisterEvents = tokenMessengerMinter.contract.parseEvents(updateDenylisterReceipt);
       expect(updateDenylisterEvents).toEqual([
         expect.objectContaining({
-          "components::denylistable::DenylistableComponent::DenylisterChanged": {
+          "components::denylistable::events::DenylisterChanged": {
             old_denylister: num.toBigInt(tokenMessengerMinter.denylister.address),
             new_denylister: num.toBigInt(testerAddress),
           },
@@ -323,7 +324,7 @@ describe("token messenger minter", () => {
       const updateBackEvents = tokenMessengerMinter.contract.parseEvents(updateBackReceipt);
       expect(updateBackEvents).toEqual([
         expect.objectContaining({
-          "components::denylistable::DenylistableComponent::DenylisterChanged": {
+          "components::denylistable::events::DenylisterChanged": {
             old_denylister: num.toBigInt(testerAddress),
             new_denylister: num.toBigInt(tokenMessengerMinter.denylister.address),
           },
@@ -348,7 +349,7 @@ describe("token messenger minter", () => {
         const denylistEvents = tokenMessengerMinter.contract.parseEvents(denylistReceipt);
         expect(denylistEvents).toEqual([
           expect.objectContaining({
-            "components::denylistable::DenylistableComponent::Denylisted": {
+            "components::denylistable::events::Denylisted": {
               address: num.toBigInt(testerAddress),
             },
           }),
@@ -390,7 +391,7 @@ describe("token messenger minter", () => {
         const undenylistEvents = tokenMessengerMinter.contract.parseEvents(undenylistReceipt);
         expect(undenylistEvents).toEqual([
           expect.objectContaining({
-            "components::denylistable::DenylistableComponent::Undenylisted": {
+            "components::denylistable::events::Undenylisted": {
               address: num.toBigInt(testerAddress),
             },
           }),

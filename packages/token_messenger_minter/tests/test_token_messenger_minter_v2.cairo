@@ -136,6 +136,10 @@ mod MockFiatTokenContract {
         ) -> u256 {
             self.allowances.read((owner, spender))
         }
+
+        fn version(self: @ContractState) -> u8 {
+            1
+        }
     }
 
     #[abi(per_item)]

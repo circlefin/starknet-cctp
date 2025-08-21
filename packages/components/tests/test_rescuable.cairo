@@ -101,6 +101,11 @@ mod MockERC20Contract {
             // Not needed for these tests
             0
         }
+
+        fn version(self: @ContractState) -> u8 {
+            // Not needed for these tests
+            1_u8
+        }
     }
 
     #[abi(per_item)]

@@ -64,13 +64,13 @@ describe("message transmitter", () => {
       const transferTx = await messageTransmitter.contract.transfer_admin(testerAddress);
       const transferReceipt = await provider.waitForTransaction(transferTx.transaction_hash);
 
-      // Verify AdminTransferStarted event
+      // Verify AdminChangeStarted event
       expect(transferReceipt.isSuccess()).toBe(true);
       const transferEvents = messageTransmitter.contract.parseEvents(transferReceipt);
       expect(transferEvents).toEqual([
         expect.objectContaining({
-          "components::manageable::ManageableComponent::AdminTransferStarted": {
-            previous_admin: num.toBigInt(messageTransmitter.admin.address),
+          "components::manageable::events::AdminChangeStarted": {
+            old_admin: num.toBigInt(messageTransmitter.admin.address),
             new_admin: num.toBigInt(testerAddress),
           },
         }),
@@ -85,13 +85,13 @@ describe("message transmitter", () => {
       const acceptTx = await messageTransmitter.contract.accept_admin();
       const acceptReceipt = await provider.waitForTransaction(acceptTx.transaction_hash);
 
-      // Verify AdminTransferred event
+      // Verify AdminChanged event
       expect(acceptReceipt.isSuccess()).toBe(true);
       const acceptEvents = messageTransmitter.contract.parseEvents(acceptReceipt);
       expect(acceptEvents).toEqual([
         expect.objectContaining({
-          "components::manageable::ManageableComponent::AdminTransferred": {
-            previous_admin: num.toBigInt(messageTransmitter.admin.address),
+          "components::manageable::events::AdminChanged": {
+            old_admin: num.toBigInt(messageTransmitter.admin.address),
             new_admin: num.toBigInt(testerAddress),
           },
         }),
@@ -145,8 +145,8 @@ describe("message transmitter", () => {
       const transferEvents = messageTransmitter.contract.parseEvents(transferReceipt);
       expect(transferEvents).toEqual([
         expect.objectContaining({
-          "components::ownable::OwnableComponent::OwnershipTransferStarted": {
-            previous_owner: num.toBigInt(messageTransmitter.owner.address),
+          "components::ownable::events::OwnershipTransferStarted": {
+            old_owner: num.toBigInt(messageTransmitter.owner.address),
             new_owner: num.toBigInt(testerAddress),
           },
         }),
@@ -166,8 +166,8 @@ describe("message transmitter", () => {
       const acceptEvents = messageTransmitter.contract.parseEvents(acceptReceipt);
       expect(acceptEvents).toEqual([
         expect.objectContaining({
-          "components::ownable::OwnableComponent::OwnershipTransferred": {
-            previous_owner: num.toBigInt(messageTransmitter.owner.address),
+          "components::ownable::events::OwnershipTransferred": {
+            old_owner: num.toBigInt(messageTransmitter.owner.address),
             new_owner: num.toBigInt(testerAddress),
           },
         }),
@@ -220,7 +220,7 @@ describe("message transmitter", () => {
       const pauseEvents = messageTransmitter.contract.parseEvents(pauseReceipt);
       expect(pauseEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::Paused": {},
+          "components::pausable::events::Paused": {},
         }),
       ]);
 
@@ -238,7 +238,7 @@ describe("message transmitter", () => {
       const unpauseEvents = messageTransmitter.contract.parseEvents(unpauseReceipt);
       expect(unpauseEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::Unpaused": {},
+          "components::pausable::events::Unpaused": {},
         }),
       ]);
 
@@ -257,8 +257,9 @@ describe("message transmitter", () => {
       const updatePauserEvents = messageTransmitter.contract.parseEvents(updatePauserReceipt);
       expect(updatePauserEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::PauserChanged": {
-            new_address: num.toBigInt(testerAddress),
+          "components::pausable::events::PauserChanged": {
+            old_pauser: num.toBigInt(initialPauser),
+            new_pauser: num.toBigInt(testerAddress),
           },
         }),
       ]);
@@ -277,7 +278,7 @@ describe("message transmitter", () => {
       const pauseWithNewPauserEvents = messageTransmitter.contract.parseEvents(pauseWithNewPauserReceipt);
       expect(pauseWithNewPauserEvents).toEqual([
         expect.objectContaining({
-          "components::pausable::PausableComponent::Paused": {},
+          "components::pausable::events::Paused": {},
         }),
       ]);
 

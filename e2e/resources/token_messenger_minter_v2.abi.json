@@ -265,11 +265,11 @@
   {
     "type": "impl",
     "name": "DenylistableImpl",
-    "interface_name": "components::denylistable::IDenylistable"
+    "interface_name": "components::denylistable::interface::IDenylistable"
   },
   {
     "type": "interface",
-    "name": "components::denylistable::IDenylistable",
+    "name": "components::denylistable::interface::IDenylistable",
     "items": [
       {
         "type": "function",
@@ -373,11 +373,11 @@
   {
     "type": "impl",
     "name": "ManageableImpl",
-    "interface_name": "components::manageable::IManageable"
+    "interface_name": "components::manageable::interface::IManageable"
   },
   {
     "type": "interface",
-    "name": "components::manageable::IManageable",
+    "name": "components::manageable::interface::IManageable",
     "items": [
       {
         "type": "function",
@@ -491,11 +491,11 @@
   {
     "type": "impl",
     "name": "OwnableImpl",
-    "interface_name": "components::ownable::IOwnable"
+    "interface_name": "components::ownable::interface::IOwnable"
   },
   {
     "type": "interface",
-    "name": "components::ownable::IOwnable",
+    "name": "components::ownable::interface::IOwnable",
     "items": [
       {
         "type": "function",
@@ -543,11 +543,11 @@
   {
     "type": "impl",
     "name": "PausableImpl",
-    "interface_name": "components::pausable::IPausable"
+    "interface_name": "components::pausable::interface::IPausable"
   },
   {
     "type": "interface",
-    "name": "components::pausable::IPausable",
+    "name": "components::pausable::interface::IPausable",
     "items": [
       {
         "type": "function",
@@ -837,11 +837,11 @@
   {
     "type": "impl",
     "name": "UpgradeableImpl",
-    "interface_name": "components::upgradeable::IUpgradeable"
+    "interface_name": "components::upgradeable::interface::IUpgradeable"
   },
   {
     "type": "interface",
-    "name": "components::upgradeable::IUpgradeable",
+    "name": "components::upgradeable::interface::IUpgradeable",
     "items": [
       {
         "type": "function",
@@ -869,7 +869,7 @@
   },
   {
     "type": "event",
-    "name": "components::denylistable::DenylistableComponent::DenylisterChanged",
+    "name": "components::denylistable::events::DenylisterChanged",
     "kind": "struct",
     "members": [
       {
@@ -886,7 +886,7 @@
   },
   {
     "type": "event",
-    "name": "components::denylistable::DenylistableComponent::Denylisted",
+    "name": "components::denylistable::events::Denylisted",
     "kind": "struct",
     "members": [
       {
@@ -898,7 +898,7 @@
   },
   {
     "type": "event",
-    "name": "components::denylistable::DenylistableComponent::Undenylisted",
+    "name": "components::denylistable::events::Undenylisted",
     "kind": "struct",
     "members": [
       {
@@ -910,22 +910,22 @@
   },
   {
     "type": "event",
-    "name": "components::denylistable::DenylistableComponent::Event",
+    "name": "components::denylistable::denylistable::DenylistableComponent::Event",
     "kind": "enum",
     "variants": [
       {
         "name": "DenylisterChanged",
-        "type": "components::denylistable::DenylistableComponent::DenylisterChanged",
+        "type": "components::denylistable::events::DenylisterChanged",
         "kind": "nested"
       },
       {
         "name": "Denylisted",
-        "type": "components::denylistable::DenylistableComponent::Denylisted",
+        "type": "components::denylistable::events::Denylisted",
         "kind": "nested"
       },
       {
         "name": "Undenylisted",
-        "type": "components::denylistable::DenylistableComponent::Undenylisted",
+        "type": "components::denylistable::events::Undenylisted",
         "kind": "nested"
       }
     ]
@@ -956,11 +956,11 @@
   },
   {
     "type": "event",
-    "name": "components::manageable::ManageableComponent::AdminTransferred",
+    "name": "components::manageable::events::AdminChanged",
     "kind": "struct",
     "members": [
       {
-        "name": "previous_admin",
+        "name": "old_admin",
         "type": "core::starknet::contract_address::ContractAddress",
         "kind": "key"
       },
@@ -973,11 +973,11 @@
   },
   {
     "type": "event",
-    "name": "components::manageable::ManageableComponent::AdminTransferStarted",
+    "name": "components::manageable::events::AdminChangeStarted",
     "kind": "struct",
     "members": [
       {
-        "name": "previous_admin",
+        "name": "old_admin",
         "type": "core::starknet::contract_address::ContractAddress",
         "kind": "key"
       },
@@ -990,17 +990,17 @@
   },
   {
     "type": "event",
-    "name": "components::manageable::ManageableComponent::Event",
+    "name": "components::manageable::manageable::ManageableComponent::Event",
     "kind": "enum",
     "variants": [
       {
-        "name": "AdminTransferred",
-        "type": "components::manageable::ManageableComponent::AdminTransferred",
+        "name": "AdminChanged",
+        "type": "components::manageable::events::AdminChanged",
         "kind": "nested"
       },
       {
-        "name": "AdminTransferStarted",
-        "type": "components::manageable::ManageableComponent::AdminTransferStarted",
+        "name": "AdminChangeStarted",
+        "type": "components::manageable::events::AdminChangeStarted",
         "kind": "nested"
       }
     ]
@@ -1053,11 +1053,11 @@
   },
   {
     "type": "event",
-    "name": "components::ownable::OwnableComponent::OwnershipTransferred",
+    "name": "components::ownable::events::OwnershipTransferred",
     "kind": "struct",
     "members": [
       {
-        "name": "previous_owner",
+        "name": "old_owner",
         "type": "core::starknet::contract_address::ContractAddress",
         "kind": "key"
       },
@@ -1070,11 +1070,11 @@
   },
   {
     "type": "event",
-    "name": "components::ownable::OwnableComponent::OwnershipTransferStarted",
+    "name": "components::ownable::events::OwnershipTransferStarted",
     "kind": "struct",
     "members": [
       {
-        "name": "previous_owner",
+        "name": "old_owner",
         "type": "core::starknet::contract_address::ContractAddress",
         "kind": "key"
       },
@@ -1087,40 +1087,45 @@
   },
   {
     "type": "event",
-    "name": "components::ownable::OwnableComponent::Event",
+    "name": "components::ownable::ownable::OwnableComponent::Event",
     "kind": "enum",
     "variants": [
       {
         "name": "OwnershipTransferred",
-        "type": "components::ownable::OwnableComponent::OwnershipTransferred",
+        "type": "components::ownable::events::OwnershipTransferred",
         "kind": "nested"
       },
       {
         "name": "OwnershipTransferStarted",
-        "type": "components::ownable::OwnableComponent::OwnershipTransferStarted",
+        "type": "components::ownable::events::OwnershipTransferStarted",
         "kind": "nested"
       }
     ]
   },
   {
     "type": "event",
-    "name": "components::pausable::PausableComponent::Paused",
+    "name": "components::pausable::events::Paused",
     "kind": "struct",
     "members": []
   },
   {
     "type": "event",
-    "name": "components::pausable::PausableComponent::Unpaused",
+    "name": "components::pausable::events::Unpaused",
     "kind": "struct",
     "members": []
   },
   {
     "type": "event",
-    "name": "components::pausable::PausableComponent::PauserChanged",
+    "name": "components::pausable::events::PauserChanged",
     "kind": "struct",
     "members": [
       {
-        "name": "new_address",
+        "name": "old_pauser",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_pauser",
         "type": "core::starknet::contract_address::ContractAddress",
         "kind": "key"
       }
@@ -1128,22 +1133,22 @@
   },
   {
     "type": "event",
-    "name": "components::pausable::PausableComponent::Event",
+    "name": "components::pausable::pausable::PausableComponent::Event",
     "kind": "enum",
     "variants": [
       {
         "name": "Paused",
-        "type": "components::pausable::PausableComponent::Paused",
+        "type": "components::pausable::events::Paused",
         "kind": "nested"
       },
       {
         "name": "Unpaused",
-        "type": "components::pausable::PausableComponent::Unpaused",
+        "type": "components::pausable::events::Unpaused",
         "kind": "nested"
       },
       {
         "name": "PauserChanged",
-        "type": "components::pausable::PausableComponent::PauserChanged",
+        "type": "components::pausable::events::PauserChanged",
         "kind": "nested"
       }
     ]
@@ -1325,7 +1330,7 @@
   },
   {
     "type": "event",
-    "name": "components::upgradeable::UpgradeableComponent::ContractUpgraded",
+    "name": "components::upgradeable::events::ContractUpgraded",
     "kind": "struct",
     "members": [
       {
@@ -1337,12 +1342,12 @@
   },
   {
     "type": "event",
-    "name": "components::upgradeable::UpgradeableComponent::Event",
+    "name": "components::upgradeable::upgradeable::UpgradeableComponent::Event",
     "kind": "enum",
     "variants": [
       {
         "name": "ContractUpgraded",
-        "type": "components::upgradeable::UpgradeableComponent::ContractUpgraded",
+        "type": "components::upgradeable::events::ContractUpgraded",
         "kind": "nested"
       }
     ]
@@ -1438,7 +1443,7 @@
     "variants": [
       {
         "name": "DenylistableEvent",
-        "type": "components::denylistable::DenylistableComponent::Event",
+        "type": "components::denylistable::denylistable::DenylistableComponent::Event",
         "kind": "flat"
       },
       {
@@ -1448,7 +1453,7 @@
       },
       {
         "name": "ManageableEvent",
-        "type": "components::manageable::ManageableComponent::Event",
+        "type": "components::manageable::manageable::ManageableComponent::Event",
         "kind": "flat"
       },
       {
@@ -1458,12 +1463,12 @@
       },
       {
         "name": "OwnableEvent",
-        "type": "components::ownable::OwnableComponent::Event",
+        "type": "components::ownable::ownable::OwnableComponent::Event",
         "kind": "flat"
       },
       {
         "name": "PausableEvent",
-        "type": "components::pausable::PausableComponent::Event",
+        "type": "components::pausable::pausable::PausableComponent::Event",
         "kind": "flat"
       },
       {
@@ -1483,7 +1488,7 @@
       },
       {
         "name": "UpgradeableEvent",
-        "type": "components::upgradeable::UpgradeableComponent::Event",
+        "type": "components::upgradeable::upgradeable::UpgradeableComponent::Event",
         "kind": "flat"
       },
       {
