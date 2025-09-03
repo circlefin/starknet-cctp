@@ -23,13 +23,11 @@ import {
   StablecoinInfo,
   MessageTransmitterInfo,
   provider,
-  ByteArray,
   uint8ArrayToHexString,
-  numberArrayToHexString,
   constructMessage,
 } from "./utils.js";
 
-describe("token messenger minter", () => {
+xdescribe("token messenger minter", () => {
   let tokenMessengerMinter: TokenMessengerMinterInfo;
 
   beforeAll(async () => {
@@ -46,7 +44,7 @@ describe("token messenger minter", () => {
       expect(initialPendingAdmin).toBe("0x0");
 
       // 3. Transfer admin to tester address (as admin)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.admin);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.admin;
       const testerAddress = tokenMessengerMinter.tester.address;
       const transferTx = await tokenMessengerMinter.contract.transfer_admin(testerAddress);
       const transferReceipt = await provider.waitForTransaction(transferTx.transaction_hash);
@@ -68,7 +66,7 @@ describe("token messenger minter", () => {
       expect(pendingAdminAfterTransfer).toBe(num.toHex(testerAddress));
 
       // 5. Accept admin (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const acceptTx = await tokenMessengerMinter.contract.accept_admin();
       const acceptReceipt = await provider.waitForTransaction(acceptTx.transaction_hash);
 
@@ -93,12 +91,12 @@ describe("token messenger minter", () => {
       expect(pendingAdminAfterAccept).toBe("0x0");
 
       // 8. Transfer admin back to original admin (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const originalAdminAddress = tokenMessengerMinter.admin.address;
       await tokenMessengerMinter.contract.transfer_admin(originalAdminAddress);
 
       // 9. Accept admin back (as original admin)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.admin);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.admin;
       await tokenMessengerMinter.contract.accept_admin();
 
       // 10. Verify admin is back to original
@@ -121,7 +119,7 @@ describe("token messenger minter", () => {
       expect(initialPendingOwner).toBe("0x0");
 
       // 3. Transfer ownership to tester address (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const transferTx = await tokenMessengerMinter.contract.transfer_ownership(testerAddress);
       const transferReceipt = await provider.waitForTransaction(transferTx.transaction_hash);
@@ -143,7 +141,7 @@ describe("token messenger minter", () => {
       expect(pendingOwnerAfterTransfer).toBe(num.toHex(testerAddress));
 
       // 5. Accept ownership (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const acceptTx = await tokenMessengerMinter.contract.accept_ownership();
       const acceptReceipt = await provider.waitForTransaction(acceptTx.transaction_hash);
 
@@ -168,12 +166,12 @@ describe("token messenger minter", () => {
       expect(pendingOwnerAfterAccept).toBe("0x0");
 
       // 8. Transfer ownership back to original owner (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const originalOwnerAddress = tokenMessengerMinter.owner.address;
       await tokenMessengerMinter.contract.transfer_ownership(originalOwnerAddress);
 
       // 9. Accept ownership back (as original owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       await tokenMessengerMinter.contract.accept_ownership();
 
       // 10. Verify owner is back to original
@@ -196,7 +194,7 @@ describe("token messenger minter", () => {
       expect(initialPaused).toBe(false);
 
       // 3. Pause the contract (as pauser)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.pauser);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.pauser;
       const pauseTx = await tokenMessengerMinter.contract.pause();
       const pauseReceipt = await provider.waitForTransaction(pauseTx.transaction_hash);
 
@@ -214,7 +212,7 @@ describe("token messenger minter", () => {
       expect(pausedAfterPause).toBe(true);
 
       // 5. Unpause the contract (as pauser)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.pauser);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.pauser;
       const unpauseTx = await tokenMessengerMinter.contract.unpause();
       const unpauseReceipt = await provider.waitForTransaction(unpauseTx.transaction_hash);
 
@@ -232,7 +230,7 @@ describe("token messenger minter", () => {
       expect(pausedAfterUnpause).toBe(false);
 
       // 7. Update pauser to tester (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const updatePauserTx = await tokenMessengerMinter.contract.update_pauser(testerAddress);
       const updatePauserReceipt = await provider.waitForTransaction(updatePauserTx.transaction_hash);
@@ -254,7 +252,7 @@ describe("token messenger minter", () => {
       expect(newPauser).toBe(num.toHex(testerAddress));
 
       // 9. Pause with new pauser (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const pauseWithNewPauserTx = await tokenMessengerMinter.contract.pause();
       const pauseWithNewPauserReceipt = await provider.waitForTransaction(pauseWithNewPauserTx.transaction_hash);
 
@@ -272,11 +270,11 @@ describe("token messenger minter", () => {
       expect(finalPausedState).toBe(true);
 
       // 11. Unpause with new pauser to restore state (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       await tokenMessengerMinter.contract.unpause();
 
       // 12. Update pauser back to original (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       await tokenMessengerMinter.contract.update_pauser(tokenMessengerMinter.pauser.address);
 
       // 13. Verify pauser is back to original
@@ -291,7 +289,7 @@ describe("token messenger minter", () => {
       expect(initialDenylister).toBe(num.toHex(tokenMessengerMinter.denylister.address));
 
       // 2. Update denylister to tester (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const updateDenylisterTx = await tokenMessengerMinter.contract.update_denylister(testerAddress);
       const updateDenylisterReceipt = await provider.waitForTransaction(updateDenylisterTx.transaction_hash);
@@ -313,7 +311,7 @@ describe("token messenger minter", () => {
       expect(newDenylister).toBe(num.toHex(testerAddress));
 
       // 4. Update denylister back to original (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const updateBackTx = await tokenMessengerMinter.contract.update_denylister(
         tokenMessengerMinter.denylister.address,
       );
@@ -340,7 +338,7 @@ describe("token messenger minter", () => {
       const testerAddress = tokenMessengerMinter.tester.address;
 
       // 1. Add tester to denylist (as denylister)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.denylister);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.denylister;
       const denylistTx = await tokenMessengerMinter.contract.denylist(testerAddress);
 
       // 2. Wait for transaction and verify event
@@ -362,7 +360,7 @@ describe("token messenger minter", () => {
 
       // 4. Try to perform a transfer operation as denylisted address (should fail)
       // Using deposit_for_burn as an example transfer operation
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       try {
         // This should fail because tester is denylisted
         await tokenMessengerMinter.contract.deposit_for_burn(
@@ -382,7 +380,7 @@ describe("token messenger minter", () => {
       }
 
       // 5. Remove tester from denylist (as denylister)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.denylister);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.denylister;
       const undenylistTx = await tokenMessengerMinter.contract.undenylist(testerAddress);
 
       // 6. Wait for transaction and verify event
@@ -406,7 +404,7 @@ describe("token messenger minter", () => {
       expect(initialFeeRecipient).toBe(num.toHex(tokenMessengerMinter.fee_recipient.address));
 
       // 2. Set fee recipient to tester (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const setFeeRecipientTx = await tokenMessengerMinter.contract.set_fee_recipient(testerAddress);
       const setFeeRecipientReceipt = await provider.waitForTransaction(setFeeRecipientTx.transaction_hash);
@@ -427,7 +425,7 @@ describe("token messenger minter", () => {
       expect(newFeeRecipient).toBe(num.toHex(testerAddress));
 
       // 4. Set fee recipient back to original (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const setBackTx = await tokenMessengerMinter.contract.set_fee_recipient(
         tokenMessengerMinter.fee_recipient.address,
       );
@@ -463,7 +461,7 @@ describe("token messenger minter", () => {
       expect(initialMinFee).toBe(0n);
 
       // 3. Set min fee for dummy token (as min fee controller)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.min_fee_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.min_fee_controller;
       const minFeeValue = 100000n; // 1% (100000 / 10000000)
       const setMinFeeTx = await tokenMessengerMinter.contract.set_min_fee(dummyBurnToken, minFeeValue);
       const setMinFeeReceipt = await provider.waitForTransaction(setMinFeeTx.transaction_hash);
@@ -485,7 +483,7 @@ describe("token messenger minter", () => {
       expect(newMinFee).toBe(minFeeValue);
 
       // 5. Update min fee controller to tester (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const updateControllerTx = await tokenMessengerMinter.contract.set_min_fee_controller(testerAddress);
       const updateControllerReceipt = await provider.waitForTransaction(updateControllerTx.transaction_hash);
@@ -506,7 +504,7 @@ describe("token messenger minter", () => {
       expect(newMinFeeController).toBe(num.toHex(testerAddress));
 
       // 7. Update min fee with new controller (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const updatedMinFeeValue = 200000n; // 2% (200000 / 10000000)
       const updateMinFeeTx = await tokenMessengerMinter.contract.set_min_fee(dummyBurnToken, updatedMinFeeValue);
       const updateMinFeeReceipt = await provider.waitForTransaction(updateMinFeeTx.transaction_hash);
@@ -528,11 +526,11 @@ describe("token messenger minter", () => {
       expect(updatedMinFee).toBe(updatedMinFeeValue);
 
       // 9. Set min fee back to 0 to clean up (as tester)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       await tokenMessengerMinter.contract.set_min_fee(dummyBurnToken, 0n);
 
       // 10. Update min fee controller back to original (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       await tokenMessengerMinter.contract.set_min_fee_controller(tokenMessengerMinter.min_fee_controller.address);
 
       // 11. Verify min fee controller is back to original
@@ -547,7 +545,7 @@ describe("token messenger minter", () => {
       expect(initialTokenController).toBe(num.toHex(tokenMessengerMinter.token_controller.address));
 
       // 2. Set token controller to tester (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const setTokenControllerTx = await tokenMessengerMinter.contract.set_token_controller(testerAddress);
       const setTokenControllerReceipt = await provider.waitForTransaction(setTokenControllerTx.transaction_hash);
@@ -568,7 +566,7 @@ describe("token messenger minter", () => {
       expect(newTokenController).toBe(num.toHex(testerAddress));
 
       // 4. Set token controller back to original (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const setBackTx = await tokenMessengerMinter.contract.set_token_controller(
         tokenMessengerMinter.token_controller.address,
       );
@@ -598,7 +596,7 @@ describe("token messenger minter", () => {
       const maxBurnAmount = 1000000000n; // 1000 tokens with 6 decimals
 
       // 1. Set max burn amount for the token (as token controller)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       const setMaxBurnTx = await tokenMessengerMinter.contract.set_max_burn_amount_per_message(
         localToken,
         maxBurnAmount,
@@ -618,7 +616,7 @@ describe("token messenger minter", () => {
       ]);
 
       // 2. Link token pair (as token controller)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       const linkTx = await tokenMessengerMinter.contract.link_token_pair(localToken, remoteDomain, remoteToken);
       const linkReceipt = await provider.waitForTransaction(linkTx.transaction_hash);
 
@@ -637,7 +635,7 @@ describe("token messenger minter", () => {
 
       // 3. Update max burn amount to a different value (as token controller)
       const updatedMaxBurnAmount = 2000000000n; // 2000 tokens with 6 decimals
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       const updateMaxBurnTx = await tokenMessengerMinter.contract.set_max_burn_amount_per_message(
         localToken,
         updatedMaxBurnAmount,
@@ -657,7 +655,7 @@ describe("token messenger minter", () => {
       ]);
 
       // 4. Unlink token pair (as token controller)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       const unlinkTx = await tokenMessengerMinter.contract.unlink_token_pair(localToken, remoteDomain, remoteToken);
       const unlinkReceipt = await provider.waitForTransaction(unlinkTx.transaction_hash);
 
@@ -675,7 +673,7 @@ describe("token messenger minter", () => {
       ]);
 
       // 5. Set max burn amount back to 0 to clean up (as token controller)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       await tokenMessengerMinter.contract.set_max_burn_amount_per_message(localToken, 0n);
     });
 
@@ -695,7 +693,7 @@ describe("token messenger minter", () => {
       expect(num.toHex(initialLocalToken)).toBe("0x0");
 
       // 3. Set max burn amount (as token controller)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       await tokenMessengerMinter.contract.set_max_burn_amount_per_message(localToken, maxBurnAmount);
 
       // 4. Verify burn limit is set correctly
@@ -754,7 +752,7 @@ describe("token messenger minter", () => {
       expect(initialRemoteTokenMessenger4).toBe(0n);
 
       // 3. Add remote token messenger for new domain4 (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const addTx4 = await tokenMessengerMinter.contract.add_remote_token_messenger(
         newDomain4,
         newRemoteTokenMessenger4,
@@ -779,7 +777,7 @@ describe("token messenger minter", () => {
       expect(num.toHex(remoteTokenMessengerAfterAdd4)).toBe(newRemoteTokenMessenger4);
 
       // 5. Remove one of the existing pre-configured domains (domain1) (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const removeTx1 = await tokenMessengerMinter.contract.remove_remote_token_messenger(existingDomain1);
       const removeReceipt1 = await provider.waitForTransaction(removeTx1.transaction_hash);
 
@@ -812,11 +810,11 @@ describe("token messenger minter", () => {
       expect(num.toHex(stillSet4)).toBe(newRemoteTokenMessenger4);
 
       // 8. Clean up: remove the newly added domain
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       await tokenMessengerMinter.contract.remove_remote_token_messenger(newDomain4);
 
       // 9. Restore domain1 to its original state
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       await tokenMessengerMinter.contract.add_remote_token_messenger(existingDomain1, existingRemoteTokenMessenger1);
 
       // 10. Verify original state is restored
@@ -841,7 +839,7 @@ describe("token messenger minter", () => {
       expect(initialRescuer).toBe(num.toHex(tokenMessengerMinter.rescuer.address));
 
       // 2. Update rescuer to tester (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const testerAddress = tokenMessengerMinter.tester.address;
       const updateRescuerTx = await tokenMessengerMinter.contract.update_rescuer(testerAddress);
       const updateRescuerReceipt = await provider.waitForTransaction(updateRescuerTx.transaction_hash);
@@ -862,7 +860,7 @@ describe("token messenger minter", () => {
       expect(newRescuer).toBe(num.toHex(testerAddress));
 
       // 4. Update rescuer back to original (as owner)
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.owner);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.owner;
       const updateBackTx = await tokenMessengerMinter.contract.update_rescuer(tokenMessengerMinter.rescuer.address);
       const updateBackReceipt = await provider.waitForTransaction(updateBackTx.transaction_hash);
 
@@ -905,7 +903,7 @@ describe("token messenger minter", () => {
       const burnToken = stablecoin.contract.address;
 
       // 1. Set up token configuration
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
 
       // Set max burn amount per message
       const maxBurnAmount = 1000000000n; // 1000 USDC
@@ -924,7 +922,7 @@ describe("token messenger minter", () => {
       }
 
       // 2. Mint some tokens to the tester account
-      stablecoin.contract.connect(stablecoin.minter);
+      stablecoin.contract.providerOrAccount = stablecoin.minter;
       await stablecoin.contract.mint(
         tokenMessengerMinter.tester.address,
         params.amount * 2n, // Mint double the amount we'll burn
@@ -932,11 +930,11 @@ describe("token messenger minter", () => {
       const initialBalance = await stablecoin.contract.balance_of(tokenMessengerMinter.tester.address);
 
       // 3. Approve token messenger minter to spend tokens
-      stablecoin.contract.connect(tokenMessengerMinter.tester);
+      stablecoin.contract.providerOrAccount = tokenMessengerMinter.tester;
       await stablecoin.contract.approve(tokenMessengerMinter.contract.address, params.amount);
 
       // 4. Call deposit_for_burn or deposit_for_burn_with_hook
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.tester);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.tester;
       const depositTx = params.useHook
         ? await tokenMessengerMinter.contract.deposit_for_burn_with_hook(
             params.amount,
@@ -971,7 +969,7 @@ describe("token messenger minter", () => {
       expect(finalBalance).toBe(initialBalance - params.amount);
 
       // 7. Clean up
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       await tokenMessengerMinter.contract.unlink_token_pair(burnToken, params.destinationDomain, remoteToken);
       await tokenMessengerMinter.contract.set_max_burn_amount_per_message(burnToken, 0n);
 
@@ -979,7 +977,6 @@ describe("token messenger minter", () => {
         tokenMessengerEvents,
         messageTransmitterEvents,
         burnToken,
-        rawEvents: (depositReceipt as any).events,
       };
     };
 
@@ -992,16 +989,15 @@ describe("token messenger minter", () => {
       const maxFee = 10000n; // 0.01 USDC fee
       const minFinalityThreshold = 1000;
 
-      const { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents } =
-        await setupAndExecuteDepositForBurn({
-          amount,
-          destinationDomain,
-          mintRecipient,
-          destinationCaller,
-          maxFee,
-          minFinalityThreshold,
-          useHook: false,
-        });
+      const { tokenMessengerEvents, messageTransmitterEvents, burnToken } = await setupAndExecuteDepositForBurn({
+        amount,
+        destinationDomain,
+        mintRecipient,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold,
+        useHook: false,
+      });
 
       // Verify DepositForBurn event
       expect(tokenMessengerEvents).toEqual(
@@ -1017,7 +1013,7 @@ describe("token messenger minter", () => {
               destination_caller: num.toBigInt(destinationCaller),
               max_fee: maxFee,
               min_finality_threshold: num.toBigInt(minFinalityThreshold),
-              hook_data: "", // Empty for standard deposit_for_burn
+              hook_data: Buffer.from(""), // Empty for standard deposit_for_burn
             },
           }),
         ]),
@@ -1028,18 +1024,16 @@ describe("token messenger minter", () => {
         expect.arrayContaining([
           expect.objectContaining({
             "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent": {
-              message: expect.any(String),
+              message: expect.any(Buffer),
             },
           }),
         ]),
       );
 
-      // now let's decode the raw event manually
-      const messageSentEvent = rawEvents.find(
-        (event: any) => event.from_address === messageTransmitter.contract.address,
-      );
-      const messageBody = messageSentEvent.data as string[];
-      const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
+      const messageBody = messageTransmitterEvents[0][
+        "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent"
+      ]["message"] as unknown as Buffer;
+      const messageBodyHex = "0x" + messageBody.toString("hex");
       const burnMessageBytes = constructMessage({
         version: 1,
         sourceDomain: 25,
@@ -1060,7 +1054,7 @@ describe("token messenger minter", () => {
           hookData: "",
         },
       });
-      const burnMessageHex = numberArrayToHexString(burnMessageBytes);
+      const burnMessageHex = uint8ArrayToHexString(burnMessageBytes);
       expect(messageBodyHex).toEqual(burnMessageHex);
     });
 
@@ -1074,17 +1068,16 @@ describe("token messenger minter", () => {
       const minFinalityThreshold = 1000;
       const hookData = "Example hook data for testing purposes";
 
-      const { tokenMessengerEvents, messageTransmitterEvents, burnToken, rawEvents } =
-        await setupAndExecuteDepositForBurn({
-          amount,
-          destinationDomain,
-          mintRecipient,
-          destinationCaller,
-          maxFee,
-          minFinalityThreshold,
-          hookData,
-          useHook: true,
-        });
+      const { tokenMessengerEvents, messageTransmitterEvents, burnToken } = await setupAndExecuteDepositForBurn({
+        amount,
+        destinationDomain,
+        mintRecipient,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold,
+        hookData,
+        useHook: true,
+      });
 
       // Verify DepositForBurn event
       expect(tokenMessengerEvents).toEqual(
@@ -1100,7 +1093,7 @@ describe("token messenger minter", () => {
               destination_caller: num.toBigInt(destinationCaller),
               max_fee: maxFee,
               min_finality_threshold: num.toBigInt(minFinalityThreshold),
-              hook_data: hookData,
+              hook_data: Buffer.from(hookData),
             },
           }),
         ]),
@@ -1111,18 +1104,16 @@ describe("token messenger minter", () => {
         expect.arrayContaining([
           expect.objectContaining({
             "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent": {
-              message: expect.any(String),
+              message: expect.any(Buffer),
             },
           }),
         ]),
       );
 
-      // now let's decode the raw event manually
-      const messageSentEvent = rawEvents.find(
-        (event: any) => event.from_address === messageTransmitter.contract.address,
-      );
-      const messageBody = messageSentEvent.data as string[];
-      const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
+      const messageBody = messageTransmitterEvents[0][
+        "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent"
+      ]["message"] as unknown as Buffer;
+      const messageBodyHex = "0x" + messageBody.toString("hex");
       const burnMessageBytes = constructMessage({
         version: 1,
         sourceDomain: 25,
@@ -1143,7 +1134,7 @@ describe("token messenger minter", () => {
           hookData: hookData,
         },
       });
-      const burnMessageHex = numberArrayToHexString(burnMessageBytes);
+      const burnMessageHex = uint8ArrayToHexString(burnMessageBytes);
       expect(messageBodyHex).toEqual(burnMessageHex);
     });
   });

@@ -69,9 +69,9 @@ async function getContracts() {
   const usdcContract = await initializeContract(provider, usdcAddress!);
 
   // Connect account to contract
-  messageTransmitter.connect(account);
-  tokenMessengerMinter.connect(account);
-  usdcContract.connect(account);
+  messageTransmitter.providerOrAccount = account;
+  tokenMessengerMinter.providerOrAccount = account;
+  usdcContract.providerOrAccount = account;
 
   return { messageTransmitter, tokenMessengerMinter, usdcContract, provider };
 }

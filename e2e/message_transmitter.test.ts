@@ -14,15 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CallData, num } from "starknet";
+import { CairoByteArray, CallData, num } from "starknet";
 import {
   loadMessageTransmitter,
   loadTokenMessengerMinter,
   MessageTransmitterInfo,
   provider,
-  ByteArray,
   numberArrayToHexString,
-  uint8ArrayToHexString,
   appendU32BE,
   appendU256BE,
   appendZeroU256,
@@ -59,7 +57,7 @@ describe("message transmitter", () => {
       expect(initialPendingAdmin).toBe("0x0");
 
       // 3. Transfer admin to tester address (as admin)
-      messageTransmitter.contract.connect(messageTransmitter.admin);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.admin;
       const testerAddress = messageTransmitter.tester.address;
       const transferTx = await messageTransmitter.contract.transfer_admin(testerAddress);
       const transferReceipt = await provider.waitForTransaction(transferTx.transaction_hash);
@@ -81,7 +79,7 @@ describe("message transmitter", () => {
       expect(pendingAdminAfterTransfer).toBe(num.toHex(testerAddress));
 
       // 5. Accept admin (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       const acceptTx = await messageTransmitter.contract.accept_admin();
       const acceptReceipt = await provider.waitForTransaction(acceptTx.transaction_hash);
 
@@ -106,12 +104,12 @@ describe("message transmitter", () => {
       expect(pendingAdminAfterAccept).toBe("0x0");
 
       // 8. Transfer admin back to original admin (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       const originalAdminAddress = messageTransmitter.admin.address;
       await messageTransmitter.contract.transfer_admin(originalAdminAddress);
 
       // 9. Accept admin back (as original admin)
-      messageTransmitter.contract.connect(messageTransmitter.admin);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.admin;
       await messageTransmitter.contract.accept_admin();
 
       // 10. Verify admin is back to original
@@ -135,7 +133,7 @@ describe("message transmitter", () => {
       expect(initialPendingOwner).toBe("0x0");
 
       // 3. Transfer ownership to tester address (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       const testerAddress = messageTransmitter.tester.address;
       const transferTx = await messageTransmitter.contract.transfer_ownership(testerAddress);
       const transferReceipt = await provider.waitForTransaction(transferTx.transaction_hash);
@@ -157,7 +155,7 @@ describe("message transmitter", () => {
       expect(pendingOwnerAfterTransfer).toBe(num.toHex(testerAddress));
 
       // 5. Accept ownership (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       const acceptTx = await messageTransmitter.contract.accept_ownership();
       const acceptReceipt = await provider.waitForTransaction(acceptTx.transaction_hash);
 
@@ -182,12 +180,12 @@ describe("message transmitter", () => {
       expect(pendingOwnerAfterAccept).toBe("0x0");
 
       // 8. Transfer ownership back to original owner (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       const originalOwnerAddress = messageTransmitter.owner.address;
       await messageTransmitter.contract.transfer_ownership(originalOwnerAddress);
 
       // 9. Accept ownership back (as original owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       await messageTransmitter.contract.accept_ownership();
 
       // 10. Verify owner is back to original
@@ -211,7 +209,7 @@ describe("message transmitter", () => {
       expect(initialPaused).toBe(false);
 
       // 3. Pause the contract (as pauser)
-      messageTransmitter.contract.connect(messageTransmitter.pauser);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.pauser;
       const pauseTx = await messageTransmitter.contract.pause();
       const pauseReceipt = await provider.waitForTransaction(pauseTx.transaction_hash);
 
@@ -229,7 +227,7 @@ describe("message transmitter", () => {
       expect(pausedAfterPause).toBe(true);
 
       // 5. Unpause the contract (as pauser)
-      messageTransmitter.contract.connect(messageTransmitter.pauser);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.pauser;
       const unpauseTx = await messageTransmitter.contract.unpause();
       const unpauseReceipt = await provider.waitForTransaction(unpauseTx.transaction_hash);
 
@@ -247,7 +245,7 @@ describe("message transmitter", () => {
       expect(pausedAfterUnpause).toBe(false);
 
       // 7. Update pauser to tester (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       const testerAddress = messageTransmitter.tester.address;
       const updatePauserTx = await messageTransmitter.contract.update_pauser(testerAddress);
       const updatePauserReceipt = await provider.waitForTransaction(updatePauserTx.transaction_hash);
@@ -269,7 +267,7 @@ describe("message transmitter", () => {
       expect(newPauser).toBe(num.toHex(testerAddress));
 
       // 9. Pause with new pauser (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       const pauseWithNewPauserTx = await messageTransmitter.contract.pause();
       const pauseWithNewPauserReceipt = await provider.waitForTransaction(pauseWithNewPauserTx.transaction_hash);
 
@@ -287,11 +285,11 @@ describe("message transmitter", () => {
       expect(finalPausedState).toBe(true);
 
       // 11. Unpause with new pauser to restore state (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       await messageTransmitter.contract.unpause();
 
       // 12. Update pauser back to original (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       await messageTransmitter.contract.update_pauser(messageTransmitter.pauser.address);
 
       // 13. Verify pauser is back to original
@@ -314,7 +312,7 @@ describe("message transmitter", () => {
       const initialThreshold = await messageTransmitter.contract.get_signature_threshold();
 
       // 4. Enable a new attester (as attester manager)
-      messageTransmitter.contract.connect(messageTransmitter.attester_manager);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.attester_manager;
       const newAttester = "0x1234567890123456789012345678901234567890";
       const enableAttesterTx = await messageTransmitter.contract.enable_attester(newAttester);
       const enableAttesterReceipt = await provider.waitForTransaction(enableAttesterTx.transaction_hash);
@@ -340,7 +338,7 @@ describe("message transmitter", () => {
 
       // 7. Update signature threshold (as attester manager)
       const newThreshold = initialThreshold + 1n;
-      messageTransmitter.contract.connect(messageTransmitter.attester_manager);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.attester_manager;
       const setThresholdTx = await messageTransmitter.contract.set_signature_threshold(newThreshold);
       const setThresholdReceipt = await provider.waitForTransaction(setThresholdTx.transaction_hash);
 
@@ -361,11 +359,11 @@ describe("message transmitter", () => {
       expect(updatedThreshold).toBe(newThreshold);
 
       // 9. Restore threshold back (as attester manager)
-      messageTransmitter.contract.connect(messageTransmitter.attester_manager);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.attester_manager;
       await messageTransmitter.contract.set_signature_threshold(initialThreshold);
 
       // 10. Disable the attester (as attester manager)
-      messageTransmitter.contract.connect(messageTransmitter.attester_manager);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.attester_manager;
       const disableAttesterTx = await messageTransmitter.contract.disable_attester(newAttester);
       const disableAttesterReceipt = await provider.waitForTransaction(disableAttesterTx.transaction_hash);
 
@@ -395,7 +393,7 @@ describe("message transmitter", () => {
       expect(initialAttesterManager).toBe(num.toHex(messageTransmitter.attester_manager.address));
 
       // 2. Update attester manager to tester (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       const testerAddress = messageTransmitter.tester.address;
       const updateAttesterManagerTx = await messageTransmitter.contract.update_attester_manager(testerAddress);
       const updateAttesterManagerReceipt = await provider.waitForTransaction(updateAttesterManagerTx.transaction_hash);
@@ -417,7 +415,7 @@ describe("message transmitter", () => {
       expect(newAttesterManager).toBe(num.toHex(testerAddress));
 
       // 4. Enable an attester with new attester manager (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       const testAttester = "0xabcdef1234567890abcdef1234567890abcdef12";
       const enableAttesterTx = await messageTransmitter.contract.enable_attester(testAttester);
       const enableAttesterReceipt = await provider.waitForTransaction(enableAttesterTx.transaction_hash);
@@ -426,11 +424,11 @@ describe("message transmitter", () => {
       expect(enableAttesterReceipt.isSuccess()).toBe(true);
 
       // 5. Disable the test attester (as tester)
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
       await messageTransmitter.contract.disable_attester(testAttester);
 
       // 6. Update attester manager back to original (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       const originalAttesterManagerAddress = messageTransmitter.attester_manager.address;
       await messageTransmitter.contract.update_attester_manager(originalAttesterManagerAddress);
 
@@ -447,7 +445,7 @@ describe("message transmitter", () => {
       expect(initialRescuer).toBe(num.toHex(messageTransmitter.rescuer.address));
 
       // 2. Update rescuer to tester (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       const testerAddress = messageTransmitter.tester.address;
       const updateRescuerTx = await messageTransmitter.contract.update_rescuer(testerAddress);
       const updateRescuerReceipt = await provider.waitForTransaction(updateRescuerTx.transaction_hash);
@@ -468,7 +466,7 @@ describe("message transmitter", () => {
       expect(newRescuer).toBe(num.toHex(testerAddress));
 
       // 4. Update rescuer back to original (as owner)
-      messageTransmitter.contract.connect(messageTransmitter.owner);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.owner;
       const updateBackTx = await messageTransmitter.contract.update_rescuer(messageTransmitter.rescuer.address);
       const updateBackReceipt = await provider.waitForTransaction(updateBackTx.transaction_hash);
 
@@ -501,7 +499,7 @@ describe("message transmitter", () => {
       testName: string;
     }) => {
       // Send message
-      messageTransmitter.contract.connect(params.sender);
+      messageTransmitter.contract.providerOrAccount = params.sender;
       const sendTx = await messageTransmitter.contract.send_message(
         params.destinationDomain,
         params.recipient,
@@ -514,17 +512,19 @@ describe("message transmitter", () => {
       const sendReceipt = await provider.waitForTransaction(sendTx.transaction_hash);
       expect(sendReceipt.isSuccess()).toBe(true);
 
-      // Parse events - we need to get the raw event data from the receipt
-      // Access the events array from the receipt object
-      const receiptWithEvents = sendReceipt as any;
-      const events = receiptWithEvents.events || [];
-
-      const messageSentEvent = events.find((event: any) => event.from_address === messageTransmitter.contract.address);
-
-      expect(messageSentEvent).toBeDefined();
+      const events = messageTransmitter.contract.parseEvents(sendReceipt);
+      expect(events).toEqual([
+        expect.objectContaining({
+          "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent": {
+            message: expect.any(Buffer),
+          },
+        }),
+      ]);
 
       // Decode the ByteArray from the event data
-      const decodedMessage = ByteArray.decode(messageSentEvent!.data);
+      const message = events[0]["message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent"][
+        "message"
+      ] as unknown as Buffer;
 
       // Construct the expected message
       const expectedMessageBytes: number[] = [];
@@ -561,7 +561,7 @@ describe("message transmitter", () => {
       expectedMessageBytes.push(...bodyBytes);
 
       // Check the basic structure (skip nonce verification for now)
-      const decodedHex = uint8ArrayToHexString(decodedMessage);
+      const decodedHex = "0x" + message.toString("hex");
 
       const expectedHex = numberArrayToHexString(expectedMessageBytes);
 
@@ -598,7 +598,7 @@ describe("message transmitter", () => {
     const generateAttestation = (
       message: Uint8Array,
       attesters: { privateKey: string; address: string }[],
-    ): string[] => {
+    ): CairoByteArray => {
       // Hash the message using Keccak256 (raw hash, no Ethereum prefix)
       const messageHash = ethers.keccak256(message);
 
@@ -629,16 +629,8 @@ describe("message transmitter", () => {
       });
 
       // Concatenate all signatures in order
-      const attestationHex = signatures.map((s) => s.signature).join("");
-
-      // Convert hex string to bytes
-      const attestationBytes: number[] = [];
-      for (let i = 0; i < attestationHex.length; i += 2) {
-        attestationBytes.push(parseInt(attestationHex.substr(i, 2), 16));
-      }
-
-      // Encode as ByteArray
-      return ByteArray.encode(attestationBytes);
+      const attestationHex = "0x" + signatures.map((s) => s.signature).join("");
+      return new CairoByteArray(attestationHex);
     };
 
     // Common function to test receiving messages
@@ -674,20 +666,18 @@ describe("message transmitter", () => {
       };
 
       const burnMessageBytes = constructBurnMessage(messageParams.burnMessage);
+      const burnMessageByteArray = new CairoByteArray(burnMessageBytes);
       const messageBytes = constructMessage(messageParams);
-      const messageUint8Array = new Uint8Array(messageBytes);
+      const messageByteArray = new CairoByteArray(messageBytes);
 
       // Generate attestation using the configured attesters
-      const attestation = generateAttestation(messageUint8Array, messageTransmitter.attesters);
-
-      // Encode the message as a StarkNet ByteArray (array of strings)
-      const encodedMessage = ByteArray.encode(messageBytes);
+      const attestation = generateAttestation(messageBytes, messageTransmitter.attesters);
 
       // Call receive_message with the encoded message array
-      messageTransmitter.contract.connect(messageTransmitter.tester);
+      messageTransmitter.contract.providerOrAccount = messageTransmitter.tester;
 
       const receiveTx = await messageTransmitter.contract.receive_message(
-        CallData.compile([...encodedMessage, ...attestation]),
+        CallData.compile([...messageByteArray.toApiRequest(), ...attestation.toApiRequest()]),
       );
 
       // Wait for transaction
@@ -705,27 +695,27 @@ describe("message transmitter", () => {
             nonce: messageParams.nonce,
             sender: num.toBigInt(messageParams.sender),
             finality_threshold_executed: num.toBigInt(messageParams.finalityThresholdExecuted),
-            message_body: expect.any(String), // The message body should be a burn message
+            message_body: expect.any(Buffer), // The message body should be a burn message
           },
         }),
       ]);
 
-      const burnMessageHex = numberArrayToHexString(burnMessageBytes);
-      // we will need to manually parse the burn message from the event data
-      const rawEvents = (receiveReceipt as any).events || [];
-      const messageReceivedEvent = rawEvents.find(
-        (event: any) => event.from_address === messageTransmitter.contract.address,
-      );
-      const messageBody = (messageReceivedEvent.data as string[]).slice(3); // 1st felt is sourcedomain, 2nd and 3rd are sender
-      const messageBodyHex = uint8ArrayToHexString(ByteArray.decode(messageBody));
-      expect(messageBodyHex).toEqual(burnMessageHex);
+      const messageBodyBuffer = receiveEvents[0][
+        "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageReceived"
+      ]["message_body"] as unknown as Buffer;
+      const receivedMessageHex = "0x" + messageBodyBuffer.toString("hex");
+
+      const burnMessageHex = burnMessageByteArray.toHexString();
+      expect(receivedMessageHex).toEqual(burnMessageHex);
 
       const finalBalance = await stablecoin.contract.balance_of(tokenMessengerMinter.tester.address);
       expect(finalBalance).toBe(initialBalance + messageParams.burnMessage.amount);
 
       // Try to receive the same message again (should fail due to nonce already used)
       try {
-        await messageTransmitter.contract.receive_message(CallData.compile([...encodedMessage, ...attestation]));
+        await messageTransmitter.contract.receive_message(
+          CallData.compile([...messageByteArray.toApiRequest(), ...attestation.toApiRequest()]),
+        );
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
         expect(error.message).toContain("Nonce already used");
@@ -733,7 +723,7 @@ describe("message transmitter", () => {
     };
 
     beforeAll(async () => {
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       try {
         await tokenMessengerMinter.contract.link_token_pair(
           stablecoin.contract.address,
@@ -750,7 +740,7 @@ describe("message transmitter", () => {
     });
 
     afterAll(async () => {
-      tokenMessengerMinter.contract.connect(tokenMessengerMinter.token_controller);
+      tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.token_controller;
       try {
         await tokenMessengerMinter.contract.unlink_token_pair(
           stablecoin.contract.address,
@@ -766,7 +756,7 @@ describe("message transmitter", () => {
       }
     });
 
-    it("should receive a finalized message and emit MessageReceived event", async () => {
+    fit("should receive a finalized message and emit MessageReceived event", async () => {
       await testReceiveMessage({
         finalityThresholdExecuted: 2000, // >= FINALITY_THRESHOLD_FINALIZED (2000)
         destinationCaller: "0x0", // Anyone can call

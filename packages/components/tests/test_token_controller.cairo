@@ -154,7 +154,6 @@ fn test_initialized_contract_state() {
     let (owner, token_controller, _, _, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, token_controller);
     let dispatcher = ITokenControllerDispatcher { contract_address };
-    let test_dispatcher = ITestHelperDispatcher { contract_address };
 
     // Check that token controller is set correctly
     assert!(
@@ -265,7 +264,6 @@ fn test_link_token_pair_functionality() {
     let (owner, token_controller, local_token, local_token2, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, token_controller);
     let dispatcher = ITokenControllerDispatcher { contract_address };
-    let test_dispatcher = ITestHelperDispatcher { contract_address };
     let remote_domain: u32 = 1;
     let remote_token: u256 = 0x1234567890abcdef;
     let remote_domain2: u32 = 2;
@@ -311,7 +309,6 @@ fn test_unlink_token_pair_functionality() {
     let (owner, token_controller, local_token, _, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, token_controller);
     let dispatcher = ITokenControllerDispatcher { contract_address };
-    let test_dispatcher = ITestHelperDispatcher { contract_address };
     let remote_domain: u32 = 1;
     let remote_token: u256 = 0x1234567890abcdef;
 

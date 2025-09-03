@@ -4,8 +4,8 @@ on:
   push:
     branches: [master]
 jobs:
-  lint_and_test:
-    name: Lint and Test
+  contracts_test:
+    name: Contracts Lint and Test
     runs-on: large-spot
     steps:
       - name: Read secrets from AWS Secrets Manager into environment variables
@@ -54,6 +54,44 @@ jobs:
       - name: Run contracts tests
         run: snforge test --workspace
 
+  e2e_test:
+    name: E2E Lint and Test
+    runs-on: large-spot
+    steps:
+      - name: Read secrets from AWS Secrets Manager into environment variables
+        uses: aws-actions/aws-secretsmanager-get-secrets@v2.0.9
+        with:
+          parse-json-secrets: true
+          secret-ids: |
+            /ops/utilities/github-actions-bot/ssh-priv-key
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          ssh-key: ${{ env._OPS_UTILITIES_GITHUB_ACTIONS_BOT_SSH_PRIV_KEY }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl git
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo >> /home/runner/.bashrc
+          echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/runner/.bashrc
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install asdf
+          . /home/linuxbrew/.linuxbrew/opt/asdf/libexec/asdf.sh
+          asdf plugin add scarb
+          asdf plugin add starknet-devnet
+          asdf plugin add starknet-foundry
+          asdf plugin add cairo-coverage
+          asdf install
+          curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh
+          # Add asdf binary and shims to PATH for all subsequent steps
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          echo "$HOME/.asdf/shims" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -72,12 +110,11 @@ jobs:
 
       - name: Run E2E tests
         run: yarn test:e2e
-
   scan:
     if: github.event_name == 'pull_request'
     uses: circlefin/circle-public-github-workflows/.github/workflows/pr-scan.yaml@v1
 
   release-sbom:
-    needs: lint_and_test
+    needs: [contracts_test, e2e_test]
     if: github.event_name == 'push'
     uses: circlefin/circle-public-github-workflows/.github/workflows/attach-release-assets.yaml@v1

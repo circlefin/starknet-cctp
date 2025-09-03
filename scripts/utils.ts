@@ -132,5 +132,9 @@ export async function deployContract(
 
 export async function getContract(provider: RpcProvider, contractAddress: string): Promise<Contract> {
   const contractClass = await provider.getClassAt(contractAddress);
-  return new Contract(contractClass.abi, contractAddress, provider);
+  return new Contract({
+    abi: contractClass.abi,
+    address: contractAddress,
+    providerOrAccount: provider,
+  });
 }

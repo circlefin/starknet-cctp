@@ -13,7 +13,11 @@ const VERSION = 1;
 
 async function deployStablecoin(accounts: any): Promise<string> {
   console.log("Deploying Stablecoin...");
-  const deployer = new Account(provider, accounts.stablecoin.deployer.address, accounts.stablecoin.deployer.privateKey);
+  const deployer = new Account({
+    provider,
+    address: accounts.stablecoin.deployer.address,
+    signer: accounts.stablecoin.deployer.privateKey,
+  });
   const stablecoinSierra = json.parse(
     await fs.readFile(
       path.join(__dirname, "../../stablecoin-starknet-private/target/dev/stablecoin_FiatToken.contract_class.json"),
@@ -56,11 +60,11 @@ async function deployStablecoin(accounts: any): Promise<string> {
 async function deployMessageTransmitter(accounts: any): Promise<string> {
   console.log("Deploying Message Transmitter...");
   const adminAddress = accounts.message_transmitter.admin.address;
-  const deployer = new Account(
+  const deployer = new Account({
     provider,
-    accounts.message_transmitter.deployer.address,
-    accounts.message_transmitter.deployer.privateKey,
-  );
+    address: accounts.message_transmitter.deployer.address,
+    signer: accounts.message_transmitter.deployer.privateKey,
+  });
   const mtSierra = json.parse(
     await fs.readFile(
       path.join(__dirname, "../../target/dev/message_transmitter_MessageTransmitterV2.contract_class.json"),
@@ -91,11 +95,11 @@ async function deployMessageTransmitter(accounts: any): Promise<string> {
 async function deployTokenMessengerMinter(accounts: any): Promise<string> {
   console.log("Deploying Token Messenger Minter...");
   const adminAddress = accounts.token_messenger_minter.admin.address;
-  const deployer = new Account(
+  const deployer = new Account({
     provider,
-    accounts.token_messenger_minter.deployer.address,
-    accounts.token_messenger_minter.deployer.privateKey,
-  );
+    address: accounts.token_messenger_minter.deployer.address,
+    signer: accounts.token_messenger_minter.deployer.privateKey,
+  });
   const tmmSierra = json.parse(
     await fs.readFile(
       path.join(__dirname, "../../target/dev/token_messenger_minter_TokenMessengerMinterV2.contract_class.json"),
@@ -132,7 +136,7 @@ async function deployTokenMessengerMinter(accounts: any): Promise<string> {
 async function initializeStablecoin(tmmContractAddress: string) {
   // Initialize Stablecoin
   const stablecoin = await loadStablecoin();
-  stablecoin.contract.connect(stablecoin.master_minter);
+  stablecoin.contract.providerOrAccount = stablecoin.master_minter;
   // Enable token messenger minter to mint
   await stablecoin.contract.configure_controller(
     stablecoin.master_minter.address, // controller for minter
@@ -155,7 +159,7 @@ async function initializeStablecoin(tmmContractAddress: string) {
 async function initializeTokenMessengerMinter(mtContractAddress: string) {
   // Initialize Token Messenger Minter
   const tokenMessengerMinter = await loadTokenMessengerMinter();
-  tokenMessengerMinter.contract.connect(tokenMessengerMinter.admin);
+  tokenMessengerMinter.contract.providerOrAccount = tokenMessengerMinter.admin;
   await tokenMessengerMinter.contract.initialize(
     tokenMessengerMinter.owner.address,
     tokenMessengerMinter.pauser.address,
@@ -175,7 +179,7 @@ async function initializeTokenMessengerMinter(mtContractAddress: string) {
 async function initializeMessageTransmitter() {
   // Initialize Message Transmitter
   const messageTransmitter = await loadMessageTransmitter();
-  messageTransmitter.contract.connect(messageTransmitter.admin);
+  messageTransmitter.contract.providerOrAccount = messageTransmitter.admin;
   await messageTransmitter.contract.initialize(
     LOCAL_DOMAIN, // local domain
     VERSION, // version

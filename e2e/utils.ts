@@ -1,4 +1,4 @@
-import { RpcProvider, Account, Contract, num } from "starknet";
+import { RpcProvider, Account, Contract, num, ParsingStrategy, fastParsingStrategy, CairoByteArray } from "starknet";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import * as fs from "fs/promises";
@@ -16,7 +16,11 @@ export const provider = new RpcProvider({
 });
 
 export const toAccount = (accountConfig: { address: string; privateKey: string }): Account => {
-  return new Account(provider, accountConfig.address, accountConfig.privateKey);
+  return new Account({
+    provider,
+    address: accountConfig.address,
+    signer: accountConfig.privateKey,
+  });
 };
 
 export interface StablecoinInfo {
@@ -54,6 +58,21 @@ export interface MessageTransmitterInfo {
   attesters: { privateKey: string; address: string }[];
 }
 
+const customParsingStrategy: ParsingStrategy = {
+  request: fastParsingStrategy.request,
+  response: {
+    ...fastParsingStrategy.response,
+    [CairoByteArray.abiSelector]: (responseIterator: Iterator<string>) => {
+      const response = Array.from<string>(responseIterator as any);
+      const padded = [
+        ...response.slice(0, response.length - 2).map((x) => `0x${BigInt(x).toString(16).padStart(62, "0")}`),
+        ...response.slice(-2),
+      ];
+      return CairoByteArray.factoryFromApiResponse(padded.values()).toBuffer();
+    },
+  },
+};
+
 export const loadStablecoin = async (): Promise<StablecoinInfo> => {
   const accounts = JSON.parse(await fs.readFile(path.join(__dirname, "resources/accounts.json"), "utf8"));
   // Load contract addresses
@@ -66,7 +85,11 @@ export const loadStablecoin = async (): Promise<StablecoinInfo> => {
 
   // Setup contract instance
   const stablecoin = {
-    contract: new Contract(stablecoinAbi, contracts.stablecoin, provider),
+    contract: new Contract({
+      abi: stablecoinAbi,
+      address: contracts.stablecoin,
+      providerOrAccount: provider,
+    }),
     admin: toAccount(accounts.stablecoin.admin),
     owner: toAccount(accounts.stablecoin.owner),
     pauser: toAccount(accounts.stablecoin.pauser),
@@ -91,7 +114,12 @@ export const loadTokenMessengerMinter = async (): Promise<TokenMessengerMinterIn
 
   // Setup contract instance
   const tokenMessengerMinter = {
-    contract: new Contract(tmmAbi, contracts.tokenMessengerMinterV2, provider),
+    contract: new Contract({
+      abi: tmmAbi,
+      address: contracts.tokenMessengerMinterV2,
+      providerOrAccount: provider,
+      parsingStrategy: customParsingStrategy,
+    }),
     admin: toAccount(accounts.token_messenger_minter.admin),
     owner: toAccount(accounts.token_messenger_minter.owner),
     pauser: toAccount(accounts.token_messenger_minter.pauser),
@@ -118,7 +146,12 @@ export const loadMessageTransmitter = async (): Promise<MessageTransmitterInfo> 
 
   // Setup contract instance
   const messageTransmitter = {
-    contract: new Contract(mtAbi, contracts.messageTransmitterV2, provider),
+    contract: new Contract({
+      abi: mtAbi,
+      address: contracts.messageTransmitterV2,
+      providerOrAccount: provider,
+      parsingStrategy: customParsingStrategy,
+    }),
     admin: toAccount(accounts.message_transmitter.admin),
     owner: toAccount(accounts.message_transmitter.owner),
     pauser: toAccount(accounts.message_transmitter.pauser),
@@ -131,87 +164,6 @@ export const loadMessageTransmitter = async (): Promise<MessageTransmitterInfo> 
   return messageTransmitter;
 };
 
-// ByteArray encoder/decoder for StarkNet events
-export class ByteArray {
-  static decode(data: string[]): Uint8Array {
-    // 1. Decode the first cell to get the number of 31-byte chunks
-    const dataLength = parseInt(data[0], 16);
-
-    // 2. Decode the next x cells and ensure they're 31 bytes each
-    const chunks: number[] = [];
-    for (let i = 1; i <= dataLength; i++) {
-      const chunk = data[i].substring(2); // Remove '0x' prefix
-      // Pad to 31 bytes (62 hex chars) from the left
-      const paddedChunk = chunk.padStart(62, "0");
-      // Convert hex to bytes
-      for (let j = 0; j < 62; j += 2) {
-        chunks.push(parseInt(paddedChunk.substr(j, 2), 16));
-      }
-    }
-
-    // 3. Decode the pending data
-    const pendingDataIndex = dataLength + 1;
-    const pendingData = data[pendingDataIndex].substring(2); // Remove '0x' prefix
-
-    // 4. Decode the length of pending data
-    const pendingLengthIndex = dataLength + 2;
-    const pendingLength = parseInt(data[pendingLengthIndex], 16);
-
-    // 5. Process pending data according to its length
-    const pendingBytes: number[] = [];
-    if (pendingLength > 0) {
-      // Pad with leading zeros to reach the required length (pendingLength * 2 hex chars)
-      const hexData = pendingData.padStart(pendingLength * 2, "0");
-
-      // Parse the padded hex string into bytes
-      for (let i = 0; i < pendingLength * 2; i += 2) {
-        pendingBytes.push(parseInt(hexData.substr(i, 2), 16));
-      }
-    }
-
-    // 6. Concatenate all bytes together
-    const allBytes = [...chunks, ...pendingBytes];
-    return new Uint8Array(allBytes);
-  }
-
-  static encode(bytes: Uint8Array | number[]): string[] {
-    const byteArray = bytes instanceof Uint8Array ? Array.from(bytes) : bytes;
-    const result: string[] = [];
-
-    // 1. Split the array into 31-byte chunks
-    const chunks: number[][] = [];
-    let remaining: number[] = [];
-
-    for (let i = 0; i < byteArray.length; i += 31) {
-      if (i + 31 <= byteArray.length) {
-        // Full 31-byte chunk
-        chunks.push(byteArray.slice(i, i + 31));
-      } else {
-        // Remaining bytes (less than 31)
-        remaining = byteArray.slice(i);
-      }
-    }
-
-    // 2. First, push the number of full chunks (excluding remaining)
-    result.push("0x" + chunks.length.toString(16));
-
-    // 3. Push chunks as hex strings
-    for (const chunk of chunks) {
-      const hexChunk = chunk.map((b) => b.toString(16).padStart(2, "0")).join("");
-      result.push("0x" + hexChunk);
-    }
-
-    // 4. Push remaining chunk as hex string (or empty if no remaining)
-    const remainingHex = remaining.map((b) => b.toString(16).padStart(2, "0")).join("");
-    result.push("0x" + remainingHex);
-
-    // 5. Push the length of remaining chunk
-    result.push("0x" + remaining.length.toString(16));
-
-    return result;
-  }
-}
-
 export const uint8ArrayToHexString = (bytes: Uint8Array): string => {
   return (
     "0x" +
@@ -223,15 +175,6 @@ export const uint8ArrayToHexString = (bytes: Uint8Array): string => {
 
 export const numberArrayToHexString = (bytes: number[]): string => {
   return "0x" + bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
-};
-
-export const stringToHexString = (str: string): string => {
-  return (
-    "0x" +
-    Array.from(str)
-      .map((c) => c.charCodeAt(0).toString(16).padStart(2, "0"))
-      .join("")
-  );
 };
 
 // Helper functions to construct messages
@@ -272,7 +215,7 @@ export function constructBurnMessage(params: {
   messageSender: string;
   maxFee: bigint;
   hookData: string;
-}): number[] {
+}): Uint8Array {
   const burnMessage: number[] = [];
 
   // version (4 bytes, u32)
@@ -303,7 +246,7 @@ export function constructBurnMessage(params: {
   const hookDataBytes = stringToBytes(params.hookData);
   burnMessage.push(...hookDataBytes);
 
-  return burnMessage;
+  return new Uint8Array(burnMessage);
 }
 
 // Construct a message for receiving (with burn message as body)
@@ -326,7 +269,7 @@ export function constructMessage(params: {
     maxFee: bigint;
     hookData: string;
   };
-}): number[] {
+}): Uint8Array {
   const messageBuffer: number[] = [];
 
   // Append version (4 bytes)
@@ -360,5 +303,5 @@ export function constructMessage(params: {
   const burnMessageBytes = constructBurnMessage(params.burnMessage);
   messageBuffer.push(...burnMessageBytes);
 
-  return messageBuffer;
+  return new Uint8Array(messageBuffer);
 }

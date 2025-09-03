@@ -54,8 +54,16 @@ async function initializeMessageTransmitter(
 ) {
   console.log("Initializing MessageTransmitterV2 contract...");
 
-  const contract = new Contract(abi, contractAddress, provider);
-  contract.connect(new Account(provider, config.admin, adminPrivateKey));
+  const contract = new Contract({
+    abi,
+    address: contractAddress,
+    providerOrAccount: provider,
+  });
+  contract.providerOrAccount = new Account({
+    provider,
+    address: config.admin,
+    signer: adminPrivateKey,
+  });
 
   const initializeTx = await contract.initialize(
     LOCAL_DOMAIN_ID,
@@ -93,8 +101,16 @@ async function initializeTokenMessengerMinter(
 ) {
   console.log("Initializing TokenMessengerMinterV2 contract...");
 
-  const contract = new Contract(abi, contractAddress, provider);
-  contract.connect(new Account(provider, config.admin, adminPrivateKey));
+  const contract = new Contract({
+    abi,
+    address: contractAddress,
+    providerOrAccount: provider,
+  });
+  contract.providerOrAccount = new Account({
+    provider,
+    address: config.admin,
+    signer: adminPrivateKey,
+  });
 
   const initializeTx = await contract.initialize(
     config.owner,
@@ -144,7 +160,11 @@ export async function deployAndInitializeContracts({
   tmmAdminKey: string;
 }) {
   const provider = getStarknetProvider(rpcUrl);
-  const deployer = new Account(provider, deployerAddress, deployerKey);
+  const deployer = new Account({
+    provider,
+    address: deployerAddress,
+    signer: deployerKey,
+  });
 
   const { messageTransmitterV2, tokenMessengerMinterV2 } = readConfig(configPath);
   console.log(
