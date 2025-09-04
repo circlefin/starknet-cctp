@@ -19,8 +19,8 @@
 // U256 maximum value: 2^256 - 1
 export const U256_MAX = BigInt(2) ** BigInt(256) - BigInt(1);
 
-// Felt252 maximum value: 2^251 - 1
-export const FELT252_MAX = BigInt(2) ** BigInt(251) - BigInt(1);
+// Felt252 maximum value: 2^251 + 17 * 2^192 https://docs.starknet.io/build/corelib/core-felt252#core-felt252
+export const FELT252_MAX = BigInt(2) ** BigInt(251) + BigInt(17) * BigInt(2) ** BigInt(192);
 
 // Starknet domain id
 export const LOCAL_DOMAIN_ID = 25;
