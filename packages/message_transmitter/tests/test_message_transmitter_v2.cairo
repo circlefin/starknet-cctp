@@ -265,10 +265,11 @@ fn get_test_data() -> TestData {
     let recipient = 9.try_into().unwrap();
     let destination_caller: u256 = 10.try_into().unwrap();
     let min_finality_threshold = 1.try_into().unwrap();
-    let mut message_body: ByteArray = "message";
+    let message_body: ByteArray = "message";
 
-    let mut attestation: ByteArray =
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00";
+    let attestation: ByteArray = hex_string_to_bytes_array(
+        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb1c",
+    );
 
     TestData {
         admin,
@@ -541,12 +542,9 @@ fn test_receive_unfinalized_message() {
         finality_threshold_executed,
         test_data.message_body,
     );
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
 
     // set up attester
-    let attester = get_attester(@message, @attestation);
+    let attester = get_attester(@message, @test_data.attestation);
     start_cheat_caller_address(contract_address, test_data.attester_manager);
     attestable_dispatcher.set_signature_threshold(1);
     attestable_dispatcher.enable_attester(attester);
@@ -556,7 +554,7 @@ fn test_receive_unfinalized_message() {
 
     assert!(!token_messenger_helper.is_unfinalized(), "Token messenger should not be unfinalized");
     start_cheat_caller_address(contract_address, test_data.owner);
-    dispatcher.receive_message(message.clone(), attestation);
+    dispatcher.receive_message(message.clone(), test_data.attestation);
     stop_cheat_caller_address(contract_address);
 
     assert!(token_messenger_helper.is_unfinalized(), "Token messenger should not be unfinalized");
@@ -613,9 +611,7 @@ fn test_receive_finalized_message() {
         test_data.message_body,
     );
 
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
+    let attestation = test_data.attestation;
 
     // set up attester
     let attester = get_attester(@message, @attestation);
@@ -684,9 +680,7 @@ fn test_receive_message_with_zero_destination_caller() {
         test_data.message_body,
     );
 
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
+    let attestation = test_data.attestation;
 
     // set up attester
     let attester = get_attester(@message, @attestation);
@@ -762,9 +756,7 @@ fn test_is_nonce_used() {
         test_data.message_body,
     );
 
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
+    let attestation = test_data.attestation;
 
     // set up attester
     let attester = get_attester(@message, @attestation);
@@ -969,9 +961,6 @@ fn test_receive_message_with_invalid_message_body() {
     let dispatcher = IMessageTransmitterV2Dispatcher { contract_address };
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
 
     // set up attester
     start_cheat_caller_address(contract_address, test_data.attester_manager);
@@ -980,7 +969,7 @@ fn test_receive_message_with_invalid_message_body() {
         .enable_attester(0xb414dd0de175ce490997279832e9b0ab1bc24aa8.try_into().unwrap());
     stop_cheat_caller_address(contract_address);
 
-    dispatcher.receive_message(test_data.message_body.clone(), attestation);
+    dispatcher.receive_message(test_data.message_body.clone(), test_data.attestation);
 }
 
 #[test]
@@ -991,9 +980,6 @@ fn test_receive_message_with_invalid_domain() {
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
 
     // set up attester
     start_cheat_caller_address(contract_address, test_data.attester_manager);
@@ -1016,7 +1002,7 @@ fn test_receive_message_with_invalid_domain() {
         test_data.message_body,
     );
 
-    dispatcher.receive_message(message, attestation);
+    dispatcher.receive_message(message, test_data.attestation);
 }
 
 #[test]
@@ -1027,10 +1013,6 @@ fn test_receive_message_with_invalid_destination_caller() {
     let attestable_dispatcher = IAttestableDispatcher { contract_address };
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
-
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
 
     // set up attester
     start_cheat_caller_address(contract_address, test_data.attester_manager);
@@ -1053,7 +1035,7 @@ fn test_receive_message_with_invalid_destination_caller() {
         test_data.message_body,
     );
 
-    dispatcher.receive_message(message, attestation);
+    dispatcher.receive_message(message, test_data.attestation);
 }
 
 #[test]
@@ -1092,10 +1074,6 @@ fn test_receive_message_with_invalid_version() {
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
 
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
-
     // set up attester
     start_cheat_caller_address(contract_address, test_data.attester_manager);
     attestable_dispatcher.set_signature_threshold(1);
@@ -1118,7 +1096,7 @@ fn test_receive_message_with_invalid_version() {
     );
 
     start_cheat_caller_address(contract_address, test_data.owner);
-    dispatcher.receive_message(message, attestation);
+    dispatcher.receive_message(message, test_data.attestation);
 }
 
 #[test]
@@ -1130,9 +1108,7 @@ fn test_receive_message_with_invalid_nonce() {
     let test_data = get_test_data();
     let sender: felt252 = test_data.owner.into();
 
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
+    let attestation = test_data.attestation;
 
     // set up attester
     start_cheat_caller_address(contract_address, test_data.attester_manager);
@@ -1181,9 +1157,7 @@ fn test_failed_handle_unfinalized_message() {
     let nonce: u256 = 1.into();
     let finality_threshold_executed: u32 = 10;
     let destination_caller: felt252 = test_data.owner.into();
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
+    let attestation = test_data.attestation;
     let message = format_message(
         test_data.version,
         test_data.local_domain,
@@ -1230,9 +1204,7 @@ fn test_failed_handle_finalized_message() {
     let nonce: u256 = 1.into();
     let finality_threshold_executed: u32 = 2001;
     let destination_caller: felt252 = test_data.owner.into();
-    let attestation = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb00",
-    );
+    let attestation = test_data.attestation;
     let message = format_message(
         test_data.version,
         test_data.local_domain,

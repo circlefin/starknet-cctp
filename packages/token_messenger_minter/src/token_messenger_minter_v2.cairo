@@ -26,6 +26,7 @@ pub mod TokenMessengerMinterV2 {
     use components::ownable::OwnableComponent;
     use components::pausable::PausableComponent;
     use components::upgradeable::UpgradeableComponent;
+    use core::num::traits::Zero;
     use interfaces::message_transmitter_v2::{
         IMessageTransmitterV2Dispatcher, IMessageTransmitterV2DispatcherTrait,
     };
@@ -55,6 +56,7 @@ pub mod TokenMessengerMinterV2 {
         pub const BURN_OPERATION_FAILED: felt252 = 'Burn operation failed';
         pub const TRANSFER_OPERATION_FAILED: felt252 = 'Transfer operation failed';
         pub const HOOK_DATA_IS_EMPTY: felt252 = 'Hook data is empty';
+        pub const MESSAGE_TRANSMITTER_MUST_BE_NONZERO: felt252 = 'MessageTransmitter is zero';
     }
 
     // Constants
@@ -240,6 +242,11 @@ pub mod TokenMessengerMinterV2 {
 
             // Ensure not already initialized
             assert(!self.initialized.read(), 'Already initialized');
+
+            // Ensure local message transmitter is not zero
+            assert(
+                !local_message_transmitter.is_zero(), Errors::MESSAGE_TRANSMITTER_MUST_BE_NONZERO,
+            );
 
             // Initialize ownable FIRST as other components depend on it
             self.ownable.initializer(owner);

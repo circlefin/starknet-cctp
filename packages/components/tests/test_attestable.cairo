@@ -1813,7 +1813,7 @@ fn test_verify_attestation_signatures_dupe_signature() {
 }
 
 #[test]
-#[should_panic(expected: ('Invalid signature',))]
+#[should_panic(expected: ('Invalid Signature S value',))]
 fn test_verify_attestation_signatures_invalid_signature_s_value() {
     let (owner, attester_manager, attesters, _, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, attester_manager, attesters, 1);
@@ -1829,7 +1829,23 @@ fn test_verify_attestation_signatures_invalid_signature_s_value() {
 }
 
 #[test]
-#[should_panic(expected: ('Invalid signature',))]
+#[should_panic(expected: ('Invalid Signature S value',))]
+fn test_verify_attestation_signatures_invalid_signature_s_value_high() {
+    let (owner, attester_manager, attesters, _, _) = get_test_addresses();
+    let contract_address = deploy_mock_contract(owner, attester_manager, attesters, 1);
+    let test_dispatcher = ITestHelperDispatcher { contract_address };
+
+    let message: ByteArray = "message";
+    // invalid attestation signature
+    let attestation = hex_string_to_bytes_array(
+        "0x507000fd11054198e39d7df39280d365c2e0966d86a4f63280bf8d21b748cc1100000000000000000000000000000000000000000000000000000000000000001c",
+    );
+
+    test_dispatcher.test_verify_attestation_signatures(message, attestation);
+}
+
+#[test]
+#[should_panic(expected: ('Invalid Signature R value',))]
 fn test_verify_attestation_signatures_invalid_signature_r_value() {
     let (owner, attester_manager, attesters, _, _) = get_test_addresses();
     let contract_address = deploy_mock_contract(owner, attester_manager, attesters, 1);
@@ -1838,7 +1854,23 @@ fn test_verify_attestation_signatures_invalid_signature_r_value() {
     let message: ByteArray = "message";
     // invalid attestation signature
     let attestation = hex_string_to_bytes_array(
-        "0xc901a511af9b85b6db2b6660d3aeb029129a26944b69a74dd7c26a64e154726fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff507000fd11054198e39d7df39280d365c2e0966d86a4f63280bf8d21b748cc111c",
+    );
+
+    test_dispatcher.test_verify_attestation_signatures(message, attestation);
+}
+
+#[test]
+#[should_panic(expected: ('Invalid Signature Recovery Id',))]
+fn test_verify_attestation_signatures_invalid_signature_recovery_id() {
+    let (owner, attester_manager, attesters, _, _) = get_test_addresses();
+    let contract_address = deploy_mock_contract(owner, attester_manager, attesters, 1);
+    let test_dispatcher = ITestHelperDispatcher { contract_address };
+
+    let message: ByteArray = "message";
+    // invalid attestation signature
+    let attestation = hex_string_to_bytes_array(
+        "0x71a2cb9a1a2ebb617146d2dc5b68f288c825ed2401a47c883a4537ac295184aa507000fd11054198e39d7df39280d365c2e0966d86a4f63280bf8d21b748cc1101",
     );
 
     test_dispatcher.test_verify_attestation_signatures(message, attestation);
@@ -2939,7 +2971,7 @@ fn test_recover_attester() {
 
     // not sure why, the v value is opposite in this example, so we need to use 01
     let signature: ByteArray = hex_string_to_bytes_array(
-        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb01",
+        "0x6458bca532d26837d3efdb83d0f8805ac1ad31a1b6382075c3ea22653dc6da23172f23e0b4867df644ea021c9eac87cd3a55dc0c88a74b25d070d77db2ef84fb1b",
     );
     let recovered_attester: ContractAddress = test_dispatcher
         .test_recover_attester(digest, signature, 0);

@@ -148,6 +148,7 @@ pub mod AttestableComponent {
     use utils::{extract_u256_be, reverse_u256_bytes};
 
     const SIGNATURE_LENGTH: usize = 65;
+    const HALF_N: u256 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_u256;
 
     #[storage]
     pub struct Storage {
@@ -214,7 +215,9 @@ pub mod AttestableComponent {
         pub const INVALID_SIGNATURE_ORDER_OR_DUPE: felt252 = 'Invalid signature order or dupe';
         pub const INVALID_ATTESTERS: felt252 = 'Invalid attesters';
         pub const INVALID_ATTESTATION: felt252 = 'Invalid attestation';
-        pub const INVALID_SIGNATURE: felt252 = 'Invalid signature';
+        pub const INVALID_SIGNATURE_S_Value: felt252 = 'Invalid Signature S value';
+        pub const INVALID_SIGNATURE_R_Value: felt252 = 'Invalid Signature R value';
+        pub const INVALID_SIGNATURE_V_Value: felt252 = 'Invalid Signature Recovery Id';
     }
 
     #[embeddable_as(Attestable)]
@@ -436,7 +439,7 @@ pub mod AttestableComponent {
             // Check if attestation is valid
             for i in 0..signature_threshold {
                 let recovered_attester: ContractAddress = self
-                    ._recover_attester(digest, @attestation, i * 65);
+                    ._recover_attester(digest, @attestation, i * SIGNATURE_LENGTH);
 
                 // Signatures must be in increasing order of address, and may not duplicate
                 // signatures from same address
@@ -464,9 +467,19 @@ pub mod AttestableComponent {
             let s: u256 = extract_u256_be(attestation, start_index + 32);
             let v: u32 = attestation.at(start_index + 64).unwrap().into();
 
-            // check the given value is in value [1, N)
-            assert(is_signature_entry_valid::<Secp256k1Point>(s), Errors::INVALID_SIGNATURE);
-            assert(is_signature_entry_valid::<Secp256k1Point>(r), Errors::INVALID_SIGNATURE);
+            // check the given value is in value [1, N) and reject high-s value signatures to
+            // prevent malleability, ref:
+            // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/0cb4888ba2d7ca85f3354aa8eb86e60aa5524dd7/contracts/utils/cryptography/ECDSA.sol#L184
+            assert(
+                is_signature_entry_valid::<Secp256k1Point>(s) && s < HALF_N,
+                Errors::INVALID_SIGNATURE_S_Value,
+            );
+            assert(
+                is_signature_entry_valid::<Secp256k1Point>(r), Errors::INVALID_SIGNATURE_R_Value,
+            );
+
+            // check the recovery id is in value [27, 28]
+            assert(v >= 27 && v <= 28, Errors::INVALID_SIGNATURE_V_Value);
 
             let signature = signature_from_vrs(v, r, s);
             let point: Secp256k1Point = recover_public_key(digest, signature)

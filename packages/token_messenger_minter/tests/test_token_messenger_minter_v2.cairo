@@ -738,6 +738,58 @@ fn test_initialize_already_initialized() {
 }
 
 #[test]
+#[should_panic(expected: ('MessageTransmitter is zero',))]
+fn test_initialize_local_message_transmitter_zero() {
+    let contract = declare("TokenMessengerMinterV2").unwrap().contract_class();
+
+    // Initialize the message transmitter as zero
+    let local_message_transmitter = 0.try_into().unwrap();
+
+    // Setup addresses using numeric values instead of strings
+    let owner: ContractAddress = 0x1.try_into().unwrap();
+    let admin: ContractAddress = 0x2.try_into().unwrap();
+    let pauser: ContractAddress = 0x3.try_into().unwrap();
+    let denylister: ContractAddress = 0x4.try_into().unwrap();
+    let rescuer: ContractAddress = 0x5.try_into().unwrap();
+    let token_controller: ContractAddress = 0x6.try_into().unwrap();
+    let min_fee_controller: ContractAddress = 0x7.try_into().unwrap();
+    let fee_recipient: ContractAddress = 0x8.try_into().unwrap();
+    let message_body_version: u32 = 0_u32;
+
+    // Deploy with just admin
+    let mut constructor_calldata = array![];
+    constructor_calldata.append(admin.into());
+
+    let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
+
+    // Now initialize the contract as admin
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
+
+    // Set caller to admin for initialization
+    start_cheat_caller_address(contract_address, admin);
+
+    // Remote domain configuration as arrays
+    let remote_domains: Array<u32> = array![1_u32, 2_u32];
+    let remote_token_messengers: Array<u256> = array![1000_u256, 2000_u256];
+
+    // Initialize the contract
+    dispatcher
+        .initialize(
+            owner,
+            pauser,
+            denylister,
+            rescuer,
+            token_controller,
+            min_fee_controller,
+            fee_recipient,
+            message_body_version,
+            local_message_transmitter,
+            remote_domains,
+            remote_token_messengers,
+        );
+}
+
+#[test]
 fn test_message_body_version() {
     let (contract_address, _, _) = deploy_token_messenger_minter();
     let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
