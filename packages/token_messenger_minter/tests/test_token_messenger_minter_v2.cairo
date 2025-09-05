@@ -99,8 +99,16 @@ mod MockFiatTokenContract {
             self.balances.read(account)
         }
 
+        fn balanceOf(self: @ContractState, account: ContractAddress) -> u256 {
+            self.balance_of(account)
+        }
+
         fn total_supply(self: @ContractState) -> u256 {
             self.total_supply.read()
+        }
+
+        fn totalSupply(self: @ContractState) -> u256 {
+            self.total_supply()
         }
 
         fn transfer_from(
@@ -123,6 +131,12 @@ mod MockFiatTokenContract {
             } else {
                 false
             }
+        }
+
+        fn transferFrom(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, amount: u256,
+        ) -> bool {
+            self.transfer_from(from, to, amount)
         }
 
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {

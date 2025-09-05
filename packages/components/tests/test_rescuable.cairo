@@ -78,9 +78,17 @@ mod MockERC20Contract {
             self.balances.read(account)
         }
 
+        fn balanceOf(self: @ContractState, account: ContractAddress) -> u256 {
+            self.balance_of(account)
+        }
+
         fn total_supply(self: @ContractState) -> u256 {
             // Not needed for tests
             0
+        }
+
+        fn totalSupply(self: @ContractState) -> u256 {
+            self.total_supply()
         }
 
         fn transfer_from(
@@ -88,6 +96,12 @@ mod MockERC20Contract {
         ) -> bool {
             // Not needed for these tests
             false
+        }
+
+        fn transferFrom(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, amount: u256,
+        ) -> bool {
+            self.transfer_from(from, to, amount)
         }
 
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
