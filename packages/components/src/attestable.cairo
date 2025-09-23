@@ -471,7 +471,7 @@ pub mod AttestableComponent {
             // prevent malleability, ref:
             // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/0cb4888ba2d7ca85f3354aa8eb86e60aa5524dd7/contracts/utils/cryptography/ECDSA.sol#L184
             assert(
-                is_signature_entry_valid::<Secp256k1Point>(s) && s < HALF_N,
+                is_signature_entry_valid::<Secp256k1Point>(s) && s <= HALF_N,
                 Errors::INVALID_SIGNATURE_S_Value,
             );
             assert(
