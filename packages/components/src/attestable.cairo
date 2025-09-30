@@ -149,6 +149,8 @@ pub mod AttestableComponent {
 
     const SIGNATURE_LENGTH: usize = 65;
     const HALF_N: u256 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_u256;
+    // Maximum value for a 20-byte Ethereum address (2^160 - 1)
+    const MAX_ETHEREUM_ADDRESS: u256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     #[storage]
     pub struct Storage {
@@ -192,9 +194,7 @@ pub mod AttestableComponent {
     /// Emitted when the signature threshold is updated.
     #[derive(Drop, starknet::Event)]
     pub struct SignatureThresholdUpdated {
-        #[key]
         previous_signature_threshold: u64,
-        #[key]
         new_signature_threshold: u64,
     }
 
@@ -206,7 +206,6 @@ pub mod AttestableComponent {
         pub const ATTESTER_ALREADY_ENABLED: felt252 = 'Attester already enabled';
         pub const INVALID_SIGNATURE_THRESHOLD: felt252 = 'Invalid signature threshold';
         pub const SIGNATURE_THRESHOLD_TOO_HIGH: felt252 = 'New threshold too high';
-        pub const INVALID_INDEX: felt252 = 'Invalid index';
         pub const SAME_ATTESTER_MANAGER: felt252 = 'Manager cannot be the same';
         pub const SAME_SIGNATURE_THRESHOLD: felt252 = 'Same signature threshold';
         pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
@@ -218,6 +217,11 @@ pub mod AttestableComponent {
         pub const INVALID_SIGNATURE_S_Value: felt252 = 'Invalid Signature S value';
         pub const INVALID_SIGNATURE_R_Value: felt252 = 'Invalid Signature R value';
         pub const INVALID_SIGNATURE_V_Value: felt252 = 'Invalid Signature Recovery Id';
+        pub const FAILED_RECOVER_PUBLIC_KEY: felt252 = 'Failed to recover public key';
+        pub const INVALID_ATTESTER_ADDRESS_SIZE: felt252 = 'Invalid attester address size';
+        pub const INVALID_ATTESTER_ADDRESS: felt252 = 'Invalid attester address';
+        pub const INVALID_ETHEREUM_ADDRESS: felt252 = 'Address exceeds 20 bytes';
+        pub const INVALID_ATTESTER_POSITION: felt252 = 'Invalid attester position';
     }
 
     #[embeddable_as(Attestable)]
@@ -236,8 +240,15 @@ pub mod AttestableComponent {
             // Check if attester is not zero
             assert(!new_attester.is_zero(), Errors::INVALID_ATTESTER);
 
+            // Validate that the address is a valid 20-byte Ethereum address
+            let address_as_felt: felt252 = new_attester.into();
+            let address_as_u256: u256 = address_as_felt.into();
+            assert(address_as_u256 <= MAX_ETHEREUM_ADDRESS, Errors::INVALID_ETHEREUM_ADDRESS);
+
             // Check if attester is already enabled
-            assert(!self.is_enabled_attester(new_attester), Errors::ATTESTER_ALREADY_ENABLED);
+            assert(
+                self._get_attester_position(new_attester) == 0, Errors::ATTESTER_ALREADY_ENABLED,
+            );
 
             self.attesters.push(new_attester);
 
@@ -353,11 +364,31 @@ pub mod AttestableComponent {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of InternalTrait<TContractState> {
+        /// Initializes the attestable component with the initial configuration.
+        ///
+        /// # Arguments
+        ///
+        /// * `attester_manager` - The address of the attester manager
+        /// * `attesters` - Array of attester addresses to enable
+        /// * `signature_threshold` - The required number of signatures for attestation
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The component is already initialized
+        /// - The attester manager is the zero address
+        /// - The attesters array is empty
+        /// - The signature threshold is zero or greater than the number of attesters
+        /// - Any attester address is the zero address
+        ///
+        /// # Events
+        ///
+        /// Emits the following events upon successful initialization:
+        /// - `AttesterManagerUpdated` with previous (zero) and new attester manager
+        /// - `SignatureThresholdUpdated` with previous (0) and new signature threshold
+        /// - `AttesterEnabled` for each attester in the array
         fn initializer(
             ref self: ComponentState<TContractState>,
             attester_manager: ContractAddress,
@@ -379,18 +410,39 @@ pub mod AttestableComponent {
                 Errors::INVALID_SIGNATURE_THRESHOLD,
             );
 
-            // Add attester to attesters list
+            // Add attester to attesters list and emit AttesterEnabled for each
             for i in 0..attesters.len() {
                 let attester = *attesters.at(i);
                 assert(!attester.is_zero(), Errors::INVALID_ATTESTER);
                 self.attesters.push(attester);
+
+                // Emit AttesterEnabled event for each attester
+                self.emit(AttesterEnabled { attester });
             }
 
             // Set attester manager
             self.attester_manager.write(attester_manager);
 
+            // Emit AttesterManagerUpdated event
+            self
+                .emit(
+                    AttesterManagerUpdated {
+                        previous_attester_manager: Zero::zero(),
+                        new_attester_manager: attester_manager,
+                    },
+                );
+
             // Set signature threshold to the provided value
             self.signature_threshold.write(signature_threshold);
+
+            // Emit SignatureThresholdUpdated event
+            self
+                .emit(
+                    SignatureThresholdUpdated {
+                        previous_signature_threshold: 0,
+                        new_signature_threshold: signature_threshold,
+                    },
+                );
         }
 
         fn assert_only_attester_manager(self: @ComponentState<TContractState>) {
@@ -419,7 +471,7 @@ pub mod AttestableComponent {
         /// * `attestation` - The attestation to verify.
         ///
         fn verify_attestation_signatures(
-            self: @ComponentState<TContractState>, message: ByteArray, attestation: ByteArray,
+            self: @ComponentState<TContractState>, message: @ByteArray, attestation: @ByteArray,
         ) {
             let signature_threshold: u32 = self.signature_threshold.read().try_into().unwrap();
             // Check if attestation length is valid
@@ -428,10 +480,10 @@ pub mod AttestableComponent {
                 Errors::INVALID_ATTESTATION,
             );
 
-            let mut latestAttester: ContractAddress = 0.try_into().unwrap();
+            let mut latestAttester: ContractAddress = Zero::zero();
 
             // compute the hash of the message
-            let cairo_hash = compute_keccak_byte_array(@message);
+            let cairo_hash = compute_keccak_byte_array(message);
             // cairo hash is u256 in little-endian, so we need to reverse it to get the big-endian
             // hash, which is the same as ethereum hash
             let digest = reverse_u256_bytes(cairo_hash);
@@ -439,7 +491,7 @@ pub mod AttestableComponent {
             // Check if attestation is valid
             for i in 0..signature_threshold {
                 let recovered_attester: ContractAddress = self
-                    ._recover_attester(digest, @attestation, i * SIGNATURE_LENGTH);
+                    ._recover_attester(digest, attestation, i * SIGNATURE_LENGTH);
 
                 // Signatures must be in increasing order of address, and may not duplicate
                 // signatures from same address
@@ -448,7 +500,10 @@ pub mod AttestableComponent {
                 );
 
                 // Check if attester is enabled
-                assert(self.is_enabled_attester(recovered_attester), Errors::NOT_ENABLED_ATTESER);
+                assert(
+                    self._get_attester_position(recovered_attester) > 0,
+                    Errors::NOT_ENABLED_ATTESER,
+                );
 
                 // Update latest attester
                 latestAttester = recovered_attester;
@@ -483,13 +538,13 @@ pub mod AttestableComponent {
 
             let signature = signature_from_vrs(v, r, s);
             let point: Secp256k1Point = recover_public_key(digest, signature)
-                .expect('Failed to recover public key');
+                .expect(Errors::FAILED_RECOVER_PUBLIC_KEY);
 
             // convert the public key point to eth address
             let recovered_attester: felt252 = public_key_point_to_eth_address(point)
                 .try_into()
-                .expect('Invalid attester address size');
-            recovered_attester.try_into().expect('Invalid attester address')
+                .expect(Errors::INVALID_ATTESTER_ADDRESS_SIZE);
+            recovered_attester.try_into().expect(Errors::INVALID_ATTESTER_ADDRESS)
         }
 
         fn _get_attester_position(
@@ -507,6 +562,11 @@ pub mod AttestableComponent {
         }
 
         fn _remove_attester(ref self: ComponentState<TContractState>, position: u64) {
+            // Validate that position is within valid range (1 to attesters.len())
+            assert(
+                position > 0 && position <= self.attesters.len(), Errors::INVALID_ATTESTER_POSITION,
+            );
+
             // Remove attester from attesters list by swapping with the last attester
             if position < self.attesters.len() {
                 let last_attester = self.attesters.at(self.attesters.len() - 1).read();

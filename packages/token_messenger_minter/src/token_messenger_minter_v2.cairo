@@ -45,18 +45,17 @@ pub mod TokenMessengerMinterV2 {
         pub const FEE_EQUALS_OR_EXCEEDS_AMOUNT: felt252 = 'Fee equals or exceeds amount';
         pub const FEE_EXCEEDS_MAX_FEE: felt252 = 'Fee exceeds max fee';
         pub const MINT_TOKEN_NOT_SUPPORTED: felt252 = 'Mint token not supported';
-        pub const FIRST_MINT_OPERATION_FAILED: felt252 = 'First mint operation failed';
-        pub const SECOND_MINT_OPERATION_FAILED: felt252 = 'Second mint operation failed';
         pub const CALLER_NOT_LOCAL_MSG_TRANSMITTER: felt252 = 'Caller not local MT';
         pub const UNSUPPORTED_FINALITY_THRESHOLD: felt252 = 'Unsupported finality threshold';
         pub const AMOUNT_MUST_BE_NONZERO: felt252 = 'Amount must be nonzero';
         pub const MINT_RECIPIENT_MUST_BE_NONZERO: felt252 = 'Mint recipient must be non-zero';
         pub const MAX_FEE_MUST_BE_LESS_THAN_AMOUNT: felt252 = 'Max fee must be less than amt';
         pub const INSUFFICIENT_MAX_FEE: felt252 = 'Insufficient max fee';
-        pub const BURN_OPERATION_FAILED: felt252 = 'Burn operation failed';
         pub const TRANSFER_OPERATION_FAILED: felt252 = 'Transfer operation failed';
         pub const HOOK_DATA_IS_EMPTY: felt252 = 'Hook data is empty';
         pub const MESSAGE_TRANSMITTER_MUST_BE_NONZERO: felt252 = 'MessageTransmitter is zero';
+        pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
+        pub const NO_TOKEN_MESSENGER_FOR_DOMAIN: felt252 = 'No TokenMessenger for domain';
     }
 
     // Constants
@@ -208,7 +207,11 @@ pub mod TokenMessengerMinterV2 {
         pub destination_token_messenger: u256,
         pub destination_caller: u256,
         pub max_fee: u256,
+        #[key]
         pub min_finality_threshold: u32,
+        /// Hook data appended to burn message. This field is emitted as-is without
+        /// endianness conversion. Integrators parsing this event must be aware that
+        /// Starknet uses little-endian encoding while other chains may use big-endian.
         pub hook_data: ByteArray,
     }
 
@@ -241,7 +244,7 @@ pub mod TokenMessengerMinterV2 {
             self.manageable.assert_only_admin();
 
             // Ensure not already initialized
-            assert(!self.initialized.read(), 'Already initialized');
+            assert(!self.initialized.read(), Errors::ALREADY_INITIALIZED);
 
             // Ensure local message transmitter is not zero
             assert(
@@ -452,7 +455,12 @@ pub mod TokenMessengerMinterV2 {
         /// burnToken * `min_finality_threshold` - the minimum finality at which a burn message will
         /// be attested to.
         /// * `hook_data` - hook data to append to burn message for interpretation on destination
-        /// domain
+        /// domain. IMPORTANT: The hook_data field is treated as an opaque ByteArray and is NOT
+        /// subject to endianness conversion by CCTP. Since Starknet uses little-endian encoding
+        /// by default while most EVM chains use big-endian, integrators MUST ensure consistent
+        /// encoding/decoding across chains. If your application encodes structured data (e.g.,
+        /// numbers, addresses) in hook_data, you must handle endianness conversion appropriately
+        /// on both source and destination chains to ensure correct interpretation.
         ///
         /// # Panics
         ///
@@ -615,7 +623,7 @@ pub mod TokenMessengerMinterV2 {
             let mint_token = self.token_controller.get_local_token(source_domain, burn_token);
 
             // Ensure the mint token is supported (non-zero address)
-            let zero_address: ContractAddress = 0.try_into().unwrap();
+            let zero_address: ContractAddress = Zero::zero();
             assert(mint_token != zero_address, Errors::MINT_TOKEN_NOT_SUPPORTED);
 
             // Create token dispatcher
@@ -697,7 +705,7 @@ pub mod TokenMessengerMinterV2 {
         /// Asserts that the caller is the local message transmitter
         fn assert_local_message_transmitter(self: @ContractState) {
             let local_message_transmitter = self.local_message_transmitter.read();
-            let zero_address: ContractAddress = 0.try_into().unwrap();
+            let zero_address: ContractAddress = Zero::zero();
             assert(
                 local_message_transmitter != zero_address
                     && get_caller_address() == local_message_transmitter,
@@ -717,6 +725,7 @@ pub mod TokenMessengerMinterV2 {
         /// * `max_fee` - maximum fee to pay on destination chain
         /// * `min_finality_threshold` - minimum finality threshold for the message
         /// * `hook_data` - optional hook data for interpretation on destination chain
+        ///   (treated as opaque bytes, no endianness conversion applied)
         fn deposit_for_burn_internal(
             ref self: ContractState,
             amount: u256,
@@ -746,6 +755,9 @@ pub mod TokenMessengerMinterV2 {
             let destination_token_messenger = self
                 .remote_token_messenger_controller
                 .remote_token_messenger(destination_domain);
+
+            // Check that destination token messenger is not zero
+            assert(destination_token_messenger != 0, Errors::NO_TOKEN_MESSENGER_FOR_DOMAIN);
 
             // Deposit and burn tokens
             self.deposit_and_burn(burn_token, get_caller_address(), amount);

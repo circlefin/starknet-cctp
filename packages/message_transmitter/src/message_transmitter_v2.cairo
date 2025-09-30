@@ -116,7 +116,6 @@ pub mod MessageTransmitterV2 {
     /// Emitted when the max message body size is updated
     #[derive(Drop, starknet::Event)]
     pub struct MaxMessageBodySizeUpdated {
-        #[key]
         pub max_message_body_size: u256,
     }
 
@@ -249,7 +248,7 @@ pub mod MessageTransmitterV2 {
                 nonce, source_domain, sender, recipient, finality_threshold_executed, message_body,
             ) =
                 self
-                .validate_received_message(message.clone(), attestation);
+                .validate_received_message(message, attestation);
 
             // mark nonce as used
             self.used_nonces.entry(nonce).write(true);
@@ -337,7 +336,7 @@ pub mod MessageTransmitterV2 {
             ByteArray // message body
         ) {
             // validate message and attestation
-            self.attestable.verify_attestation_signatures(message.clone(), attestation);
+            self.attestable.verify_attestation_signatures(@message, @attestation);
 
             // validate message format
             MessageV2::validate_message_format(@message);

@@ -125,7 +125,6 @@ pub mod TokenControllerComponent {
     /// Emitted when the token controller address is updated
     #[derive(Drop, starknet::Event)]
     pub struct SetTokenController {
-        #[key]
         pub token_controller: ContractAddress,
     }
 
@@ -140,9 +139,7 @@ pub mod TokenControllerComponent {
     /// Emitted when a token pair is linked between local and remote domains
     #[derive(Drop, starknet::Event)]
     pub struct TokenPairLinked {
-        #[key]
         pub local_token: ContractAddress,
-        #[key]
         pub remote_domain: u32,
         pub remote_token: u256,
     }
@@ -150,9 +147,7 @@ pub mod TokenControllerComponent {
     /// Emitted when a token pair is unlinked between local and remote domains
     #[derive(Drop, starknet::Event)]
     pub struct TokenPairUnlinked {
-        #[key]
         pub local_token: ContractAddress,
-        #[key]
         pub remote_domain: u32,
         pub remote_token: u256,
     }

@@ -95,7 +95,7 @@ pub mod RescuableComponent {
     use core::num::traits::Zero;
     use stablecoin::{IFiatTokenDispatcher, IFiatTokenDispatcherTrait};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use starknet::{ContractAddress, get_caller_address, get_contract_address};
+    use starknet::{ContractAddress, get_caller_address};
 
     #[storage]
     pub struct Storage {
@@ -121,7 +121,6 @@ pub mod RescuableComponent {
         pub const TOKEN_CANNOT_BE_ZERO_ADDRESS: felt252 = 'Token cannot be zero address';
         pub const RECIPIENT_CANNOT_BE_ZERO: felt252 = 'Recipient cannot be zero';
         pub const AMOUNT_CANNOT_BE_ZERO: felt252 = 'Amount cannot be zero';
-        pub const INSUFFICIENT_TOKEN_BALANCE: felt252 = 'Insufficient token balance';
         pub const RESCUE_TRANSFER_FAILED: felt252 = 'Rescue transfer failed';
         pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
     }
@@ -189,7 +188,6 @@ pub mod RescuableComponent {
         /// - The token contract address is the zero address
         /// - The recipient address is the zero address
         /// - The amount is zero
-        /// - The contract has insufficient token balance
         /// - The token transfer operation fails
         fn rescue_erc20(
             ref self: ComponentState<TContractState>,
@@ -212,10 +210,6 @@ pub mod RescuableComponent {
             // Create token dispatcher
             let token_dispatcher = IFiatTokenDispatcher { contract_address: token_contract };
 
-            // Check contract has sufficient balance before attempting transfer
-            let contract_balance = token_dispatcher.balance_of(get_contract_address());
-            assert(contract_balance >= amount, Errors::INSUFFICIENT_TOKEN_BALANCE);
-
             // Attempt transfer
             let transfer_result = token_dispatcher.transfer(to, amount);
 
@@ -226,10 +220,7 @@ pub mod RescuableComponent {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         /// Initializes the rescuable component with an initial rescuer address
         ///

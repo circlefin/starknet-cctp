@@ -459,33 +459,6 @@ fn test_rescue_erc20_rejects_zero_amount() {
     dispatcher.rescue_erc20(erc20_address, recipient, 0);
 }
 
-#[test]
-#[should_panic(expected: ('Insufficient token balance',))]
-fn test_rescue_erc20_rejects_insufficient_balance() {
-    let (owner, rescuer, _, recipient, _) = get_test_addresses();
-    let contract_address = deploy_mock_rescuable_contract(owner, rescuer);
-    let dispatcher = IRescuableDispatcher { contract_address };
-
-    // Deploy mock ERC20 contract
-    let erc20_address = deploy_mock_erc20_contract();
-    let erc20_dispatcher = IFiatTokenDispatcher { contract_address: erc20_address };
-    let erc20_test_helper = IMockERC20TestHelperDispatcher { contract_address: erc20_address };
-
-    // Set up contract with some balance, but less than what we try to rescue
-    let contract_balance: u256 = 500;
-    let rescue_amount: u256 = 1000; // More than available balance
-    erc20_test_helper.set_balance(contract_address, contract_balance);
-
-    // Verify the setup
-    assert!(
-        erc20_dispatcher.balance_of(contract_address) == contract_balance,
-        "Contract should have limited balance",
-    );
-
-    // Try to rescue more tokens than available - should panic
-    start_cheat_caller_address(contract_address, rescuer);
-    dispatcher.rescue_erc20(erc20_address, recipient, rescue_amount);
-}
 
 #[test]
 #[should_panic(expected: ('Rescue transfer failed',))]
@@ -498,13 +471,33 @@ fn test_rescue_erc20_rejects_failed_transfer() {
     let erc20_address = deploy_mock_erc20_contract();
     let erc20_test_helper = IMockERC20TestHelperDispatcher { contract_address: erc20_address };
 
-    // Set sufficient balance so balance check passes
+    // Set balance and configure transfer to fail
     let rescue_amount: u256 = 1000;
     erc20_test_helper.set_balance(contract_address, rescue_amount);
-
-    // But make the transfer fail
     erc20_test_helper.set_transfer_should_fail(true);
 
+    start_cheat_caller_address(contract_address, rescuer);
+    dispatcher.rescue_erc20(erc20_address, recipient, rescue_amount);
+}
+
+#[test]
+#[should_panic]
+fn test_rescue_erc20_insufficient_balance_fails_on_transfer() {
+    let (owner, rescuer, _, recipient, _) = get_test_addresses();
+    let contract_address = deploy_mock_rescuable_contract(owner, rescuer);
+    let dispatcher = IRescuableDispatcher { contract_address };
+
+    // Deploy mock ERC20 contract
+    let erc20_address = deploy_mock_erc20_contract();
+    let erc20_test_helper = IMockERC20TestHelperDispatcher { contract_address: erc20_address };
+
+    // Set up contract with some balance, but less than what we try to rescue
+    let contract_balance: u256 = 500;
+    let rescue_amount: u256 = 1000; // More than available balance
+    erc20_test_helper.set_balance(contract_address, contract_balance);
+
+    // Try to rescue more tokens than available - transfer will return false
+    // and rescue_erc20 will panic with 'Rescue transfer failed'
     start_cheat_caller_address(contract_address, rescuer);
     dispatcher.rescue_erc20(erc20_address, recipient, rescue_amount);
 }

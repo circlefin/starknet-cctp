@@ -64,14 +64,12 @@ pub mod RemoteTokenMessengerControllerComponent {
 
     #[derive(Drop, starknet::Event)]
     pub struct RemoteTokenMessengerAdded {
-        #[key]
         pub domain: u32,
         pub token_messenger: u256,
     }
 
     #[derive(Drop, starknet::Event)]
     pub struct RemoteTokenMessengerRemoved {
-        #[key]
         pub domain: u32,
         pub token_messenger: u256,
     }
@@ -173,10 +171,7 @@ pub mod RemoteTokenMessengerControllerComponent {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         /// Internal function to add remote token messenger without ownership check
         ///

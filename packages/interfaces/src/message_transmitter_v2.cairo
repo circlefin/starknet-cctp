@@ -29,6 +29,14 @@ pub trait IMessageTransmitterV2<TContractState> {
     /// * `min_finality_threshold` - The minimum finality at which the message should be attested
     /// to.
     /// * `message_body` - The message body.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// - The contract is paused
+    /// - The destination domain equals the local domain
+    /// - The message body size exceeds the maximum allowed size
+    /// - The recipient address is zero
     fn send_message(
         ref self: TContractState,
         destination_domain: u32,
@@ -73,6 +81,18 @@ pub trait IMessageTransmitterV2<TContractState> {
     ///
     /// * `true` - If the message is valid and has not been broadcasted before
     /// * `false` - If the message is invalid or has already been broadcasted
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// - The contract is paused
+    /// - The attestation signatures are invalid or insufficient
+    /// - The message format is invalid
+    /// - The destination domain doesn't match the local domain
+    /// - The destination caller is specified but doesn't match the actual caller
+    /// - The message version doesn't match the contract version
+    /// - The nonce has already been used
+    /// - The recipient's handle_receive message handler fails
     fn receive_message(
         ref self: TContractState, message: ByteArray, attestation: ByteArray,
     ) -> bool;

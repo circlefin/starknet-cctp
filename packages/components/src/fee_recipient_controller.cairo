@@ -60,7 +60,6 @@ pub mod FeeRecipientControllerComponent {
 
     #[derive(Drop, starknet::Event)]
     pub struct FeeRecipientSet {
-        #[key]
         pub fee_recipient: ContractAddress,
     }
 
@@ -115,10 +114,7 @@ pub mod FeeRecipientControllerComponent {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         /// Initializes the fee recipient controller with an initial fee recipient address
         ///

@@ -64,15 +64,13 @@ pub mod MessageV2 {
     /// # Arguments
     ///
     /// * `version` - The message body version
-    /// * `sourceDomain` - The source domain
-    /// * `destinationDomain` - The destination domain
-    /// * `nonce` - The nonce
+    /// * `source_domain` - The source domain
+    /// * `destination_domain` - The destination domain
     /// * `sender` - The sender
     /// * `recipient` - The recipient
-    /// * `destinationCaller` - The destination caller
-    /// * `minFinalityThreshold` - The minimum finality threshold
-    /// * `finalityThresholdExecuted` - The finality threshold executed
-    /// * `messageBody` - The message body
+    /// * `destination_caller` - The destination caller
+    /// * `min_finality_threshold` - The minimum finality threshold
+    /// * `message_body` - The message body
     ///
     /// # Returns
     ///

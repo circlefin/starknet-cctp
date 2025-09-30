@@ -16,6 +16,8 @@
 use core::panic_with_felt252;
 pub mod Errors {
     pub const BYTE_ARRAY_TOO_SHORT: felt252 = 'Byte array too short';
+    pub const EXTRACT_U32_BE_OOB: felt252 = 'extract_u32_be OOB';
+    pub const EXTRACT_U256_BE_OOB: felt252 = 'extract_u256_be OOB';
 }
 
 // Helper functions for big-endian encoding/decoding
@@ -50,7 +52,7 @@ pub fn append_u256_be(ref byte_array: ByteArray, value: u256) {
 
 /// Extract u32 from ByteArray at given index (big-endian)
 pub fn extract_u32_be(byte_array: @ByteArray, index: usize) -> u32 {
-    assert(index + 3 < byte_array.len(), 'extract_u32_be OOB');
+    assert(index + 3 < byte_array.len(), Errors::EXTRACT_U32_BE_OOB);
 
     let b0: u32 = byte_array.at(index).unwrap().into();
     let b1: u32 = byte_array.at(index + 1).unwrap().into();
@@ -62,7 +64,7 @@ pub fn extract_u32_be(byte_array: @ByteArray, index: usize) -> u32 {
 
 /// Extract u256 from ByteArray at given index (big-endian, 32 bytes)
 pub fn extract_u256_be(byte_array: @ByteArray, index: usize) -> u256 {
-    assert(index + 31 < byte_array.len(), 'extract_u256_be OOB');
+    assert(index + 31 < byte_array.len(), Errors::EXTRACT_U256_BE_OOB);
 
     let mut result: u256 = 0;
     let mut i: u32 = 0;

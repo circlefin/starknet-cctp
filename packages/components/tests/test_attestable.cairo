@@ -105,7 +105,7 @@ mod MockAttestableContract {
         fn test_verify_attestation_signatures(
             self: @ContractState, message: ByteArray, attestation: ByteArray,
         ) {
-            self.attestable.verify_attestation_signatures(message, attestation);
+            self.attestable.verify_attestation_signatures(@message, @attestation);
         }
 
         #[external(v0)]
@@ -463,6 +463,22 @@ fn test_enable_attester_already_enabled() {
     start_cheat_caller_address(contract_address, attester_manager);
     dispatcher.enable_attester(attester0);
     dispatcher.enable_attester(attester0);
+}
+
+#[test]
+#[should_panic(expected: ('Address exceeds 20 bytes',))]
+fn test_enable_attester_invalid_ethereum_address() {
+    let (owner, attester_manager, attesters, _, _) = get_test_addresses();
+    let contract_address = deploy_mock_contract(owner, attester_manager, attesters, 1);
+    let dispatcher = IAttestableDispatcher { contract_address };
+
+    // Create an address that exceeds 20 bytes (160 bits)
+    // 2^160 = 0x10000000000000000000000000000000000000000
+    let invalid_address_felt: felt252 = 0x10000000000000000000000000000000000000000;
+    let invalid_address: ContractAddress = invalid_address_felt.try_into().unwrap();
+
+    start_cheat_caller_address(contract_address, attester_manager);
+    dispatcher.enable_attester(invalid_address);
 }
 
 #[test]

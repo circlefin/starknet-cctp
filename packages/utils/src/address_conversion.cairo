@@ -16,6 +16,11 @@
 
 use starknet::ContractAddress;
 
+pub mod Errors {
+    pub const U256_TO_FELT252_FAILED: felt252 = 'u256 to felt252 failed';
+    pub const FELT252_TO_ADDRESS_FAILED: felt252 = 'felt252 to address failed';
+}
+
 pub trait AddressConversionTrait {
     fn to_address(self: u256) -> ContractAddress;
     fn to_u256(self: ContractAddress) -> u256;
@@ -23,8 +28,8 @@ pub trait AddressConversionTrait {
 
 impl AddressConversionTraitImpl of AddressConversionTrait {
     fn to_address(self: u256) -> ContractAddress {
-        let value_felt: felt252 = self.try_into().expect('u256 to felt252 failed');
-        value_felt.try_into().expect('felt252 to address failed')
+        let value_felt: felt252 = self.try_into().expect(Errors::U256_TO_FELT252_FAILED);
+        value_felt.try_into().expect(Errors::FELT252_TO_ADDRESS_FAILED)
     }
 
     fn to_u256(self: ContractAddress) -> u256 {

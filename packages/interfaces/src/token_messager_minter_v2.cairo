@@ -66,6 +66,17 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// # Returns
     ///
     /// Bool, true if successful.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// - The caller is not the local message transmitter
+    /// - The sender is not a registered remote token messenger for the domain
+    /// - The message body version is invalid
+    /// - The message has expired (expiration block has passed)
+    /// - The fee equals or exceeds the amount
+    /// - The fee exceeds the max fee specified in the message
+    /// - The mint token is not supported for the (source domain, burn token) pair
     fn handle_receive_finalized_message(
         ref self: TContractState,
         remote_domain: u32,
@@ -94,6 +105,18 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// # Returns
     ///
     /// Bool, true if successful.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// - The caller is not the local message transmitter
+    /// - The sender is not a registered remote token messenger for the domain
+    /// - The finality threshold executed is less than 500
+    /// - The message body version is invalid
+    /// - The message has expired (expiration block has passed)
+    /// - The fee equals or exceeds the amount
+    /// - The fee exceeds the max fee specified in the message
+    /// - The mint token is not supported for the (source domain, burn token) pair
     fn handle_receive_unfinalized_message(
         ref self: TContractState,
         remote_domain: u32,
@@ -170,7 +193,12 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// * `min_finality_threshold` - the minimum finality at which a burn message will
     /// be attested to.
     /// * `hook_data` - hook data to append to burn message for interpretation on destination
-    /// domain
+    /// domain. IMPORTANT: The hook_data field is treated as an opaque ByteArray and is NOT
+    /// subject to endianness conversion by CCTP. Since Starknet uses little-endian encoding
+    /// by default while most EVM chains use big-endian, integrators MUST ensure consistent
+    /// encoding/decoding across chains. If your application encodes structured data (e.g.,
+    /// numbers, addresses) in hook_data, you must handle endianness conversion appropriately
+    /// on both source and destination chains to ensure correct interpretation.
     ///
     /// # Panics
     ///

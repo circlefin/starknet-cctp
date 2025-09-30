@@ -84,7 +84,6 @@ pub mod MinFeeControllerComponent {
     /// Emitted when the minimum fee controller address is updated
     #[derive(Drop, starknet::Event)]
     pub struct MinFeeControllerSet {
-        #[key]
         pub min_fee_controller: ContractAddress,
     }
 
@@ -101,6 +100,7 @@ pub mod MinFeeControllerComponent {
         pub const CALLER_NOT_MIN_FEE_CONTROLLER: felt252 = 'Caller not min fee controller';
         pub const MIN_FEE_TOO_HIGH: felt252 = 'Min fee too high';
         pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
+        pub const AMOUNT_TOO_LOW: felt252 = 'Amount too low';
     }
 
     /// The multiplier used in fee calculations to maintain precision
@@ -174,6 +174,7 @@ pub mod MinFeeControllerComponent {
         ///
         /// This function will panic if:
         /// - The caller is not the designated fee controller
+        /// - The burn token address is the zero address
         /// - The fee value is greater than or equal to MIN_FEE_MULTIPLIER (10,000,000)
         ///
         /// # Events
@@ -184,6 +185,9 @@ pub mod MinFeeControllerComponent {
         ) {
             // Only min fee controller can set min fee
             self.assert_only_min_fee_controller();
+
+            // Validate burn token is not zero address
+            assert(!burn_token.is_zero(), Errors::ZERO_ADDRESS_NOT_ALLOWED);
 
             // Validate min fee is not too high
             assert(min_fee < MIN_FEE_MULTIPLIER, Errors::MIN_FEE_TOO_HIGH);
@@ -198,10 +202,7 @@ pub mod MinFeeControllerComponent {
 
     #[generate_trait]
     pub impl InternalImpl<
-        TContractState,
-        +HasComponent<TContractState>,
-        +Drop<TContractState>,
-        impl Owner: OwnableComponent::HasComponent<TContractState>,
+        TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of InternalTrait<TContractState> {
         /// Initializes the minimum fee controller with an initial fee controller address
         ///
@@ -275,7 +276,7 @@ pub mod MinFeeControllerComponent {
             }
 
             // Require amount > 1 to avoid returning an invalid or misleading fee
-            assert(amount > 1, 'Amount too low');
+            assert(amount > 1, Errors::AMOUNT_TOO_LOW);
 
             let min_fee_amount = (amount * min_fee) / MIN_FEE_MULTIPLIER;
             if min_fee_amount == 0 {

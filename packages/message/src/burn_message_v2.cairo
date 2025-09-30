@@ -72,7 +72,11 @@ pub mod BurnMessageV2 {
     /// * `amount` - The burn amount
     /// * `message_sender` - The message sender
     /// * `max_fee` - The maximum fee to be paid on destination domain
-    /// * `hook_data` - Optional hook data for processing on the destination domain
+    /// * `hook_data` - Optional hook data for processing on the destination domain.
+    ///   NOTE: This field is treated as an opaque byte array and is NOT subject to endianness
+    ///   conversion. Integrators must ensure consistent encoding/decoding across chains,
+    ///   especially when bridging between Starknet (little-endian) and other chains (typically
+    ///   big-endian)
     ///
     /// # Returns
     ///
@@ -113,6 +117,8 @@ pub mod BurnMessageV2 {
         append_zero_u256(ref message);
 
         // Append hook_data (dynamic bytes)
+        // Note: hook_data is appended as-is without endianness conversion
+        // Integrators must handle endianness consistency across chains
         message.append(@hook_data);
 
         message
