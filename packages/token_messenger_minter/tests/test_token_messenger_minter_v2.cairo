@@ -1185,6 +1185,7 @@ fn test_deposit_for_burn_with_hook_fails_with_empty_hook_data() {
     let (contract_address, _, mock_token) = deploy_token_messenger_minter();
     let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
 
+    let empty_hook_data: ByteArray = Default::default();
     dispatcher
         .deposit_for_burn_with_hook(
             1000_u256,
@@ -1194,7 +1195,7 @@ fn test_deposit_for_burn_with_hook_fails_with_empty_hook_data() {
             0_u256,
             10_u256,
             0_u32,
-            Default::default() // Empty hook data
+            empty_hook_data,
         );
 }
 

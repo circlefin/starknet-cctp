@@ -70,13 +70,11 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// # Panics
     ///
     /// This function will panic if:
-    /// - The caller is not the local message transmitter
-    /// - The sender is not a registered remote token messenger for the domain
-    /// - The message body version is invalid
-    /// - The message has expired (expiration block has passed)
-    /// - The fee equals or exceeds the amount
-    /// - The fee exceeds the max fee specified in the message
-    /// - The mint token is not supported for the (source domain, burn token) pair
+    /// - The caller is not the local MessageTransmitter
+    /// - The sender is not a registered remote TokenMessenger for the domain
+    /// - The contract is paused
+    /// - The external call to mint tokens fails
+    /// - The message body format is invalid or contains invalid data
     fn handle_receive_finalized_message(
         ref self: TContractState,
         remote_domain: u32,
@@ -109,14 +107,12 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// # Panics
     ///
     /// This function will panic if:
-    /// - The caller is not the local message transmitter
-    /// - The sender is not a registered remote token messenger for the domain
-    /// - The finality threshold executed is less than 500
-    /// - The message body version is invalid
-    /// - The message has expired (expiration block has passed)
-    /// - The fee equals or exceeds the amount
-    /// - The fee exceeds the max fee specified in the message
-    /// - The mint token is not supported for the (source domain, burn token) pair
+    /// - The caller is not the local MessageTransmitter
+    /// - The sender is not a registered remote TokenMessenger for the domain
+    /// - The finality threshold is less than 500
+    /// - The contract is paused
+    /// - The external call to mint tokens fails
+    /// - The message body format is invalid or contains invalid data
     fn handle_receive_unfinalized_message(
         ref self: TContractState,
         remote_domain: u32,

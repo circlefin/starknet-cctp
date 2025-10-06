@@ -88,7 +88,7 @@ pub mod BurnMessageV2 {
         amount: u256,
         message_sender: u256,
         max_fee: u256,
-        hook_data: ByteArray,
+        hook_data: @ByteArray,
     ) -> ByteArray {
         let mut message: ByteArray = Default::default();
 
@@ -119,7 +119,7 @@ pub mod BurnMessageV2 {
         // Append hook_data (dynamic bytes)
         // Note: hook_data is appended as-is without endianness conversion
         // Integrators must handle endianness consistency across chains
-        message.append(@hook_data);
+        message.append(hook_data);
 
         message
     }

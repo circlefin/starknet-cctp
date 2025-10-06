@@ -83,7 +83,7 @@ pub mod MessageV2 {
         recipient: u256,
         destination_caller: u256,
         min_finality_threshold: u32,
-        message_body: ByteArray,
+        message_body: @ByteArray,
     ) -> ByteArray {
         let mut message: ByteArray = Default::default();
 
@@ -115,7 +115,7 @@ pub mod MessageV2 {
         append_u32_be(ref message, EMPTY_FINALITY_THRESHOLD_EXECUTED);
 
         // Append message_body (dynamic, bytes)
-        message.append(@message_body);
+        message.append(message_body);
 
         message
     }

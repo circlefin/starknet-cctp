@@ -64,7 +64,7 @@ fn test_format_message_for_relay_basic() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     // Message should have correct minimum length: 151 bytes (fixed fields) + message body length
@@ -93,7 +93,7 @@ fn test_all_fields() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body.clone(),
+        @message_body,
     );
 
     // Test all getter functions
@@ -136,7 +136,7 @@ fn test_empty_message_body() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        empty_message_body,
+        @empty_message_body,
     );
 
     // Message should have correct length: 148 bytes (no message body)
@@ -177,7 +177,7 @@ fn test_large_message_body() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        large_message_body,
+        @large_message_body,
     );
 
     // verify all fields are correct
@@ -223,7 +223,7 @@ fn test_zero_values() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     assert_eq!(MessageV2::get_version(@message), version);
@@ -256,7 +256,7 @@ fn test_max_values() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     assert_eq!(MessageV2::get_version(@message), version);
@@ -291,7 +291,7 @@ fn test_validate_message_format_valid() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     // Should not panic for valid message
@@ -321,7 +321,7 @@ fn test_validate_message_format_minimum_length() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        empty_message_body,
+        @empty_message_body,
     );
 
     // Should not panic for minimum valid length (148 bytes)
@@ -377,7 +377,7 @@ fn test_message_structure_consistency() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     // Test that extracting and reformatting produces the same result
@@ -398,7 +398,7 @@ fn test_message_structure_consistency() {
         extracted_recipient,
         extracted_destination_caller,
         extracted_min_finality_threshold,
-        extracted_message_body,
+        @extracted_message_body,
     );
 
     // Messages should be identical
@@ -435,7 +435,7 @@ fn test_field_independence() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     // Only version should be different
@@ -476,7 +476,7 @@ fn test_message_body_with_zero_bytes() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     // Test message body extraction
@@ -522,7 +522,7 @@ fn test_different_message_body_sizes() {
             recipient,
             destination_caller,
             min_finality_threshold,
-            message_body,
+            @message_body,
         );
 
         let extracted_message_body = MessageV2::get_message_body(@message);
@@ -560,7 +560,7 @@ fn test_nonce_always_zero() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     assert_eq!(MessageV2::get_nonce(@message), 0_u256);
@@ -588,7 +588,7 @@ fn test_finality_threshold_executed_always_zero() {
         recipient,
         destination_caller,
         min_finality_threshold,
-        message_body,
+        @message_body,
     );
 
     assert_eq!(MessageV2::get_finality_threshold_executed(@message), 0_u32);

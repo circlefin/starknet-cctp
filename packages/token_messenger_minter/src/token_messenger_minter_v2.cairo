@@ -56,6 +56,7 @@ pub mod TokenMessengerMinterV2 {
         pub const MESSAGE_TRANSMITTER_MUST_BE_NONZERO: felt252 = 'MessageTransmitter is zero';
         pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
         pub const NO_TOKEN_MESSENGER_FOR_DOMAIN: felt252 = 'No TokenMessenger for domain';
+        pub const ARRAY_LENGTHS_MUST_MATCH: felt252 = 'Array lengths must match';
     }
 
     // Constants
@@ -226,6 +227,30 @@ pub mod TokenMessengerMinterV2 {
 
     #[abi(embed_v0)]
     impl TokenMessengerMinterV2Impl of ITokenMessengerMinterV2<ContractState> {
+        /// Initializes the TokenMessengerMinter contract with all necessary role addresses
+        /// and configuration. This function can only be called once by the admin.
+        ///
+        /// # Arguments
+        ///
+        /// * `owner` - Address to be set as owner
+        /// * `pauser` - Address to be set as pauser
+        /// * `denylister` - Address to be set as denylister
+        /// * `rescuer` - Address to be set as rescuer
+        /// * `token_controller` - Address to be set as token controller
+        /// * `min_fee_controller` - Address to be set as min fee controller
+        /// * `fee_recipient` - Address to be set as fee recipient
+        /// * `message_body_version` - Version of message body format to use
+        /// * `local_message_transmitter` - Address of the local MessageTransmitter contract
+        /// * `remote_domains` - Array of remote domain IDs
+        /// * `remote_token_messengers` - Array of remote TokenMessenger addresses
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The caller is not the admin
+        /// - The contract has already been initialized
+        /// - The local_message_transmitter address is zero
+        /// - The lengths of remote_domains and remote_token_messengers arrays don't match
         fn initialize(
             ref self: ContractState,
             owner: ContractAddress,
@@ -271,7 +296,8 @@ pub mod TokenMessengerMinterV2 {
             // Remote token messenger configuration
             let remote_domains_length = remote_domains.len();
             assert(
-                remote_domains_length == remote_token_messengers.len(), 'Array lengths must match',
+                remote_domains_length == remote_token_messengers.len(),
+                Errors::ARRAY_LENGTHS_MUST_MATCH,
             );
 
             let mut i: u32 = 0;
@@ -291,10 +317,20 @@ pub mod TokenMessengerMinterV2 {
             self.initialized.write(true);
         }
 
+        /// Returns the message body version used by this contract
+        ///
+        /// # Returns
+        ///
+        /// The message body version as u32
         fn message_body_version(self: @ContractState) -> u32 {
             self.message_body_version.read()
         }
 
+        /// Returns the address of the local MessageTransmitter contract
+        ///
+        /// # Returns
+        ///
+        /// The local MessageTransmitter contract address
         fn local_message_transmitter(self: @ContractState) -> ContractAddress {
             self.local_message_transmitter.read()
         }
@@ -317,6 +353,15 @@ pub mod TokenMessengerMinterV2 {
         /// # Returns
         ///
         /// Bool, true if successful.
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The caller is not the local MessageTransmitter
+        /// - The sender is not a registered remote TokenMessenger for the domain
+        /// - The contract is paused
+        /// - The external call to mint tokens fails
+        /// - The message body format is invalid or contains invalid data
         fn handle_receive_finalized_message(
             ref self: ContractState,
             remote_domain: u32,
@@ -356,6 +401,16 @@ pub mod TokenMessengerMinterV2 {
         /// # Returns
         ///
         /// Bool, true if successful.
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The caller is not the local MessageTransmitter
+        /// - The sender is not a registered remote TokenMessenger for the domain
+        /// - The finality threshold is less than 500
+        /// - The contract is paused
+        /// - The external call to mint tokens fails
+        /// - The message body format is invalid or contains invalid data
         fn handle_receive_unfinalized_message(
             ref self: ContractState,
             remote_domain: u32,
@@ -513,6 +568,12 @@ pub mod TokenMessengerMinterV2 {
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         /// Asserts that both the caller and transaction origin are not denylisted
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The direct caller is denylisted
+        /// - The transaction origin (account contract) is denylisted
         fn assert_not_denylisted_caller_and_origin(self: @ContractState) {
             let caller = get_caller_address();
 
@@ -652,6 +713,13 @@ pub mod TokenMessengerMinterV2 {
         /// * `mint_recipient` - recipient address of minted tokens
         /// * `amount` - amount of tokens to mint to mint_recipient
         /// * `fee` - fee collected for mint
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The contract is paused
+        /// - The (remote_domain, burn_token) pair doesn't map to a supported token
+        /// - The external call to mint tokens fails
         fn mint_and_withdraw(
             ref self: ContractState,
             remote_domain: u32,
@@ -703,6 +771,12 @@ pub mod TokenMessengerMinterV2 {
         }
 
         /// Asserts that the caller is the local message transmitter
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The local_message_transmitter is zero address
+        /// - The caller is not the local message transmitter
         fn assert_local_message_transmitter(self: @ContractState) {
             let local_message_transmitter = self.local_message_transmitter.read();
             let zero_address: ContractAddress = Zero::zero();
@@ -726,6 +800,19 @@ pub mod TokenMessengerMinterV2 {
         /// * `min_finality_threshold` - minimum finality threshold for the message
         /// * `hook_data` - optional hook data for interpretation on destination chain
         ///   (treated as opaque bytes, no endianness conversion applied)
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The amount is zero
+        /// - The mint_recipient is zero
+        /// - The max_fee is greater than or equal to amount
+        /// - The max_fee is less than the calculated minimum fee
+        /// - The destination domain has no registered TokenMessenger
+        /// - The burn limit is exceeded
+        /// - The token transfer fails
+        /// - The token burn fails
+        /// - The MessageTransmitter sendMessage call fails
         fn deposit_for_burn_internal(
             ref self: ContractState,
             amount: u256,
@@ -774,7 +861,7 @@ pub mod TokenMessengerMinterV2 {
                 amount,
                 depositor_u256,
                 max_fee,
-                hook_data.clone(),
+                @hook_data,
             );
 
             // Send message via local message transmitter
@@ -816,6 +903,13 @@ pub mod TokenMessengerMinterV2 {
         /// * `burn_token` - address of contract to burn deposited tokens, on local domain
         /// * `from` - address depositing the funds
         /// * `amount` - deposit amount
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The amount exceeds the burn limit for the token
+        /// - The transfer_from operation fails (e.g., insufficient balance or allowance)
+        /// - The burn operation fails
         fn deposit_and_burn(
             ref self: ContractState,
             burn_token: ContractAddress,

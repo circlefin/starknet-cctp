@@ -38,7 +38,7 @@ fn test_format_message_for_relay_basic() {
         get_test_data();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // Message should have correct minimum length: 228 bytes (fixed fields) + hook data length
@@ -52,7 +52,7 @@ fn test_round_trip_all_fields() {
         get_test_data();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data.clone(),
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // Test all getter functions
@@ -81,7 +81,7 @@ fn test_empty_hook_data() {
     let empty_hook_data: ByteArray = Default::default();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, empty_hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @empty_hook_data,
     );
 
     // Message should have exactly 228 bytes (no hook data)
@@ -104,13 +104,7 @@ fn test_large_hook_data() {
     }
 
     let message = BurnMessageV2::format_message_for_relay(
-        version,
-        burn_token,
-        mint_recipient,
-        amount,
-        message_sender,
-        max_fee,
-        large_hook_data.clone(),
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @large_hook_data,
     );
 
     // Verify all fields are correct
@@ -144,7 +138,7 @@ fn test_edge_values() {
     let hook_data: ByteArray = Default::default();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     assert_eq!(BurnMessageV2::get_version(@message), 0);
@@ -167,7 +161,7 @@ fn test_max_values() {
     let hook_data: ByteArray = Default::default();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     assert_eq!(BurnMessageV2::get_version(@message), version);
@@ -184,7 +178,7 @@ fn test_validate_burn_message_format_valid() {
         get_test_data();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // Should not panic for valid message
@@ -197,7 +191,7 @@ fn test_validate_burn_message_format_minimum_length() {
     let empty_hook_data: ByteArray = Default::default();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, empty_hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @empty_hook_data,
     );
 
     // Should not panic for minimum valid length (228 bytes)
@@ -238,7 +232,7 @@ fn test_message_structure_consistency() {
         get_test_data();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data.clone(),
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // Test that extracting and reformatting produces the same result
@@ -257,7 +251,7 @@ fn test_message_structure_consistency() {
         extracted_amount,
         extracted_message_sender,
         extracted_max_fee,
-        extracted_hook_data,
+        @extracted_hook_data,
     );
 
     // Messages should be identical
@@ -279,7 +273,7 @@ fn test_field_independence() {
     // Create message with modified version
     let modified_version = version + 1;
     let message = BurnMessageV2::format_message_for_relay(
-        modified_version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        modified_version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // Only version should be different
@@ -297,7 +291,7 @@ fn test_fee_executed_always_zero() {
         get_test_data();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // fee_executed should always be zero in formatted messages
@@ -310,7 +304,7 @@ fn test_expiration_block_always_zero() {
         get_test_data();
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data,
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     // expiration_block should always be zero in formatted messages
@@ -330,7 +324,7 @@ fn test_hook_data_with_zero_bytes() {
     hook_data.append_byte(0x00);
 
     let message = BurnMessageV2::format_message_for_relay(
-        version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data.clone(),
+        version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
     );
 
     let extracted_hook_data = BurnMessageV2::get_hook_data(@message);
@@ -361,7 +355,7 @@ fn test_different_hook_data_sizes() {
         }
 
         let message = BurnMessageV2::format_message_for_relay(
-            version, burn_token, mint_recipient, amount, message_sender, max_fee, hook_data.clone(),
+            version, burn_token, mint_recipient, amount, message_sender, max_fee, @hook_data,
         );
 
         let extracted_hook_data = BurnMessageV2::get_hook_data(@message);

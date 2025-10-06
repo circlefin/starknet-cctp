@@ -153,6 +153,11 @@ pub mod MessageTransmitterV2 {
         pub const ALREADY_INITIALIZED: felt252 = 'Already initialized';
     }
 
+    /// Contract constructor that sets up the initial admin
+    ///
+    /// # Arguments
+    ///
+    /// * `admin` - The address to be set as the initial admin
     #[constructor]
     fn constructor(ref self: ContractState, admin: ContractAddress) {
         // initialize manageable component with admin
@@ -163,6 +168,27 @@ pub mod MessageTransmitterV2 {
 
     #[abi(embed_v0)]
     impl MessageTransmitter of IMessageTransmitterV2<ContractState> {
+        /// Initializes the MessageTransmitter contract with all necessary role addresses
+        /// and configuration. This function can only be called once by the admin.
+        ///
+        /// # Arguments
+        ///
+        /// * `local_domain` - The domain ID of this chain
+        /// * `version` - The message format version
+        /// * `owner` - Address to be set as owner
+        /// * `pauser` - Address to be set as pauser
+        /// * `rescuer` - Address to be set as rescuer
+        /// * `attester_manager` - Address to be set as attester manager
+        /// * `attesters` - Array of initial attester addresses
+        /// * `signature_threshold` - The minimum number of signatures required
+        /// * `max_message_body_size` - The maximum allowed message body size
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The caller is not the admin
+        /// - The contract has already been initialized
+        /// - The max_message_body_size is 0
         fn initialize(
             ref self: ContractState,
             local_domain: u32,
@@ -201,6 +227,23 @@ pub mod MessageTransmitterV2 {
             self.initialized.write(true);
         }
 
+        /// Sends a cross-chain message to a recipient on another domain.
+        ///
+        /// # Arguments
+        ///
+        /// * `destination_domain` - The domain ID of the destination chain
+        /// * `recipient` - The address of the recipient on the destination chain
+        /// * `destination_caller` - The authorized caller on destination domain (0 allows any)
+        /// * `min_finality_threshold` - The minimum finality threshold for the message
+        /// * `message_body` - The message content to send
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The contract is paused
+        /// - The destination_domain equals the local domain
+        /// - The message body size exceeds the maximum allowed size
+        /// - The recipient is zero address
         fn send_message(
             ref self: ContractState,
             destination_domain: u32,
@@ -230,13 +273,36 @@ pub mod MessageTransmitterV2 {
                 recipient,
                 destination_caller,
                 min_finality_threshold,
-                message_body,
+                @message_body,
             );
 
             // emit MessageSent event
             self.emit(MessageSent { message });
         }
 
+        /// Receives and processes a cross-chain message with its attestation.
+        ///
+        /// # Arguments
+        ///
+        /// * `message` - The encoded message to receive
+        /// * `attestation` - The attestation signatures proving message validity
+        ///
+        /// # Returns
+        ///
+        /// Returns true if the message was successfully processed
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The contract is paused
+        /// - The attestation signatures are invalid
+        /// - The message format is invalid
+        /// - The destination domain doesn't match the local domain
+        /// - The destination caller is specified and doesn't match the caller
+        /// - The message version doesn't match the contract version
+        /// - The nonce has already been used
+        /// - The unfinalized message handler fails (for messages below finality threshold)
+        /// - The finalized message handler fails (for messages at or above finality threshold)
         fn receive_message(
             ref self: ContractState, message: ByteArray, attestation: ByteArray,
         ) -> bool {
@@ -299,6 +365,16 @@ pub mod MessageTransmitterV2 {
             true
         }
 
+        /// Sets the maximum allowed message body size. Only callable by the owner.
+        ///
+        /// # Arguments
+        ///
+        /// * `max_message_body_size` - The new maximum message body size to set
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The caller is not the owner
         fn set_max_message_body_size(ref self: ContractState, max_message_body_size: u256) {
             self.ownable.assert_only_owner();
             self.max_message_body_size.write(max_message_body_size);
@@ -306,18 +382,42 @@ pub mod MessageTransmitterV2 {
             self.emit(MaxMessageBodySizeUpdated { max_message_body_size });
         }
 
+        /// Returns the current maximum allowed message body size
+        ///
+        /// # Returns
+        ///
+        /// The maximum message body size as u256
         fn get_max_message_body_size(self: @ContractState) -> u256 {
             self.max_message_body_size.read()
         }
 
+        /// Checks if a nonce has already been used
+        ///
+        /// # Arguments
+        ///
+        /// * `nonce` - The nonce to check
+        ///
+        /// # Returns
+        ///
+        /// Returns true if the nonce has been used, false otherwise
         fn is_nonce_used(self: @ContractState, nonce: u256) -> bool {
             self.used_nonces.entry(nonce).read()
         }
 
+        /// Returns the domain ID of this chain
+        ///
+        /// # Returns
+        ///
+        /// The local domain ID as u32
         fn get_local_domain(self: @ContractState) -> u32 {
             self.local_domain.read()
         }
 
+        /// Returns the message format version used by this contract
+        ///
+        /// # Returns
+        ///
+        /// The message version as u32
         fn get_version(self: @ContractState) -> u32 {
             self.version.read()
         }
@@ -325,6 +425,32 @@ pub mod MessageTransmitterV2 {
 
     #[generate_trait]
     pub impl InternalImpl of ContractInternalTrait {
+        /// Validates a received message and its attestation, returning the message details
+        ///
+        /// # Arguments
+        ///
+        /// * `message` - The encoded message to validate
+        /// * `attestation` - The attestation signatures to verify
+        ///
+        /// # Returns
+        ///
+        /// Returns a tuple containing:
+        /// - nonce: The message nonce
+        /// - source_domain: The domain where the message originated
+        /// - sender: The address that sent the message
+        /// - recipient: The intended recipient on this domain
+        /// - finality_threshold_executed: The finality level of the attestation
+        /// - message_body: The decoded message body
+        ///
+        /// # Panics
+        ///
+        /// This function will panic if:
+        /// - The attestation signatures are invalid or insufficient
+        /// - The message format is invalid
+        /// - The destination domain doesn't match the local domain
+        /// - The destination caller is specified and doesn't match the current caller
+        /// - The message version doesn't match the contract version
+        /// - The nonce has already been used
         fn validate_received_message(
             ref self: ContractState, message: ByteArray, attestation: ByteArray,
         ) -> (

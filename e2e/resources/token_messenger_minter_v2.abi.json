@@ -938,7 +938,7 @@
       {
         "name": "fee_recipient",
         "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "kind": "data"
       }
     ]
   },
@@ -1013,7 +1013,7 @@
       {
         "name": "min_fee_controller",
         "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "kind": "data"
       }
     ]
   },
@@ -1161,7 +1161,7 @@
       {
         "name": "domain",
         "type": "core::integer::u32",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "token_messenger",
@@ -1178,7 +1178,7 @@
       {
         "name": "domain",
         "type": "core::integer::u32",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "token_messenger",
@@ -1236,7 +1236,7 @@
       {
         "name": "token_controller",
         "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "kind": "data"
       }
     ]
   },
@@ -1265,12 +1265,12 @@
       {
         "name": "local_token",
         "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "remote_domain",
         "type": "core::integer::u32",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "remote_token",
@@ -1287,12 +1287,12 @@
       {
         "name": "local_token",
         "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "remote_domain",
         "type": "core::integer::u32",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "remote_token",
@@ -1427,7 +1427,7 @@
       {
         "name": "min_finality_threshold",
         "type": "core::integer::u32",
-        "kind": "data"
+        "kind": "key"
       },
       {
         "name": "hook_data",

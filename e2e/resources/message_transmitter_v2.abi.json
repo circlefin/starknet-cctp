@@ -793,12 +793,12 @@
       {
         "name": "previous_signature_threshold",
         "type": "core::integer::u64",
-        "kind": "key"
+        "kind": "data"
       },
       {
         "name": "new_signature_threshold",
         "type": "core::integer::u64",
-        "kind": "key"
+        "kind": "data"
       }
     ]
   },
@@ -861,7 +861,7 @@
       {
         "name": "max_message_body_size",
         "type": "core::integer::u256",
-        "kind": "key"
+        "kind": "data"
       }
     ]
   },

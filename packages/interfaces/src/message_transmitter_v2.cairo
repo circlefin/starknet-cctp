@@ -18,25 +18,23 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IMessageTransmitterV2<TContractState> {
-    /// Send a message to the destination domain and recipient.
-    /// Formats the message, and emits a `MessageSent` event with message information.
+    /// Sends a cross-chain message to a recipient on another domain.
     ///
     /// # Arguments
     ///
-    /// * `destination_domain` - The destination domain
-    /// * `recipient` - Address of message recipient on destination chain
-    /// * `destination_caller` - The destination caller
-    /// * `min_finality_threshold` - The minimum finality at which the message should be attested
-    /// to.
-    /// * `message_body` - The message body.
+    /// * `destination_domain` - The domain ID of the destination chain
+    /// * `recipient` - The address of the recipient on the destination chain
+    /// * `destination_caller` - The authorized caller on destination domain (0 allows any)
+    /// * `min_finality_threshold` - The minimum finality threshold for the message
+    /// * `message_body` - The message content to send
     ///
     /// # Panics
     ///
     /// This function will panic if:
     /// - The contract is paused
-    /// - The destination domain equals the local domain
+    /// - The destination_domain equals the local domain
     /// - The message body size exceeds the maximum allowed size
-    /// - The recipient address is zero
+    /// - The recipient is zero address
     fn send_message(
         ref self: TContractState,
         destination_domain: u32,
@@ -86,59 +84,58 @@ pub trait IMessageTransmitterV2<TContractState> {
     ///
     /// This function will panic if:
     /// - The contract is paused
-    /// - The attestation signatures are invalid or insufficient
+    /// - The attestation signatures are invalid
     /// - The message format is invalid
     /// - The destination domain doesn't match the local domain
-    /// - The destination caller is specified but doesn't match the actual caller
+    /// - The destination caller is specified and doesn't match the caller
     /// - The message version doesn't match the contract version
     /// - The nonce has already been used
-    /// - The recipient's handle_receive message handler fails
+    /// - The unfinalized message handler fails (for messages below finality threshold)
+    /// - The finalized message handler fails (for messages at or above finality threshold)
     fn receive_message(
         ref self: TContractState, message: ByteArray, attestation: ByteArray,
     ) -> bool;
 
-    /// Set the max message body size.
+    /// Sets the maximum allowed message body size. Only callable by the owner.
     ///
     /// # Arguments
     ///
-    /// * `max_message_body_size` - The max message body size
+    /// * `max_message_body_size` - The new maximum message body size to set
     ///
     /// # Panics
     ///
-    /// * `INVALID_MAX_MESSAGE_BODY_SIZE` - If the max message body size is invalid
-    /// * `INVALID_OWNER` - If the caller is not the owner
+    /// This function will panic if:
+    /// - The caller is not the owner
     fn set_max_message_body_size(ref self: TContractState, max_message_body_size: u256);
 
-    /// Get the max message body size.
+    /// Returns the current maximum allowed message body size
     ///
     /// # Returns
     ///
-    /// * `max_message_body_size` - The max message body size
-    ///
-    /// # Returns
-    ///
-    /// * `max_message_body_size` - The max message body size
+    /// The maximum message body size as u256
     fn get_max_message_body_size(self: @TContractState) -> u256;
 
-    /// Initialize the contract.
+    /// Initializes the MessageTransmitter contract with all necessary role addresses
+    /// and configuration. This function can only be called once by the admin.
     ///
     /// # Arguments
     ///
-    /// * `local_domain` - The local domain
-    /// * `version` - The version
-    /// * `owner` - The owner
-    /// * `pauser` - The pauser
-    /// * `rescuer` - The rescuer
-    /// * `attester_manager` - The attester manager
-    /// * `attesters` - The attesters
-    /// * `signature_threshold` - The signature threshold
-    /// * `max_message_body_size` - The max message body size
+    /// * `local_domain` - The domain ID of this chain
+    /// * `version` - The message format version
+    /// * `owner` - Address to be set as owner
+    /// * `pauser` - Address to be set as pauser
+    /// * `rescuer` - Address to be set as rescuer
+    /// * `attester_manager` - Address to be set as attester manager
+    /// * `attesters` - Array of initial attester addresses
+    /// * `signature_threshold` - The minimum number of signatures required
+    /// * `max_message_body_size` - The maximum allowed message body size
     ///
     /// # Panics
     ///
-    /// * `ALREADY_INITIALIZED` - If the contract is already initialized
-    /// * `NOT_ADMIN` - If the caller is not the admin
-    /// * `INVALID_MAX_MESSAGE_BODY_SIZE` - If the max message body size is invalid
+    /// This function will panic if:
+    /// - The caller is not the admin
+    /// - The contract has already been initialized
+    /// - The max_message_body_size is 0
     fn initialize(
         ref self: TContractState,
         local_domain: u32,
@@ -152,7 +149,7 @@ pub trait IMessageTransmitterV2<TContractState> {
         max_message_body_size: u256,
     );
 
-    /// Check if a nonce has been used.
+    /// Checks if a nonce has already been used
     ///
     /// # Arguments
     ///
@@ -160,21 +157,20 @@ pub trait IMessageTransmitterV2<TContractState> {
     ///
     /// # Returns
     ///
-    /// * `true` - If the nonce has been used
-    /// * `false` - If the nonce has not been used
+    /// Returns true if the nonce has been used, false otherwise
     fn is_nonce_used(self: @TContractState, nonce: u256) -> bool;
 
-    /// Get the local domain.
+    /// Returns the domain ID of this chain
     ///
     /// # Returns
     ///
-    /// * `local_domain` - The local domain
+    /// The local domain ID as u32
     fn get_local_domain(self: @TContractState) -> u32;
 
-    /// Get the version.
+    /// Returns the message format version used by this contract
     ///
     /// # Returns
     ///
-    /// * `version` - The version
+    /// The message version as u32
     fn get_version(self: @TContractState) -> u32;
 }
