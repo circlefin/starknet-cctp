@@ -74,7 +74,12 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// - The sender is not a registered remote TokenMessenger for the domain
     /// - The contract is paused
     /// - The external call to mint tokens fails
-    /// - The message body format is invalid or contains invalid data
+    /// - The BurnMessage is malformed
+    /// - The BurnMessage version isn't supported
+    /// - The BurnMessage has expired
+    /// - The fee equals or exceeds the amount
+    /// - The fee exceeds the max fee specified on the source chain
+    /// - The (remote_domain, burn_token) pair doesn't map to a supported token
     fn handle_receive_finalized_message(
         ref self: TContractState,
         remote_domain: u32,
@@ -112,7 +117,12 @@ pub trait ITokenMessengerMinterV2<TContractState> {
     /// - The finality threshold is less than 500
     /// - The contract is paused
     /// - The external call to mint tokens fails
-    /// - The message body format is invalid or contains invalid data
+    /// - The BurnMessage is malformed
+    /// - The BurnMessage version isn't supported
+    /// - The BurnMessage has expired
+    /// - The fee equals or exceeds the amount
+    /// - The fee exceeds the max fee specified on the source chain
+    /// - The (remote_domain, burn_token) pair doesn't map to a supported token
     fn handle_receive_unfinalized_message(
         ref self: TContractState,
         remote_domain: u32,
