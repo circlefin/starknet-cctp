@@ -22,6 +22,8 @@ import verifyOnchainBytecode from "./commands/verifyOnchainBytecode.js";
 import computeClassHash from "./commands/computeClassHash.js";
 import verifyContractState from "./commands/verifyContractState.js";
 import calculateDeploymentAddress from "./commands/calculateDeploymentAddress.js";
+import generateAccount from "./commands/generateAccount.js";
+import deployAccount from "./commands/deployAccount.js";
 
 program.name("scripts").description("Scripts related to Starknet contract development.");
 
@@ -30,6 +32,8 @@ program.addCommand(verifyOnchainBytecode);
 program.addCommand(computeClassHash);
 program.addCommand(verifyContractState);
 program.addCommand(calculateDeploymentAddress);
+program.addCommand(generateAccount);
+program.addCommand(deployAccount);
 
 if (process.env.NODE_ENV !== "TESTING") {
   program.parse();
