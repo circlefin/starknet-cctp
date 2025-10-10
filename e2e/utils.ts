@@ -63,12 +63,7 @@ const customParsingStrategy: ParsingStrategy = {
   response: {
     ...fastParsingStrategy.response,
     [CairoByteArray.abiSelector]: (responseIterator: Iterator<string>) => {
-      const response = Array.from<string>(responseIterator as any);
-      const padded = [
-        ...response.slice(0, response.length - 2).map((x) => `0x${BigInt(x).toString(16).padStart(62, "0")}`),
-        ...response.slice(-2),
-      ];
-      return CairoByteArray.factoryFromApiResponse(padded.values()).toBuffer();
+      return CairoByteArray.factoryFromApiResponse(responseIterator).toBuffer();
     },
   },
 };

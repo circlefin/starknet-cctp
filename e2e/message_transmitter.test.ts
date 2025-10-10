@@ -756,7 +756,7 @@ describe("message transmitter", () => {
       }
     });
 
-    fit("should receive a finalized message and emit MessageReceived event", async () => {
+    it("should receive a finalized message and emit MessageReceived event", async () => {
       await testReceiveMessage({
         finalityThresholdExecuted: 2000, // >= FINALITY_THRESHOLD_FINALIZED (2000)
         destinationCaller: "0x0", // Anyone can call

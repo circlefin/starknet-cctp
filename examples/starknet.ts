@@ -14,8 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { RpcProvider, Contract, Account, CallData } from "starknet";
-import { hexToBytesArray } from "./utils";
+import { RpcProvider, Contract, Account, CallData, CairoByteArray } from "starknet";
 import {
   NODE_URL,
   ACCOUNT_ADDRESS,
@@ -31,7 +30,11 @@ import {
 // Initialize provider and account
 async function initializeAccount(nodeUrl: string, address: string, privateKey: string) {
   const provider = new RpcProvider({ nodeUrl });
-  return new Account(provider, address, privateKey);
+  return new Account({
+    provider,
+    address,
+    signer: privateKey,
+  });
 }
 
 // Initialize contract with ABI
@@ -40,15 +43,19 @@ async function initializeContract(provider: RpcProvider, contractAddress: string
   if (!abi) {
     throw new Error(`Failed to retrieve ABI for contract: ${contractAddress}`);
   }
-  return new Contract(abi, contractAddress, provider);
+  return new Contract({
+    abi,
+    address: contractAddress,
+    providerOrAccount: provider,
+  });
 }
 
 // Prepare message data for the contract call
 function prepareMessageData(messageHex: string, attestationHex: string): any[] {
   try {
-    const messageBytes = hexToBytesArray(messageHex);
-    const attestationBytes = hexToBytesArray(attestationHex);
-    return CallData.compile([...messageBytes, ...attestationBytes]);
+    const messageBytes = new CairoByteArray(messageHex);
+    const attestationBytes = new CairoByteArray(attestationHex);
+    return CallData.compile([...messageBytes.toApiRequest(), ...attestationBytes.toApiRequest()]);
   } catch (error) {
     throw new Error(`Failed to prepare message data: ${error}`);
   }
@@ -129,25 +136,25 @@ export async function depositForBurn(amount: number, maxFee: number, minFinality
 
     // Execute deposit for burn transaction
     const depositTx = hookData
-      ? await tokenMessengerMinter.deposit_for_burn_with_hook(
+      ? await tokenMessengerMinter.invoke("deposit_for_burn_with_hook", [
           amount,
           REMOTE_EVM_DOMAIN,
           REMOTE_EVM_ADDRESS,
           BURN_TOKEN_ADDRESS,
-          DESTINATION_CALLER,
+          DESTINATION_CALLER!,
           maxFee,
           minFinalityThreshold,
           hookData,
-        )
-      : await tokenMessengerMinter.deposit_for_burn(
+        ])
+      : await tokenMessengerMinter.invoke("deposit_for_burn", [
           amount,
           REMOTE_EVM_DOMAIN,
           REMOTE_EVM_ADDRESS,
           BURN_TOKEN_ADDRESS,
-          DESTINATION_CALLER,
+          DESTINATION_CALLER!,
           maxFee,
           minFinalityThreshold,
-        );
+        ]);
 
     console.log(`Transaction submitted: ${depositTx.transaction_hash}`);
 

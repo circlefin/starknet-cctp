@@ -27,7 +27,7 @@ import {
   constructMessage,
 } from "./utils.js";
 
-xdescribe("token messenger minter", () => {
+describe("token messenger minter", () => {
   let tokenMessengerMinter: TokenMessengerMinterInfo;
 
   beforeAll(async () => {
