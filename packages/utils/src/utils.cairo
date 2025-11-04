@@ -1,4 +1,4 @@
-// Copyright (c) 2025, Circle Internet Financial LTD. All Rights Reserved.
+// Copyright (c) 2025 Circle Internet Group, Inc. All rights reserved.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -13,6 +13,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 use core::panic_with_felt252;
 pub mod Errors {
     pub const BYTE_ARRAY_TOO_SHORT: felt252 = 'Byte array too short';

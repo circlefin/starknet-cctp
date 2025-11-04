@@ -1,4 +1,4 @@
-// Copyright (c) 2025, Circle Internet Financial LTD. All Rights Reserved.
+// Copyright (c) 2025 Circle Internet Group, Inc. All rights reserved.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
