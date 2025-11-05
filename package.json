@@ -27,7 +27,7 @@
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build-contracts": "scarb build --workspace && cd stablecoin-starknet-private && scarb build --workspace",
+    "build-contracts": "scarb build --workspace && cd stablecoin-starknet && scarb build --workspace",
     "start-network": "bash ./e2e/cmd/start_network.sh",
     "stop-network": "bash ./e2e/cmd/stop_network.sh",
     "deploy": "tsx ./e2e/cmd/deploy.ts",

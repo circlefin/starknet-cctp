@@ -38,16 +38,13 @@ async function deployStablecoin(accounts: any): Promise<string> {
   });
   const stablecoinSierra = json.parse(
     await fs.readFile(
-      path.join(__dirname, "../../stablecoin-starknet-private/target/dev/stablecoin_FiatToken.contract_class.json"),
+      path.join(__dirname, "../../stablecoin-starknet/target/dev/stablecoin_FiatToken.contract_class.json"),
       "utf8",
     ),
   );
   const stablecoinCasm = json.parse(
     await fs.readFile(
-      path.join(
-        __dirname,
-        "../../stablecoin-starknet-private/target/dev/stablecoin_FiatToken.compiled_contract_class.json",
-      ),
+      path.join(__dirname, "../../stablecoin-starknet/target/dev/stablecoin_FiatToken.compiled_contract_class.json"),
       "utf8",
     ),
   );

@@ -26,7 +26,7 @@ export default tseslint.config(
   {
     ignores: [
       ".pnp.*",
-      "stablecoin-starknet-private/**",
+      "stablecoin-starknet/**",
       "coverage/**",
       "target/**",
       "packages/**",
