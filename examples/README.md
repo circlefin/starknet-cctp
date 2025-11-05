@@ -1,6 +1,6 @@
 # CCTP on Starknet Example Scripts
 
-This directory provides example scripts for calling depositForBurn and receiveMessage on Starknet Devnet.
+This directory provides example scripts for calling depositForBurn and receiveMessage on Starknet.
 
 For more information see our [developer documentation](https://developers.circle.com/stablecoins/docs/cctp-getting-started).
 

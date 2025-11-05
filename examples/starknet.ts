@@ -107,7 +107,7 @@ export async function receiveMessage(messageHex: string, attestationHex: string)
       );
     }
 
-    console.log("Receive receipt:", receipt);
+    console.debug("Receive receipt:", receipt);
     return receiveMessageTx.transaction_hash;
   } catch (error) {
     console.error("Error in receiveMessage:", error);
@@ -124,8 +124,17 @@ async function approve(provider: RpcProvider, usdcContract: Contract, amount: nu
       `Approve transaction failed, Transaction hash: ${approveTx.transaction_hash}, Error: ${approveTxReceipt.value}`,
     );
   }
-  console.log("Approve receipt:", approveTxReceipt);
+  console.log("Approved receipt:", approveTxReceipt.transaction_hash);
 }
+
+// Sanitize and normalize transaction hash to 32 bytes with leading zeros
+const sanitizeTransactionHash = (txHash: string): string => {
+  const hash = txHash.trim().toLowerCase();
+  if (hash.length < 66) {
+    return `0x${hash.replace("0x", "").padStart(64, "0")}`;
+  }
+  return hash;
+};
 
 export async function depositForBurn(amount: number, maxFee: number, minFinalityThreshold: number, hookData?: string) {
   try {
@@ -143,7 +152,7 @@ export async function depositForBurn(amount: number, maxFee: number, minFinality
           REMOTE_EVM_DOMAIN,
           REMOTE_EVM_ADDRESS,
           BURN_TOKEN_ADDRESS,
-          DESTINATION_CALLER!,
+          DESTINATION_CALLER,
           maxFee,
           minFinalityThreshold,
           hookData,
@@ -153,7 +162,7 @@ export async function depositForBurn(amount: number, maxFee: number, minFinality
           REMOTE_EVM_DOMAIN,
           REMOTE_EVM_ADDRESS,
           BURN_TOKEN_ADDRESS,
-          DESTINATION_CALLER!,
+          DESTINATION_CALLER,
           maxFee,
           minFinalityThreshold,
         ]);
@@ -168,8 +177,10 @@ export async function depositForBurn(amount: number, maxFee: number, minFinality
       );
     }
 
-    console.log("Deposit receipt:", receipt);
-    return depositTx.transaction_hash;
+    console.debug("Deposit receipt:", receipt);
+
+    // starknet transaction hash is 64 characters long, we need to sanitize and normalize it to 32 bytes with leading zeros
+    return sanitizeTransactionHash(depositTx.transaction_hash);
   } catch (error) {
     console.error("Error in depositForBurn:", error);
     process.exit(1);

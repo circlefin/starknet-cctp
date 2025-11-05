@@ -31,9 +31,6 @@ interface ParsedArgs {
   amount: number;
   fastBurn: boolean;
   hookData: string;
-  attestation: string;
-  destinationMessage: string;
-  messageSentEventAccount: string;
 }
 
 interface AttestationResponse {
@@ -58,15 +55,12 @@ const main = async () => {
   const commandName: CommandName = process.argv.slice(2)[0] as CommandName;
 
   const rawArgs = minimist(process.argv.slice(3), {
-    string: ["amount", "fastBurn", "hookData", "attestation", "destinationMessage", "messageSentEventAccount"],
+    string: ["amount", "fastBurn", "hookData"],
   });
   const args: ParsedArgs = {
     amount: Number(rawArgs.amount),
     fastBurn: Boolean(rawArgs.fastBurn),
     hookData: rawArgs.hookData,
-    attestation: rawArgs.attestation,
-    destinationMessage: rawArgs.destinationMessage,
-    messageSentEventAccount: rawArgs.messageSentEventAccount,
   };
   console.log("args", args);
 
@@ -78,6 +72,7 @@ const main = async () => {
     const depositTxHash = await depositForBurn(args.amount, maxFee, minFinalityThreshold, args.hookData);
     console.log("DepositForBurn txHash:", depositTxHash);
     const attestationResponse = await fetchAttestation(depositTxHash, STARKNET_DOMAIN_ID);
+
     const receiveTxHash = await receiveMessageEvm(attestationResponse.message, attestationResponse.attestation);
     console.log("ReceiveMessage txHash:", receiveTxHash);
   } else if (commandName === CommandName.Evm2Strk) {
@@ -89,6 +84,7 @@ const main = async () => {
       ? await depositForBurnEvmWithHook(args.amount, maxFee, minFinalityThreshold, args.hookData)
       : await depositForBurnEvm(args.amount, maxFee, minFinalityThreshold);
     console.log("DepositForBurn txHash:", depositTxHash);
+
     const attestationResponse = await fetchAttestation(depositTxHash, REMOTE_EVM_DOMAIN);
     const receiveTxHash = await receiveMessage(attestationResponse.message, attestationResponse.attestation);
     console.log("ReceiveMessage txHash:", receiveTxHash);
@@ -116,7 +112,8 @@ async function fetchAttestation(txHash: string, domainId: number) {
       break;
     }
   }
-  console.log("Attestation response:", attestationResponse);
+
+  console.debug("Attestation response:", attestationResponse);
   return attestationResponse.messages[0];
 }
 
@@ -124,6 +121,20 @@ async function fetchBurnFee(sourceDomainId: number, destDomainId: number) {
   console.log("Fetching Fees...");
 
   const response = await fetch(`${IRIS_API_URL}/v2/burn/usdc/fees/${sourceDomainId}/${destDomainId}`);
+  if (!response.ok) {
+    console.warn(`Failed to fetch burn fees: ${response.statusText}, use the default fees`);
+    return {
+      fast: {
+        finalityThreshold: 1000,
+        minimumFee: 1,
+      },
+      slow: {
+        finalityThreshold: 2000,
+        minimumFee: 1,
+      },
+    };
+  }
+
   const fees: BurnFee[] = await response.json();
   const result: {
     fast: BurnFee;
@@ -131,11 +142,11 @@ async function fetchBurnFee(sourceDomainId: number, destDomainId: number) {
   } = {
     fast: fees.find((fee) => fee.finalityThreshold === 1000) ?? {
       finalityThreshold: 1000,
-      minimumFee: 0,
+      minimumFee: 1,
     },
     slow: fees.find((fee) => fee.finalityThreshold === 2000) ?? {
       finalityThreshold: 2000,
-      minimumFee: 0,
+      minimumFee: 1,
     },
   };
 

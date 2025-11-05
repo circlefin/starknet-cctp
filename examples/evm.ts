@@ -72,6 +72,10 @@ const approve = async (usdcApproveContract: ethers.Contract, amount: number) => 
   }
 };
 
+const convertAddressToBytes32Format = (address: string) => {
+  return `0x${address.replace("0x", "").padStart(64, "0")}`;
+};
+
 export const depositForBurnEvm = async (amount: number, maxFee: number, minFinalityThreshold: number) => {
   const { usdcApproveContract, tokenMessengerV2Contract } = getContracts();
 
@@ -81,9 +85,9 @@ export const depositForBurnEvm = async (amount: number, maxFee: number, minFinal
   const depositForBurnTx = await tokenMessengerV2Contract.depositForBurn(
     amount,
     STARKNET_DOMAIN_ID,
-    ACCOUNT_ADDRESS, // Starknet token account address
+    convertAddressToBytes32Format(ACCOUNT_ADDRESS), // Starknet token account address
     REMOTE_TOKEN_HEX,
-    destinationCaller,
+    convertAddressToBytes32Format(destinationCaller),
     maxFee,
     minFinalityThreshold,
   );
@@ -109,9 +113,9 @@ export const depositForBurnEvmWithHook = async (
   const depositForBurnTx = await tokenMessengerV2Contract.depositForBurnWithHook(
     amount,
     STARKNET_DOMAIN_ID,
-    ACCOUNT_ADDRESS, // Starknet token account address
+    convertAddressToBytes32Format(ACCOUNT_ADDRESS), // Starknet token account address
     REMOTE_TOKEN_HEX,
-    destinationCaller,
+    convertAddressToBytes32Format(destinationCaller),
     maxFee,
     minFinalityThreshold,
     hookData,
