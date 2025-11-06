@@ -24,18 +24,10 @@ jobs:
     name: Contracts Lint and Test
     runs-on: large-spot
     steps:
-      - name: Read secrets from AWS Secrets Manager into environment variables
-        uses: aws-actions/aws-secretsmanager-get-secrets@v2.0.9
-        with:
-          parse-json-secrets: true
-          secret-ids: |
-            /ops/utilities/github-actions-bot/ssh-priv-key
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: true
-          ssh-key: ${{ env._OPS_UTILITIES_GITHUB_ACTIONS_BOT_SSH_PRIV_KEY }}
 
       - name: Install dependencies
         run: |
@@ -74,13 +66,6 @@ jobs:
     name: E2E Lint and Test
     runs-on: large-spot
     steps:
-      - name: Read secrets from AWS Secrets Manager into environment variables
-        uses: aws-actions/aws-secretsmanager-get-secrets@v2.0.9
-        with:
-          parse-json-secrets: true
-          secret-ids: |
-            /ops/utilities/github-actions-bot/ssh-priv-key
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
