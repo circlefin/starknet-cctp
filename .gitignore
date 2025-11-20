@@ -1,0 +1,26 @@
+.DS_Store
+.idea/
+# Scarb
+target/
+
+# Starknet Foundry
+.snfoundry_cache/
+*-sepolia_state.json
+snfoundry.toml
+snfoundry_trace/
+
+# Environments
+.env
+
+# Coverage
+coverage/
+coverage_report/
+coverage.lcov
+
+node_modules/
+
+# Test logs
+devnet.log
+
+.yarn/
+starknet-node.log

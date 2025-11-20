@@ -1,0 +1,5 @@
+node_modules/*
+yarn.lock
+stablecoin-starknet/*
+jest.config.js
+.vscode

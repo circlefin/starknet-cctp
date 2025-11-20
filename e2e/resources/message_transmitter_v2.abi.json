@@ -1,0 +1,969 @@
+[
+  {
+    "type": "impl",
+    "name": "MessageTransmitter",
+    "interface_name": "interfaces::message_transmitter_v2::IMessageTransmitterV2"
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "interfaces::message_transmitter_v2::IMessageTransmitterV2",
+    "items": [
+      {
+        "type": "function",
+        "name": "send_message",
+        "inputs": [
+          {
+            "name": "destination_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "recipient",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "destination_caller",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "min_finality_threshold",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "message_body",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "receive_message",
+        "inputs": [
+          {
+            "name": "message",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "attestation",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_max_message_body_size",
+        "inputs": [
+          {
+            "name": "max_message_body_size",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_max_message_body_size",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "initialize",
+        "inputs": [
+          {
+            "name": "local_domain",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "version",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "pauser",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "rescuer",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "attester_manager",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "attesters",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "signature_threshold",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "max_message_body_size",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "is_nonce_used",
+        "inputs": [
+          {
+            "name": "nonce",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_local_domain",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_version",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "OwnableImpl",
+    "interface_name": "components::ownable::interface::IOwnable"
+  },
+  {
+    "type": "interface",
+    "name": "components::ownable::interface::IOwnable",
+    "items": [
+      {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "pending_owner",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer_ownership",
+        "inputs": [
+          {
+            "name": "new_owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "accept_ownership",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "PausableImpl",
+    "interface_name": "components::pausable::interface::IPausable"
+  },
+  {
+    "type": "interface",
+    "name": "components::pausable::interface::IPausable",
+    "items": [
+      {
+        "type": "function",
+        "name": "pauser",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "update_pauser",
+        "inputs": [
+          {
+            "name": "new_pauser",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "pause",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "unpause",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "paused",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "ManageableImpl",
+    "interface_name": "components::manageable::interface::IManageable"
+  },
+  {
+    "type": "interface",
+    "name": "components::manageable::interface::IManageable",
+    "items": [
+      {
+        "type": "function",
+        "name": "admin",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "pending_admin",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer_admin",
+        "inputs": [
+          {
+            "name": "new_admin",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "accept_admin",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "UpgradeableImpl",
+    "interface_name": "components::upgradeable::interface::IUpgradeable"
+  },
+  {
+    "type": "interface",
+    "name": "components::upgradeable::interface::IUpgradeable",
+    "items": [
+      {
+        "type": "function",
+        "name": "upgrade",
+        "inputs": [
+          {
+            "name": "new_class_hash",
+            "type": "core::starknet::class_hash::ClassHash"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "AttestableImpl",
+    "interface_name": "cctp_components::attestable::IAttestable"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::attestable::IAttestable",
+    "items": [
+      {
+        "type": "function",
+        "name": "enable_attester",
+        "inputs": [
+          {
+            "name": "new_attester",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "disable_attester",
+        "inputs": [
+          {
+            "name": "attester",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "is_enabled_attester",
+        "inputs": [
+          {
+            "name": "attester",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "update_attester_manager",
+        "inputs": [
+          {
+            "name": "new_attester_manager",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_signature_threshold",
+        "inputs": [
+          {
+            "name": "new_signature_threshold",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "attester_manager",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_signature_threshold",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u64"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_enabled_attesters",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "RescuableImpl",
+    "interface_name": "cctp_components::rescuable::IRescuable"
+  },
+  {
+    "type": "interface",
+    "name": "cctp_components::rescuable::IRescuable",
+    "items": [
+      {
+        "type": "function",
+        "name": "rescuer",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "update_rescuer",
+        "inputs": [
+          {
+            "name": "new_rescuer",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "rescue_erc20",
+        "inputs": [
+          {
+            "name": "token_contract",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "amount",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "admin",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::ownable::events::OwnershipTransferred",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::ownable::events::OwnershipTransferStarted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::ownable::ownable::OwnableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "OwnershipTransferred",
+        "type": "components::ownable::events::OwnershipTransferred",
+        "kind": "nested"
+      },
+      {
+        "name": "OwnershipTransferStarted",
+        "type": "components::ownable::events::OwnershipTransferStarted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::events::Paused",
+    "kind": "struct",
+    "members": []
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::events::Unpaused",
+    "kind": "struct",
+    "members": []
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::events::PauserChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old_pauser",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_pauser",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::pausable::pausable::PausableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "Paused",
+        "type": "components::pausable::events::Paused",
+        "kind": "nested"
+      },
+      {
+        "name": "Unpaused",
+        "type": "components::pausable::events::Unpaused",
+        "kind": "nested"
+      },
+      {
+        "name": "PauserChanged",
+        "type": "components::pausable::events::PauserChanged",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::manageable::events::AdminChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::manageable::events::AdminChangeStarted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::manageable::manageable::ManageableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "AdminChanged",
+        "type": "components::manageable::events::AdminChanged",
+        "kind": "nested"
+      },
+      {
+        "name": "AdminChangeStarted",
+        "type": "components::manageable::events::AdminChangeStarted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::upgradeable::events::ContractUpgraded",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "class_hash",
+        "type": "core::starknet::class_hash::ClassHash",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "components::upgradeable::upgradeable::UpgradeableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "ContractUpgraded",
+        "type": "components::upgradeable::events::ContractUpgraded",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::attestable::AttestableComponent::AttesterEnabled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "attester",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::attestable::AttestableComponent::AttesterDisabled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "attester",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::attestable::AttestableComponent::AttesterManagerUpdated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_attester_manager",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_attester_manager",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::attestable::AttestableComponent::SignatureThresholdUpdated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_signature_threshold",
+        "type": "core::integer::u64",
+        "kind": "data"
+      },
+      {
+        "name": "new_signature_threshold",
+        "type": "core::integer::u64",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::attestable::AttestableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "AttesterEnabled",
+        "type": "cctp_components::attestable::AttestableComponent::AttesterEnabled",
+        "kind": "nested"
+      },
+      {
+        "name": "AttesterDisabled",
+        "type": "cctp_components::attestable::AttestableComponent::AttesterDisabled",
+        "kind": "nested"
+      },
+      {
+        "name": "AttesterManagerUpdated",
+        "type": "cctp_components::attestable::AttestableComponent::AttesterManagerUpdated",
+        "kind": "nested"
+      },
+      {
+        "name": "SignatureThresholdUpdated",
+        "type": "cctp_components::attestable::AttestableComponent::SignatureThresholdUpdated",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::rescuable::RescuableComponent::RescuerChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "new_rescuer",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "cctp_components::rescuable::RescuableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "RescuerChanged",
+        "type": "cctp_components::rescuable::RescuableComponent::RescuerChanged",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MaxMessageBodySizeUpdated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "max_message_body_size",
+        "type": "core::integer::u256",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "message",
+        "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageReceived",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "caller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "source_domain",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "nonce",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "sender",
+        "type": "core::integer::u256",
+        "kind": "data"
+      },
+      {
+        "name": "finality_threshold_executed",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "message_body",
+        "type": "core::byte_array::ByteArray",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "OwnableEvent",
+        "type": "components::ownable::ownable::OwnableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "PausableEvent",
+        "type": "components::pausable::pausable::PausableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "ManageableEvent",
+        "type": "components::manageable::manageable::ManageableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "UpgradeableEvent",
+        "type": "components::upgradeable::upgradeable::UpgradeableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "AttestableEvent",
+        "type": "cctp_components::attestable::AttestableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "RescuableEvent",
+        "type": "cctp_components::rescuable::RescuableComponent::Event",
+        "kind": "flat"
+      },
+      {
+        "name": "MaxMessageBodySizeUpdated",
+        "type": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MaxMessageBodySizeUpdated",
+        "kind": "nested"
+      },
+      {
+        "name": "MessageSent",
+        "type": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageSent",
+        "kind": "nested"
+      },
+      {
+        "name": "MessageReceived",
+        "type": "message_transmitter::message_transmitter_v2::MessageTransmitterV2::MessageReceived",
+        "kind": "nested"
+      }
+    ]
+  }
+]
