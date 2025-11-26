@@ -15,20 +15,33 @@
 # limitations under the License.
 
 LOG_FILE="$PWD/starknet-node.log"
-if [ -f "$LOG_FILE" ]
-then
+DEVNET_RUNTIME=${STARKNET_DEVNET_RUNTIME:-docker}
+DEVNET_PORT=${STARKNET_DEVNET_PORT:-5050}
+DEVNET_COMPOSE_FILE=${STARKNET_DEVNET_COMPOSE_FILE:-"$PWD/repros/denylist_poc/devnet/docker-compose.yml"}
+DEVNET_SERVICE_NAME=${STARKNET_DEVNET_SERVICE_NAME:-starknet-devnet}
+
+if [ -f "$LOG_FILE" ]; then
   rm "$LOG_FILE"
 fi
 
-# Find the PID of the node using the lsof command
-# -t = only return PID
-# -c starknet-devnet = where command name is 'starknet-devnet'
-# -a = <AND>
-# -i:5050 = where the port is '5050'
-PID=$(lsof -t -c starknet-devnet -a -i:5050 || true)
+if [[ "$DEVNET_RUNTIME" == "docker" ]]; then
+  if command -v docker >/dev/null 2>&1; then
+    COMPOSE_CMD=(docker compose)
+    echo "Stopping dockerized Starknet devnet..."
+    "${COMPOSE_CMD[@]}" -f "$DEVNET_COMPOSE_FILE" down >/dev/null 2>&1 || true
+  else
+    echo "Docker runtime requested but docker command not found" >&2
+  fi
+else
+  # Find the PID of the node using the lsof command
+  # -t = only return PID
+  # -c starknet-devnet = where command name is 'starknet-devnet'
+  # -a = <AND>
+  # -i:PORT = where the port is being used
+  PID=$(lsof -t -c starknet-devnet -a -i:${DEVNET_PORT} || true)
 
-if [ ! -z "$PID" ]
-then
-  echo "Stopping network at pid: $PID..."
-  kill "$PID" &>/dev/null
+  if [ ! -z "$PID" ]; then
+    echo "Stopping network at pid: $PID..."
+    kill "$PID" &>/dev/null || true
+  fi
 fi

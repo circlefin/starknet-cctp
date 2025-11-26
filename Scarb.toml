@@ -45,7 +45,7 @@ keywords = [
 [workspace.dependencies]
 assert_macros = "2.12.0"
 starknet = "2.12.0"
-snforge_std = "0.48.1"
+snforge_std = "0.52.0"
 utils = { path = "packages/utils" }
 test_utils = { path = "packages/test_utils" }
 message = { path = "packages/message" }
@@ -55,6 +55,7 @@ message_transmitter = { path = "packages/message_transmitter" }
 token_messenger_minter = { path = "packages/token_messenger_minter" }
 components = { path = "stablecoin-starknet/packages/components" }
 stablecoin = { path = "stablecoin-starknet/packages/stablecoin" }
+
 
 [workspace.tool.fmt]
 

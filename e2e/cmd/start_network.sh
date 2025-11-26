@@ -15,38 +15,62 @@
 # limitations under the License.
 
 LOG_FILE="$PWD/starknet-node.log"
+DEVNET_RUNTIME=${STARKNET_DEVNET_RUNTIME:-docker}
+DEVNET_PORT=${STARKNET_DEVNET_PORT:-5050}
+DEVNET_COMPOSE_FILE=${STARKNET_DEVNET_COMPOSE_FILE:-"$PWD/repros/denylist_poc/devnet/docker-compose.yml"}
+DEVNET_SERVICE_NAME=${STARKNET_DEVNET_SERVICE_NAME:-starknet-devnet}
 
-echo "Starting Starknet node..."
+echo "Starting Starknet node using runtime: $DEVNET_RUNTIME"
 
-starknet-devnet --seed=0 &> $LOG_FILE &
+if [[ "$DEVNET_RUNTIME" == "docker" ]]; then
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker is required for docker runtime; set STARKNET_DEVNET_RUNTIME=native to use local binary." >&2
+    exit 1
+  fi
+
+  COMPOSE_CMD=(docker compose)
+  echo ">> Launching container via ${COMPOSE_CMD[*]} -f $DEVNET_COMPOSE_FILE up"
+  "${COMPOSE_CMD[@]}" -f "$DEVNET_COMPOSE_FILE" up -d --build "$DEVNET_SERVICE_NAME"
+else
+  echo ">> Launching local starknet-devnet binary"
+  starknet-devnet --seed=0 &> "$LOG_FILE" &
+fi
 
 WAIT_TIME=120
 echo ">> Waiting for Starknet node to come online within $WAIT_TIME seconds..."
 
 ELAPSED=0
-SECONDS=0 
-while [[ "$ELAPSED" -lt "$WAIT_TIME" ]]
-do
-  HEALTHCHECK_STATUS_CODE="$(curl -k -s -o /dev/null -w %{http_code} http://localhost:5050/is_alive)"
-  if [[ "$HEALTHCHECK_STATUS_CODE" -eq 200 ]]
-  then 
+SECONDS=0
+while [[ "$ELAPSED" -lt "$WAIT_TIME" ]]; do
+  HEALTHCHECK_STATUS_CODE="$(curl -k -s -o /dev/null -w %{http_code} http://localhost:${DEVNET_PORT}/is_alive)"
+  if [[ "$HEALTHCHECK_STATUS_CODE" -eq 200 ]]; then
     echo ">> Starknet node is started after $ELAPSED seconds!"
-    cat $LOG_FILE
+    if [[ "$DEVNET_RUNTIME" != "docker" && -f "$LOG_FILE" ]]; then
+      cat "$LOG_FILE"
+    fi
     exit 0
   fi
 
-  if [[ $(( ELAPSED % 10 )) == 0 && "$ELAPSED" > 0 ]]
-  then
+  if [[ $(( ELAPSED % 10 )) == 0 && "$ELAPSED" -gt 0 ]]; then
     echo ">> Waiting for Starknet node for $ELAPSED seconds.. (Status: $HEALTHCHECK_STATUS_CODE)"
-    echo ">> Last few lines of log:"
-    tail -5 $LOG_FILE 2>/dev/null || echo "   No log content yet"
+    if [[ "$DEVNET_RUNTIME" != "docker" ]]; then
+      echo ">> Last few lines of log:"
+      tail -5 "$LOG_FILE" 2>/dev/null || echo "   No log content yet"
+    else
+      echo ">> View container logs with: docker logs -f $DEVNET_SERVICE_NAME"
+    fi
   fi
-  
+
   sleep 1
   ELAPSED=$SECONDS
 done
 
 echo ">> Starknet node failed to start within $WAIT_TIME seconds!"
-echo ">> Showing log file contents:"
-cat $LOG_FILE
+if [[ "$DEVNET_RUNTIME" != "docker" ]]; then
+  echo ">> Showing log file contents:"
+  cat "$LOG_FILE"
+else
+  echo ">> Showing container logs:"
+  docker logs "$DEVNET_SERVICE_NAME" || true
+fi
 exit 1

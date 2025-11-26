@@ -1341,6 +1341,73 @@ fn test_handle_receive_unfinalized_message_happy_path() {
 }
 
 #[test]
+fn test_handle_receive_message_allows_denylisted_recipient() {
+    // This test demonstrates the missing denylist check when minting on Starknet.
+    let (contract_address, local_message_transmitter, mock_token) = deploy_token_messenger_minter();
+    let dispatcher = ITokenMessengerMinterV2Dispatcher { contract_address };
+    let token_controller_dispatcher = ITokenControllerDispatcher { contract_address };
+    let denylistable_dispatcher = IDenylistableDispatcher { contract_address };
+
+    // Link token pair for the remote domain
+    let source_domain: u32 = 1_u32;
+    let burn_token: u256 = 0x200.into();
+    start_cheat_caller_address(contract_address, 0x6.try_into().unwrap()); // Token controller
+    token_controller_dispatcher.link_token_pair(mock_token, source_domain, burn_token);
+    stop_cheat_caller_address(contract_address);
+
+    // Denylist the Starknet mint recipient
+    let mint_recipient: ContractAddress = 0x200.try_into().unwrap();
+    start_cheat_caller_address(contract_address, 0x4.try_into().unwrap()); // Denylister
+    denylistable_dispatcher.denylist(mint_recipient);
+    stop_cheat_caller_address(contract_address);
+
+    // Craft a valid burn message that names the denylisted recipient
+    let mint_recipient_felt: felt252 = mint_recipient.into();
+    let mint_recipient_u256: u256 = mint_recipient_felt.into();
+    let amount: u256 = 1000_u256;
+    let depositor: u256 = 0x100.into();
+    let max_fee: u256 = 10_u256;
+    let message_body = BurnMessageV2::format_message_for_relay(
+        0_u32,
+        burn_token,
+        mint_recipient_u256,
+        amount,
+        depositor,
+        max_fee,
+        Default::default(),
+    );
+
+    // Spy on events to prove minting still occurs
+    let mut spy = spy_events();
+
+    // Call as the authorized local message transmitter
+    start_cheat_caller_address(contract_address, local_message_transmitter);
+    let result = dispatcher
+        .handle_receive_finalized_message(source_domain, 1000_u256, 0_u32, message_body);
+    stop_cheat_caller_address(contract_address);
+
+    assert!(result, "Message handling should succeed even with denylisted recipient");
+
+    // Verify that the MintAndWithdraw event was emitted for the denylisted address
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    contract_address,
+                    token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::Event::MintAndWithdraw(
+                        token_messenger_minter::token_messenger_minter_v2::TokenMessengerMinterV2::MintAndWithdraw {
+                            mint_recipient,
+                            amount,
+                            mint_token: mock_token,
+                            fee_collected: 0_u256,
+                        },
+                    ),
+                ),
+            ],
+        );
+}
+
+#[test]
 #[should_panic(expected: ('Caller not local MT',))]
 fn test_handle_receive_finalized_message_fails_invalid_caller() {
     let (contract_address, _, _) = deploy_token_messenger_minter();

@@ -15,7 +15,14 @@ The deployment process involves two main contracts:
    yarn start-network
    ```
 
-   This spins up a local Starknet node using [`starknet-devnet`](https://github.com/0xSpaceShard/starknet-devnet) at `http://127.0.0.1:5050`.
+   By default this command now runs [`starknet-devnet`](https://github.com/0xSpaceShard/starknet-devnet) inside a Docker container (defined in `repros/denylist_poc/devnet`). The container exposes `http://127.0.0.1:5050`. To fall back to the locally installed binary set `STARKNET_DEVNET_RUNTIME=native` before running the script.
+
+   Useful environment overrides:
+
+   - `STARKNET_DEVNET_PORT` – host port to expose (defaults to `5050`).
+   - `STARKNET_DEVNET_COMPOSE_FILE` – path to the docker compose file if you need a custom one.
+   - `STARKNET_DEVNET_SERVICE_NAME` – compose service name (defaults to `starknet-devnet`).
+   - `STARKNET_DEVNET_RUNTIME` – set to `native` to launch the binary directly instead of Docker.
 
 2. **Choose Deployer Account**
    

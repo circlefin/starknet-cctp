@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  starknet-devnet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DEVNET_VERSION: ${STARKNET_DEVNET_VERSION:-v0.6.1}
+    container_name: starknet-devnet
+    ports:
+      - "${STARKNET_DEVNET_PORT:-5050}:5050"
+    command: ["--seed","0","--host","0.0.0.0","--port","5050"]

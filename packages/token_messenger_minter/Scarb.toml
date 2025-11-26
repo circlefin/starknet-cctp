@@ -51,6 +51,7 @@ stablecoin.workspace = true
 [dev-dependencies]
 assert_macros.workspace = true
 snforge_std.workspace = true
+cairo_test = "2.13.1"
 
 [[target.starknet-contract]]
 sierra = true

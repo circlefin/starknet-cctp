@@ -1,5 +1,5 @@
 {
-  "tokenMessengerMinterV2": "0x394a641beceb5deb4d35ee16ea2c1d678bea473ece1e96512d21e91327ed68b",
-  "messageTransmitterV2": "0xe6d95bc3e78e1900e003cdd0c63e77365428e30ab02cbf999f8a6de2fa758c",
-  "stablecoin": "0x15c2c3131d7c4c2579bfe99971f9339076e43e7144e1404f7022c0856298b7e"
+  "tokenMessengerMinterV2": "0x1a8aef65113f8a4c46ac2793e3b02e9d32cc43a79b171df50d4fcbd684ce636",
+  "messageTransmitterV2": "0x4356cdc4411523c5cc98a2e09c723ddee4e051b615d3cf12bc152b49c20e45f",
+  "stablecoin": "0x26a1971b64ed77c82ec85fc83bc3d1a1ea867e776e61be6a8872c321ecd87b6"
 }

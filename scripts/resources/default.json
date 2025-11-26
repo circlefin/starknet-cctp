@@ -7,8 +7,8 @@
     "rescuer": "0x00d513de92c16aa42418cf7e5b60f8022dbee1b4dfd81bcf03ebee079cfb5cb5",
     "attesterManager": "0x01e8c6c17efa3a047506c0b1610bd188aa3e3dd6c5d9227549b65428de24de78",
     "attesters": [
-      "0x47E832D17C7a6F44787d6B71aBE1092e69de760A",
-      "0x8ADB4389439BD6fCDAf0520C14a0CAbA3Da22C86"
+      "0x06D2cdA5C7Aa0aeFDeB9334338CCE6b7A299450a",
+      "0x3770BE63108AA263f1DE9e583e220b79f5294110"
     ],
     "signatureThreshold": 1,
     "maxMessageBodySize": 1000
