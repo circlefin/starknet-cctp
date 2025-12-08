@@ -15,6 +15,7 @@ dependencies = [
 [[package]]
 name = "components"
 version = "0.1.0"
+source = "git+https://github.com/circlefin/stablecoin-starknet.git#ef469dee4edded19a62cb9745388cc31a44b375b"
 
 [[package]]
 name = "interfaces"
@@ -59,6 +60,7 @@ dependencies = [
 [[package]]
 name = "stablecoin"
 version = "0.1.0"
+source = "git+https://github.com/circlefin/stablecoin-starknet.git#ef469dee4edded19a62cb9745388cc31a44b375b"
 dependencies = [
  "components",
 ]

@@ -53,8 +53,8 @@ cctp_components = { path = "packages/components" }
 interfaces = { path = "packages/interfaces" }
 message_transmitter = { path = "packages/message_transmitter" }
 token_messenger_minter = { path = "packages/token_messenger_minter" }
-components = { path = "stablecoin-starknet/packages/components" }
-stablecoin = { path = "stablecoin-starknet/packages/stablecoin" }
+components = { git = "https://github.com/circlefin/stablecoin-starknet.git" }
+stablecoin = { git = "https://github.com/circlefin/stablecoin-starknet.git" }
 
 [workspace.tool.fmt]
 
